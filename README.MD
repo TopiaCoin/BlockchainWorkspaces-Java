@@ -1,0 +1,3 @@
+# Workspace Blockchain Library for Java
+
+The Workspace Blockchain Library provides the code necessary to create, interact with, and manage Blockchain-based workspaces. This includes handling the creation of the workspaces, managing membership, uploading and downloading files, and interacting with messages.  When used in a desktop environment, it can be combined with the Chainmail Library to allow for full control of the Multichain blockchain daemons.
