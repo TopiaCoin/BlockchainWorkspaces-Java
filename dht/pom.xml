@@ -11,33 +11,18 @@
 
   <!-- Project Information -->
   <groupId>topiacoin</groupId>
-  <artifactId>workspace-blockchain</artifactId>
+  <artifactId>dht</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <name>TopiaCoin Workspace Blockchain</name>
+  <name>TopiaCoin Distributed Hash Table</name>
   <packaging>jar</packaging>
   <url>https://topiacoin.io</url>
 
   <dependencies>
-    <dependency>
-      <groupId>topiacoin</groupId>
-      <artifactId>core</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>topiacoin</groupId>
-      <artifactId>crypto</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>topiacoin</groupId>
-      <artifactId>chainmail</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>topiacoin</groupId>
-      <artifactId>blockchainUtil</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
-    </dependency>
+      <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.12</version>
+      </dependency>
   </dependencies>
 
   <!-- Distribution Management Properties -->

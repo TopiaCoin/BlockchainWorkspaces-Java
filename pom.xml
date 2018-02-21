@@ -5,7 +5,7 @@
   
   <!-- Project Information -->
   <groupId>topiacoin</groupId>
-  <artifactId>master</artifactId>
+  <artifactId>bcWorkspaceLibrary</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <name>TopiaCoin Master Project</name>
   <packaging>pom</packaging>
@@ -16,8 +16,8 @@
   	<module>model</module>
   	<module>core</module>
   	<module>workspace-blockchain</module>
-  	<module>chainmail</module>
   	<module>crypto</module>
+  	<module>dht</module>
   </modules>
   
   <!-- Distribution Management Properties -->
