@@ -1,6 +1,7 @@
 package io.topiacoin.dht.messages;
 
 import io.topiacoin.dht.intf.Message;
+import io.topiacoin.dht.network.Node;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -53,6 +54,21 @@ public class TestMessage implements Message {
             throw new RuntimeException("OMG! UTF-8 is no longer supported in JAVA!!");
         }
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TestMessage that = (TestMessage) o;
+
+        return message != null ? message.equals(that.message) : that.message == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return message != null ? message.hashCode() : 0;
     }
 
     public String getMessage() {

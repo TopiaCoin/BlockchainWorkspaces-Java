@@ -1,9 +1,11 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.dht.MessageSigner;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
 import io.topiacoin.dht.messages.MessageFactory;
+import org.apache.commons.codec.binary.Hex;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -11,6 +13,9 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.KeyPair;
+import java.security.Signature;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -30,17 +35,21 @@ public class CommunicationServer {
     private transient Map<Integer, TimerTask> tasks;
     private transient Random random;
     private transient MessageFactory messageFactory;
+    private transient KeyPair keyPair;
+    private transient MessageSigner _messageSigner;
 
-    public CommunicationServer(int udpPort, DefaultConfiguration config, MessageFactory messageFactory) throws SocketException {
+    public CommunicationServer(int udpPort, DefaultConfiguration config, MessageFactory messageFactory, KeyPair keyPair, MessageSigner messageSigner) throws SocketException {
 
         this.socket = new DatagramSocket(udpPort);
         this.configuration = config;
+        this.keyPair = keyPair;
 
         this.handlers = new HashMap<Integer, ResponseHandler>();
         this.tasks = new HashMap<Integer, TimerTask>();
         this.random = new Random();
         this.timer = new Timer();
         this.messageFactory = messageFactory;
+        this._messageSigner = messageSigner;
 
         this.start();
     }
@@ -70,29 +79,47 @@ public class CommunicationServer {
                 this.socket.receive(packet);
 
                 // Decode the received data
-                ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
-                byteBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order
-                int msgID = byteBuffer.getInt();
-                byte msgType = byteBuffer.get();
+                ByteBuffer packetBuffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
+                packetBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order
+                int sigLength = packetBuffer.getInt();
+                byte[] signature = new byte[sigLength];
+                packetBuffer.get(signature) ;
 
-                Message message = this.messageFactory.createMessage(msgType, byteBuffer);
+                System.out.println ( "public key: " + Arrays.toString(keyPair.getPublic().getEncoded()));
+                System.out.println ( "signature length: " + signature.length);
+                System.out.println ( "packet buffer.length with Signature: " + packetBuffer.limit() ) ;
 
-                // Find the Response Handler
-                ResponseHandler responseHandler = null;
-                if (this.handlers.containsKey(msgID)) {
-                    synchronized (this) {
-                        responseHandler = this.handlers.remove(msgID);
-                        TimerTask timerTask = this.tasks.remove(msgID);
-                        if (timerTask != null) {
-                            timerTask.cancel();
+                System.out.println ("packet buffer: " + Arrays.toString(packetBuffer.array())) ;
+
+                packetBuffer.mark();
+                if ( this._messageSigner.verify(packetBuffer, this.keyPair, signature) ) {
+                    packetBuffer.reset();
+
+                    int messageLength = packetBuffer.getInt();
+                    int msgID = packetBuffer.getInt();
+                    byte msgType = packetBuffer.get();
+
+                    Message message = this.messageFactory.createMessage(msgType, packetBuffer);
+
+                    // Find the Response Handler
+                    ResponseHandler responseHandler = null;
+                    if (this.handlers.containsKey(msgID)) {
+                        synchronized (this) {
+                            responseHandler = this.handlers.remove(msgID);
+                            TimerTask timerTask = this.tasks.remove(msgID);
+                            if (timerTask != null) {
+                                timerTask.cancel();
+                            }
                         }
+                    } else {
+                        responseHandler = messageFactory.createReceiver(msgType, this);
+                    }
+
+                    if (responseHandler != null) {
+                        responseHandler.receive(message, msgID);
                     }
                 } else {
-                    responseHandler = messageFactory.createReceiver(msgType, this);
-                }
-
-                if (responseHandler != null) {
-                    responseHandler.receive(message, msgID);
+                    System.err.println("Signature Verification Failed!");
                 }
 
             } catch (IOException e) {
@@ -101,7 +128,7 @@ public class CommunicationServer {
         }
     }
 
-    public void sendMessage(Object recipient, Message message, ResponseHandler responseHandler) {
+    public void sendMessage(Node recipient, Message message, ResponseHandler responseHandler) {
         if (!this.isRunning) {
             throw new IllegalStateException("The Communication Server is not running");
         }
@@ -129,30 +156,49 @@ public class CommunicationServer {
         sendMessage(recipient, message, msgID);
     }
 
-    public void reply(Object recipient, Message message, int msgID) {
+    public void reply(Node recipient, Message message, int msgID) {
         if (!this.isRunning) {
             throw new IllegalStateException("The Communication Server is not running");
         }
         sendMessage(recipient, message, msgID);
     }
 
-    private void sendMessage(Object recipient, Message message, int msgID) {
+    private void sendMessage(Node recipient, Message message, int msgID) {
 
         // Encode the message for sending
-        ByteBuffer byteBuffer = ByteBuffer.allocate(BUFFER_SIZE);
-        byteBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order
-        byteBuffer.putInt(msgID) ;
-        byteBuffer.put(message.getType());
-        message.encodeMessage(byteBuffer);
+        ByteBuffer messageBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+        messageBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order
+        messageBuffer.putInt(msgID) ;
+        messageBuffer.put(message.getType());
+        message.encodeMessage(messageBuffer);
+        messageBuffer.flip();
 
-        byteBuffer.flip();
+        System.out.println ( "message buffer.length with Signature: " + messageBuffer.limit() ) ;
+        System.out.println ("message buffer: " + Arrays.toString(messageBuffer.array())) ;
 
-        byte[] data = new byte[byteBuffer.limit()] ;
-        byteBuffer.get(data) ;
+        // Sign the Message and append the signature
+        byte[]signature = this._messageSigner.sign(messageBuffer, this.keyPair) ;
+        messageBuffer.flip();
 
-        DatagramPacket packet = new DatagramPacket(data, 0, data.length) ;
+        ByteBuffer packetBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+        packetBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order
+        packetBuffer.putInt(signature.length);
+        packetBuffer.put(signature);
+        packetBuffer.putInt(messageBuffer.remaining());
+        packetBuffer.put(messageBuffer);
+        packetBuffer.flip();
+
+        System.out.println ( "signature length: " + signature.length);
+        System.out.println("Signature: " + Hex.encodeHexString(signature));
+        System.out.println ( "packet buffer.length with Signature: " + packetBuffer.limit() ) ;
+
+        System.out.println ("packet buffer: " + Arrays.toString(packetBuffer.array())) ;
+
+
+        // Build the Datagram Packet
+        DatagramPacket packet = new DatagramPacket(packetBuffer.array(), 0, packetBuffer.limit()) ;
         // TODO: Set the Socket Address of the packet so that it will get delivered
-//        packet.setSocketAddress(recipient.getSocketAddress());
+        packet.setSocketAddress(recipient.getSocketAddress());
 
         try {
             this.socket.send(packet);
