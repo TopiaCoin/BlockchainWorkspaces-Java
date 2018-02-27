@@ -11,7 +11,7 @@ import java.util.Random;
 
 public class TestyTestTest {
 
-    @Test
+    //@Test
     public void testSecureNodeIDGeneration() throws Exception {
 
         long overallStart = 0;
@@ -42,17 +42,18 @@ public class TestyTestTest {
 
             // Find a key that conforms to the First check: H(H(pubKey)) < 2^(160-c1)
             int part1Count = 0;
+            byte[] encodedPublicKey = keyPair.getPublic().getEncoded();
             while (!part1Done) {
                 keyPair = kpg.generateKeyPair();
 
-                byte[] hash1 = sha1.digest(sha1.digest(keyPair.getPublic().getEncoded()));
+                byte[] hash1 = sha1.digest(sha1.digest(encodedPublicKey));
                 part1Done = hasSufficientZeros(hash1, c1);
                 part1Count++;
             }
 
             stop = System.currentTimeMillis();
 
-            nodeID = sha1.digest(keyPair.getPublic().getEncoded());
+            nodeID = sha1.digest(encodedPublicKey);
 //            System.out.println ( "Digest: " + Hex.encodeHexString(digest)) ;
 //            System.out.println ( "nodeID: " + nodeID.toString(16));
 
