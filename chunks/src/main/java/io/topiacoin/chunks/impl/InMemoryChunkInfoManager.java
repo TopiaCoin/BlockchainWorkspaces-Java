@@ -7,7 +7,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class InMemoryChunkInfoManager implements ChunkInfoManager {
 
