@@ -1,6 +1,7 @@
 package io.topiacoin.chunks.intf;
 
 import io.topiacoin.chunks.exceptions.DuplicateChunkException;
+import io.topiacoin.chunks.exceptions.InsufficientSpaceException;
 import io.topiacoin.chunks.exceptions.InvalidReservationException;
 import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 
@@ -20,7 +21,7 @@ public interface ChunkStorage {
      * @throws DuplicateChunkException If there is already data in Storage with the specified chunkID.
      */
     void addChunk(final String chunkID, final InputStream chunkStream, ReservationID reservationID, boolean purgeable)
-            throws DuplicateChunkException, InvalidReservationException, IOException;
+            throws DuplicateChunkException, InvalidReservationException, InsufficientSpaceException, IOException;
 
     /**
      * Retrieves the chunk data for the chunk with the specified chunkID.  Throws an exception if no chunk data with the
@@ -60,7 +61,7 @@ public interface ChunkStorage {
      *
      * @return The total number of bytes of storage available from the chunk storage.
      */
-    long getTotalStorage();
+    long getStorageQuota();
 
     /**
      * Returns the amount of unused storage available from the chunk storage.  This amount is the total amount of
@@ -94,8 +95,11 @@ public interface ChunkStorage {
      * @param spaceToReserve The amount of storage, in bytes, that is being reserved.
      *
      * @return A reservation ID that is used when adding chunks to storage.
+     *
+     * @throws InsufficientSpaceException If there is not sufficient storage quota remaining to satisfy the
+     *                                    reservation.
      */
-    ReservationID reserveStorageSpace(long spaceToReserve);
+    ReservationID reserveStorageSpace(long spaceToReserve) throws InsufficientSpaceException;
 
     /**
      * Releases a reservation for storage space.  The space previously held by this reservation is released back into
@@ -103,5 +107,5 @@ public interface ChunkStorage {
      *
      * @param reservationID The ID of the reservation that is being released.
      */
-    void releaseSpaceReservation(ReservationID reservationID);
+    void releaseSpaceReservation(ReservationID reservationID) throws InvalidReservationException;
 }

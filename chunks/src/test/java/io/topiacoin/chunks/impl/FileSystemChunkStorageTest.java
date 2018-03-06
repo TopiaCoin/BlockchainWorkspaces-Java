@@ -1,12 +1,12 @@
 package io.topiacoin.chunks.impl;
 
 import io.topiacoin.chunks.intf.AbstractChunkStorageTest;
+import io.topiacoin.chunks.intf.ChunkInfoManager;
 import io.topiacoin.chunks.intf.ChunkStorage;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.File;
-import java.nio.file.Files;
 
 public class FileSystemChunkStorageTest extends AbstractChunkStorageTest {
 
@@ -30,9 +30,13 @@ public class FileSystemChunkStorageTest extends AbstractChunkStorageTest {
     }
 
     @Override
-    protected ChunkStorage getChunkStorage() {
+    protected ChunkStorage getChunkStorage(long quota, long inactivityTimeout, ChunkInfoManager chunkInfoManager) {
+
         FileSystemChunkStorage chunkStorage = new FileSystemChunkStorage();
         chunkStorage.setChunkStorageDirectory(_chunkDir);
+        chunkStorage.setStorageQuota(quota);
+        chunkStorage.setReservationInactivityTimeout(inactivityTimeout);
+        chunkStorage.setChunkInfoManager(chunkInfoManager);
 
         chunkStorage.init();
 
@@ -42,6 +46,8 @@ public class FileSystemChunkStorageTest extends AbstractChunkStorageTest {
     @Override
     protected void emptyChunkStorage(ChunkStorage chunkStorage) {
         cleanDir(_chunkDir);
+        ((FileSystemChunkStorage)chunkStorage).clearReservations() ;
+        ((FileSystemChunkStorage)chunkStorage).updateUsedStorage();
     }
 
     private static void cleanDir(File dir) {
