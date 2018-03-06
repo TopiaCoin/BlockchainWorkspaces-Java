@@ -4,3 +4,4 @@ core/target/
 crypto/target/
 dht/target/
 model/target/
+chunks/target/
