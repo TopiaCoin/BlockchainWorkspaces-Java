@@ -107,22 +107,6 @@ public class ChunkManager {
     }
 
     /**
-     * Requests that the Chunk Manager fetch the chunk data for the specified chunkID.  The Chunk Manager will
-     * communicate with the other nodes that make up the micro-network for the associated container to retrieve the data
-     * for the requested chunk. The fetch operation is performed asynchronously and the handler is called when the fetch
-     * operation is completed.
-     *
-     * @param chunkID     The ID of the chunk whose data is to be fetched.
-     * @param containerID The ID of the container from which the chunk is being fetched.
-     * @param handler     The object that should be notified when the fetch operation is completed.
-     * @param state       An opaque object that will be passed to the handler on fetch operation completion.  This can
-     *                    be used to carry state between the initiator of the fetch and the handler.
-     */
-    public void fetchChunk(final String chunkID, final String containerID, final ChunkFetchHandler handler, final Object state) {
-        // TODO - Implement this method
-    }
-
-    /**
      * Requests that the Chunk Manager fetch the chunk data for the specified chunkIDs.  The Chunk Manager will
      * communicate with the other nodes that make up the micro-network for the associated container to retrieve the data
      * for the requested chunks.  The fetch operation is performed asynchronously and the handler is called when the
