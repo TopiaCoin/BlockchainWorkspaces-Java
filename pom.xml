@@ -18,6 +18,7 @@
   	<module>workspace-blockchain</module>
   	<module>crypto</module>
   	<module>dht</module>
+  	<module>chunks</module>
   </modules>
   
   <!-- Distribution Management Properties -->
