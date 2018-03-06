@@ -1,2 +1,6 @@
 .idea
 *.iml
+core/target/
+crypto/target/
+dht/target/
+model/target/
