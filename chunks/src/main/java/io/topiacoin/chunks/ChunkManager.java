@@ -118,6 +118,27 @@ public class ChunkManager {
      *                    be used to carry state between the initiator of the fetch and the handler.
      */
     public void fetchChunks(final List<String> chunkIDs, final String containerID, final ChunksFetchHandler handler, final Object state) {
-        // TODO - Implement this method
+        /*
+        Psuedocode...relies heavily on Java closure, which I'm not SUUUPER familiar with, so we'll have to see how I can make it work.
+
+        final List<String> successfulChunks
+        final List<String> failedChunks
+        final Map<String, ChunkFetchHandler> unfetchedChunks
+        foreach chunkID in chunkIDs
+            if hasChunk(chunkID) { successfulChunks.add(chunkID) }
+            else { unfetchedChunks.add(chunkID, new ChunkFetchHandler(){
+                onFetch {
+                    addChunk(thisChunkID, chunkdata)
+                    successful/failedChunks.add(thisChunkID)
+                    sync (unfetchedChunks) {
+                    unfetchedChunks.remove(thisChunkID)
+                    if(unfetchedChunks.isEmpty)
+                        handler.doneTransferring(...)
+                    }
+            }) }
+
+
+        ChunkTransferrer.fetchChunksRemotely(...);
+         */
     }
 }
