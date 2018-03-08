@@ -20,6 +20,9 @@ public class Workspace {
     private List<Message> messages;
 
     public Workspace() {
+        this.members = new ArrayList<Member>();
+        this.files = new ArrayList<File>();
+        this.messages = new ArrayList<Message>();
     }
 
     public Workspace(String name, String description, int status, SecretKey workspaceKey, String guid, long lastModified, List<Member> members, List<File> files, List<Message> messages) {
@@ -87,7 +90,10 @@ public class Workspace {
     }
 
     public void setMembers(List<Member> members) {
-        this.members = new ArrayList<Member>(members);
+        this.members.clear();
+        if ( members != null ) {
+            this.members.addAll(members) ;
+        }
     }
 
     public List<File> getFiles() {
@@ -95,7 +101,10 @@ public class Workspace {
     }
 
     public void setFiles(List<File> files) {
-        this.files = new ArrayList<File>(files);
+        this.files.clear(); ;
+        if ( files != null ) {
+            this.files.addAll(files);
+        }
     }
 
     public List<Message> getMessages() {
@@ -103,7 +112,10 @@ public class Workspace {
     }
 
     public void setMessages(List<Message> messages) {
-        this.messages = new ArrayList<Message>(messages);
+        this.messages.clear() ;
+        if ( messages != null ) {
+            this.messages.addAll(messages);
+        }
     }
 
     @Override
@@ -115,11 +127,12 @@ public class Workspace {
 
         if (status != workspace.status) return false;
         if (lastModified != workspace.lastModified) return false;
-        if (!name.equals(workspace.name)) return false;
+        if (name != null ? !name.equals(workspace.name) : workspace.name != null) return false;
         if (description != null ? !description.equals(workspace.description) : workspace.description != null)
             return false;
-        if (!workspaceKey.equals(workspace.workspaceKey)) return false;
-        if (!guid.equals(workspace.guid)) return false;
+        if (workspaceKey != null ? !workspaceKey.equals(workspace.workspaceKey) : workspace.workspaceKey != null)
+            return false;
+        if (guid != null ? !guid.equals(workspace.guid) : workspace.guid != null) return false;
         if (!members.equals(workspace.members)) return false;
         if (!files.equals(workspace.files)) return false;
         return messages.equals(workspace.messages);
@@ -127,11 +140,11 @@ public class Workspace {
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
+        int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + status;
-        result = 31 * result + workspaceKey.hashCode();
-        result = 31 * result + guid.hashCode();
+        result = 31 * result + (workspaceKey != null ? workspaceKey.hashCode() : 0);
+        result = 31 * result + (guid != null ? guid.hashCode() : 0);
         result = 31 * result + (int) (lastModified ^ (lastModified >>> 32));
         result = 31 * result + members.hashCode();
         result = 31 * result + files.hashCode();

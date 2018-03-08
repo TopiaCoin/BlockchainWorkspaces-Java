@@ -59,16 +59,16 @@ public class Member {
 
         if (status != member.status) return false;
         if (inviteDate != member.inviteDate) return false;
-        if (!userID.equals(member.userID)) return false;
-        return inviterID.equals(member.inviterID);
+        if (userID != null ? !userID.equals(member.userID) : member.userID != null) return false;
+        return inviterID != null ? inviterID.equals(member.inviterID) : member.inviterID == null;
     }
 
     @Override
     public int hashCode() {
-        int result = userID.hashCode();
+        int result = userID != null ? userID.hashCode() : 0;
         result = 31 * result + status;
         result = 31 * result + (int) (inviteDate ^ (inviteDate >>> 32));
-        result = 31 * result + inviterID.hashCode();
+        result = 31 * result + (inviterID != null ? inviterID.hashCode() : 0);
         return result;
     }
 

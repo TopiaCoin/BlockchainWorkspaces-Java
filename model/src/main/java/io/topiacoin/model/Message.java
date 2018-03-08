@@ -101,23 +101,23 @@ public class Message {
 
         if (seq != message.seq) return false;
         if (timestamp != message.timestamp) return false;
-        if (!authorID.equals(message.authorID)) return false;
-        if (!entityID.equals(message.entityID)) return false;
-        if (!guid.equals(message.guid)) return false;
-        if (!text.equals(message.text)) return false;
-        if (!mimeType.equals(message.mimeType)) return false;
+        if (authorID != null ? !authorID.equals(message.authorID) : message.authorID != null) return false;
+        if (entityID != null ? !entityID.equals(message.entityID) : message.entityID != null) return false;
+        if (guid != null ? !guid.equals(message.guid) : message.guid != null) return false;
+        if (text != null ? !text.equals(message.text) : message.text != null) return false;
+        if (mimeType != null ? !mimeType.equals(message.mimeType) : message.mimeType != null) return false;
         return Arrays.equals(digitalSignature, message.digitalSignature);
     }
 
     @Override
     public int hashCode() {
-        int result = authorID.hashCode();
-        result = 31 * result + entityID.hashCode();
-        result = 31 * result + guid.hashCode();
+        int result = authorID != null ? authorID.hashCode() : 0;
+        result = 31 * result + (entityID != null ? entityID.hashCode() : 0);
+        result = 31 * result + (guid != null ? guid.hashCode() : 0);
         result = 31 * result + (int) (seq ^ (seq >>> 32));
         result = 31 * result + (int) (timestamp ^ (timestamp >>> 32));
-        result = 31 * result + text.hashCode();
-        result = 31 * result + mimeType.hashCode();
+        result = 31 * result + (text != null ? text.hashCode() : 0);
+        result = 31 * result + (mimeType != null ? mimeType.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(digitalSignature);
         return result;
     }

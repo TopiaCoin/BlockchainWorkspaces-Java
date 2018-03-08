@@ -57,16 +57,16 @@ public class FileVersionReceipt {
         FileVersionReceipt that = (FileVersionReceipt) o;
 
         if (date != that.date) return false;
-        if (!entryID.equals(that.entryID)) return false;
-        if (!versionID.equals(that.versionID)) return false;
-        return recipientID.equals(that.recipientID);
+        if (entryID != null ? !entryID.equals(that.entryID) : that.entryID != null) return false;
+        if (versionID != null ? !versionID.equals(that.versionID) : that.versionID != null) return false;
+        return recipientID != null ? recipientID.equals(that.recipientID) : that.recipientID == null;
     }
 
     @Override
     public int hashCode() {
-        int result = entryID.hashCode();
-        result = 31 * result + versionID.hashCode();
-        result = 31 * result + recipientID.hashCode();
+        int result = entryID != null ? entryID.hashCode() : 0;
+        result = 31 * result + (versionID != null ? versionID.hashCode() : 0);
+        result = 31 * result + (recipientID != null ? recipientID.hashCode() : 0);
         result = 31 * result + (int) (date ^ (date >>> 32));
         return result;
     }
