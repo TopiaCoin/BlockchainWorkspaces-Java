@@ -2,7 +2,8 @@ package io.topiacoin.chunks;
 
 import io.topiacoin.chunks.exceptions.DuplicateChunkException;
 import io.topiacoin.chunks.exceptions.NoSuchChunkException;
-import io.topiacoin.chunks.intf.ChunkFetchHandler;
+import io.topiacoin.chunks.intf.ChunksTransferHandler;
+import io.topiacoin.chunks.intf.ChunkTransferer;
 import io.topiacoin.chunks.intf.ChunksFetchHandler;
 
 import java.io.ByteArrayInputStream;
@@ -10,9 +11,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChunkManager {
+    ChunkTransferer chunkTransferer;
 
     /**
      * Adds a chunk to the Chunk Manager.  The given chunkData is stored in the Chunk Manager under the specified
@@ -116,29 +119,38 @@ public class ChunkManager {
      * @param handler     The object that will be notified when the fetch operation is completed.
      * @param state       An opaque object that will be passed to the handler on fetch operation completion.  This can
      *                    be used to carry state between the initiator of the fetch and the handler.
+     * @throws IllegalArgumentException If chunkIDs or containerID is null or empty
      */
     public void fetchChunks(final List<String> chunkIDs, final String containerID, final ChunksFetchHandler handler, final Object state) {
-        /*
-        Psuedocode...relies heavily on Java closure, which I'm not SUUUPER familiar with, so we'll have to see how I can make it work.
+        final List<String> successfulChunks = new ArrayList<>();
+        final List<String> failedChunks = new ArrayList<>();
+        final List<String> unfetchedChunks = new ArrayList<>();
+        for (String chunkID : chunkIDs) {
+            if (hasChunk(chunkID)) {
+                successfulChunks.add(chunkID);
+            } else {
+                unfetchedChunks.add(chunkID);
+            }
+        }
+        ChunksTransferHandler chunkFetchHandler = new ChunksTransferHandler() {
+            @Override public void didFetchChunk(String chunkID, Object state, byte[] chunkdata) {
+                try {
+                    addChunk(chunkID, chunkdata);
+                    successfulChunks.add(chunkID);
+                } catch (DuplicateChunkException e) {
+                    //NOP, it really doesn't matter
+                }
+            }
 
-        final List<String> successfulChunks
-        final List<String> failedChunks
-        final Map<String, ChunkFetchHandler> unfetchedChunks
-        foreach chunkID in chunkIDs
-            if hasChunk(chunkID) { successfulChunks.add(chunkID) }
-            else { unfetchedChunks.add(chunkID, new ChunkFetchHandler(){
-                onFetch {
-                    addChunk(thisChunkID, chunkdata)
-                    successful/failedChunks.add(thisChunkID)
-                    sync (unfetchedChunks) {
-                    unfetchedChunks.remove(thisChunkID)
-                    if(unfetchedChunks.isEmpty)
-                        handler.doneTransferring(...)
-                    }
-            }) }
+            @Override public void failedToFetchChunk(String chunkID, String message, Exception cause, Object state) {
+                failedChunks.add(chunkID);
+                //Perhaps log the Exception here?
+            }
 
-
-        ChunkTransferrer.fetchChunksRemotely(...);
-         */
+            @Override public void fetchedAllChunks(Object state) {
+                handler.finishedFetchingChunks(successfulChunks, failedChunks, state);
+            }
+        };
+        chunkTransferer.fetchChunksRemotely(unfetchedChunks, containerID, chunkFetchHandler, state);
     }
 }
