@@ -22,9 +22,13 @@ public class FileVersion {
 
 
     public FileVersion() {
+        this.userTags = new ArrayList<FileTag>();
+        this.systemTags = new ArrayList<FileTag>();
+        this.fileChunks = new ArrayList<FileChunk>();
+        this.receipts = new ArrayList<FileVersionReceipt>();
     }
 
-    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, List<FileTag> userTags, List<FileTag> systemTags, String status, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts) {
+    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileTag> systemTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts) {
         this.entryID = entryID;
         this.versionID = versionID;
         this.ownerID = ownerID;
@@ -100,7 +104,11 @@ public class FileVersion {
     }
 
     public void setUserTags(List<FileTag> userTags) {
-        this.userTags = new ArrayList<FileTag>(userTags);
+        this.userTags.clear();
+        if ( userTags != null ) {
+            this.userTags.addAll(userTags);
+        }
+
     }
 
     public List<FileTag> getSystemTags() {
@@ -108,7 +116,11 @@ public class FileVersion {
     }
 
     public void setSystemTags(List<FileTag> systemTags) {
-        this.systemTags = new ArrayList<FileTag>(systemTags);
+        this.systemTags.clear() ;
+        if ( systemTags != null ) {
+            this.systemTags.addAll(systemTags);
+        }
+
     }
 
     public String getStatus() {
@@ -124,7 +136,10 @@ public class FileVersion {
     }
 
     public void setFileChunks(List<FileChunk> fileChunks) {
-        this.fileChunks = new ArrayList<FileChunk>(fileChunks);
+        this.fileChunks.clear() ;
+        if ( fileChunks != null ) {
+            this.fileChunks.addAll(fileChunks);
+        }
     }
 
     public List<FileVersionReceipt> getReceipts() {
@@ -132,7 +147,10 @@ public class FileVersion {
     }
 
     public void setReceipts(List<FileVersionReceipt> receipts) {
-        this.receipts = new ArrayList<FileVersionReceipt>(receipts);
+        this.receipts.clear();
+        if ( receipts != null ) {
+            this.receipts.addAll(receipts);
+        }
     }
 
     @Override
@@ -145,29 +163,29 @@ public class FileVersion {
         if (size != that.size) return false;
         if (date != that.date) return false;
         if (uploadDate != that.uploadDate) return false;
-        if (!entryID.equals(that.entryID)) return false;
-        if (!versionID.equals(that.versionID)) return false;
-        if (!ownerID.equals(that.ownerID)) return false;
-        if (!fileHash.equals(that.fileHash)) return false;
+        if (entryID != null ? !entryID.equals(that.entryID) : that.entryID != null) return false;
+        if (versionID != null ? !versionID.equals(that.versionID) : that.versionID != null) return false;
+        if (ownerID != null ? !ownerID.equals(that.ownerID) : that.ownerID != null) return false;
+        if (fileHash != null ? !fileHash.equals(that.fileHash) : that.fileHash != null) return false;
         if (!userTags.equals(that.userTags)) return false;
         if (!systemTags.equals(that.systemTags)) return false;
-        if (!status.equals(that.status)) return false;
+        if (status != null ? !status.equals(that.status) : that.status != null) return false;
         if (!fileChunks.equals(that.fileChunks)) return false;
         return receipts.equals(that.receipts);
     }
 
     @Override
     public int hashCode() {
-        int result = entryID.hashCode();
-        result = 31 * result + versionID.hashCode();
-        result = 31 * result + ownerID.hashCode();
+        int result = entryID != null ? entryID.hashCode() : 0;
+        result = 31 * result + (versionID != null ? versionID.hashCode() : 0);
+        result = 31 * result + (ownerID != null ? ownerID.hashCode() : 0);
         result = 31 * result + (int) (size ^ (size >>> 32));
         result = 31 * result + (int) (date ^ (date >>> 32));
         result = 31 * result + (int) (uploadDate ^ (uploadDate >>> 32));
-        result = 31 * result + fileHash.hashCode();
+        result = 31 * result + (fileHash != null ? fileHash.hashCode() : 0);
         result = 31 * result + userTags.hashCode();
         result = 31 * result + systemTags.hashCode();
-        result = 31 * result + status.hashCode();
+        result = 31 * result + (status != null ? status.hashCode() : 0);
         result = 31 * result + fileChunks.hashCode();
         result = 31 * result + receipts.hashCode();
         return result;

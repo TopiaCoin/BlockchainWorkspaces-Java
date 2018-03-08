@@ -36,14 +36,14 @@ public class FileTag {
 
         FileTag fileTag = (FileTag) o;
 
-        if (!scope.equals(fileTag.scope)) return false;
-        return value.equals(fileTag.value);
+        if (scope != null ? !scope.equals(fileTag.scope) : fileTag.scope != null) return false;
+        return value != null ? value.equals(fileTag.value) : fileTag.value == null;
     }
 
     @Override
     public int hashCode() {
-        int result = scope.hashCode();
-        result = 31 * result + value.hashCode();
+        int result = scope != null ? scope.hashCode() : 0;
+        result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;
     }
 
