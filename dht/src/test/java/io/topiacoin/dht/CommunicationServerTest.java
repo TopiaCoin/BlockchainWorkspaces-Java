@@ -1,5 +1,6 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
@@ -8,6 +9,7 @@ import io.topiacoin.dht.messages.StoreValueRequest;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
+import io.topiacoin.dht.network.NodeIDGenerator;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -34,7 +36,13 @@ public class CommunicationServerTest {
 
         CommunicationServer communicationServer = new CommunicationServer(12345, config, messageFactory, keyPair, messageSigner);
 
-        Node recipient = new Node(new NodeID(), InetAddress.getLocalHost(), 12345) ;
+        Configuration configuration = new DefaultConfiguration();
+
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
+
+        NodeID nodeID = nodeIDGenerator.generateNodeID();
+
+        Node recipient = new Node(nodeID, InetAddress.getLocalHost(), 12345) ;
         Message message = new StoreValueRequest(key, value);
 
         success = false ;

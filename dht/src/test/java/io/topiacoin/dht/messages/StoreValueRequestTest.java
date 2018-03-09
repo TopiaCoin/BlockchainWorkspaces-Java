@@ -6,7 +6,17 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.*;
 
-public class StoreValueRequestTest {
+public class StoreValueRequestTest implements MessageTest {
+
+    @Test
+    public void testConstructorAndAccessors() throws Exception {
+        String key = "helloKey";
+        String value = "arrivederci";
+        StoreValueRequest testMessage = new StoreValueRequest(key, value) ;
+
+        assertEquals(key, testMessage.getKey());
+        assertEquals(value, testMessage.getValue());
+    }
 
     @Test
     public void testEncodingAndDecoding() {

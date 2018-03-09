@@ -1,6 +1,7 @@
 package io.topiacoin.dht.config;
 
 public interface Configuration {
+
     long getRestoreInterval();
 
     void setRestoreInterval(long restoreInterval);
@@ -12,6 +13,14 @@ public interface Configuration {
     int getMaxConcurrentMessages();
 
     void setMaxConcurrentMessages(int maxConcurrentMessages);
+
+    int getC1() ;
+
+    void setC1(int c1) ;
+
+    int getC2() ;
+
+    void setC2(int c2) ;
 
     int getK();
 

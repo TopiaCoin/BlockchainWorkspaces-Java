@@ -15,6 +15,8 @@ import java.security.SignatureException;
 
 public class StoreValueRequest implements Message {
 
+    private static final int TYPE = 1;
+
     private String key;
     private String value;
     private byte[] signature;
@@ -29,7 +31,7 @@ public class StoreValueRequest implements Message {
     }
 
     public byte getType() {
-        return 0;
+        return TYPE;
     }
 
     public String getKey() {

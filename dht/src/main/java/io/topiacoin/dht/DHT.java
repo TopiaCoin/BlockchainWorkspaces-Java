@@ -1,32 +1,42 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.intf.FetchContentCallback;
 import io.topiacoin.dht.intf.StoreContentCallback;
 import io.topiacoin.dht.messages.MessageFactory;
+import io.topiacoin.dht.messages.NodeLookupMessage;
+import io.topiacoin.dht.messages.NodeLookupResponseHandler;
 import io.topiacoin.dht.messages.StoreValueRequest;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.network.Node;
+import io.topiacoin.dht.network.NodeID;
+import io.topiacoin.dht.network.NodeIDGenerator;
 import io.topiacoin.dht.routing.RoutingTable;
 
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.util.List;
 
 public class DHT {
 
+    private final Configuration configuration;
     private CommunicationServer _communicationServer ;
     private RoutingTable _routingTable;
     private MessageSigner _messageSigner;
     private KeyPair keyPair;
+    private NodeID nodeID;
 
-    public DHT(int udpPort, KeyPair keyPair) throws SocketException {
+    public DHT(int udpPort, KeyPair keyPair, Configuration configuration) throws SocketException {
 
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration) ;
+
+        this.configuration = configuration;
+        this.nodeID = nodeIDGenerator.generateNodeID();
         this.keyPair = keyPair;
         _messageSigner = new DSAMessageSigner();
         _communicationServer = new CommunicationServer(udpPort, new DefaultConfiguration(), new MessageFactory(), keyPair, _messageSigner);
-        _routingTable = new RoutingTable();
+        _routingTable = new RoutingTable(nodeID, configuration);
     }
 
     public static DHT loadState() {
@@ -37,8 +47,16 @@ public class DHT {
 
     }
 
-    public void bootstrap(Object node) {
+    public void bootstrap(Node bootStrapNode) {
+        // TODO: Populate the Routing Table by asking the bootstrap node for nodes that fit in each of our buckets
 
+        for ( int i = 0 ; i < 160; i++ ) {
+
+            NodeID bucketNodeID = this.nodeID.generateNodeIDByDistance(i) ;
+            NodeLookupMessage nodeLookupMessage = new NodeLookupMessage(bucketNodeID);
+            _communicationServer.sendMessage(bootStrapNode, nodeLookupMessage, new NodeLookupResponseHandler(this._routingTable));
+
+        }
     }
 
     public void shutdown(final boolean saveState) {
