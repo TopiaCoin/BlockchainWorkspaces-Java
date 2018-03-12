@@ -18,11 +18,13 @@ public class DefaultConfigurationTest {
 			conf.getConfigurationOption(null);
 			fail("Expected an IllegalArgumentException to be thrown, but it wasn't");
 		} catch(IllegalArgumentException ex) {
+			//NOP, expected exception
 		}
 		try {
 			conf.getConfigurationOption("");
 			fail("Expected an IllegalArgumentException to be thrown, but it wasn't");
 		} catch(IllegalArgumentException ex) {
+			//NOP, expected exception
 		}
 		String val = conf.getConfigurationOption(oneOfTheDefaultPropertyNames);
 		assertEquals("Property Values do not match...did the default config change?", theDefaultValueOfThatProperty, val);
@@ -32,6 +34,7 @@ public class DefaultConfigurationTest {
 			conf.setConfigurationOption("testProp", "test");
 			fail("Expected a NotImplementedException to be thrown because Notifications haven't been implemented yet...did you implement them?");
 		} catch(NotImplementedException ex) {
+			//NOP, expected exception
 		}
 		val = conf.getConfigurationOption("testProp");
 		assertEquals("Property Values do not match...set didn't work?", "test", val);
@@ -42,6 +45,7 @@ public class DefaultConfigurationTest {
 			conf.setConfigurationOption("testProp", null);
 			fail("Expected a NotImplementedException to be thrown because Notifications haven't been implemented yet...did you implement them?");
 		} catch(NotImplementedException ex2) {
+			//NOP, expected exception
 		}
 		val = conf.getConfigurationOption("testProp");
 		assertEquals("Property Values do not match...set didn't work?", null, val);
