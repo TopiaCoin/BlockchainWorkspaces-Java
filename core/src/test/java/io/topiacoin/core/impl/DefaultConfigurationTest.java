@@ -65,12 +65,20 @@ public class DefaultConfigurationTest {
 	public void setConfigurationOptionSendsNotificationsAppropriately() {
 		Configuration conf = new DefaultConfiguration();
 		NotificationCenter center = NotificationCenter.defaultCenter();
+		//Make sure it works for unclassified handlers
 		final List<Map<String, Object>> gotNotifications = new ArrayList<Map<String, Object>>();
 		center.addHandler(new NotificationHandler() {
 			public void handleNotification(Notification notification) {
 				gotNotifications.add(notification.getNotificationInfo());
 			}
 		}, "ConfigurationDidChange", null);
+		//Also make sure it works for classified handlers (testProp2)
+		final List<Map<String, Object>> gotNotificationsWithClassifier = new ArrayList<Map<String, Object>>();
+		center.addHandler(new NotificationHandler() {
+			public void handleNotification(Notification notification) {
+				gotNotificationsWithClassifier.add(notification.getNotificationInfo());
+			}
+		}, "ConfigurationDidChange", "testProp2");
 		conf.setConfigurationOption("testProp", "test");
 		String val = conf.getConfigurationOption("testProp");
 		assertEquals("Property Values do not match...set didn't work?", "test", val);
@@ -79,12 +87,14 @@ public class DefaultConfigurationTest {
 		assertEquals("NotificationInfo wrong", "testProp", gotNotifications.get(0).get("key"));
 		assertEquals("NotificationInfo wrong", "test", gotNotifications.get(0).get("value"));
 		assertEquals("NotificationInfo wrong", null, gotNotifications.get(0).get("oldValue"));
+		assertEquals("Classifier Notification Handler count incorrect", 0, gotNotificationsWithClassifier.size());
 
 		//Since the value isn't changing, a second Notification should not be sent
 		conf.setConfigurationOption("testProp", "test");
 		val = conf.getConfigurationOption("testProp");
 		assertEquals("Property Values do not match...set didn't work?", "test", val);
 		assertEquals("Got a Notification when I shouldn't have", 1, gotNotifications.size());
+		assertEquals("Classifier Notification Handler count incorrect", 0, gotNotificationsWithClassifier.size());
 
 		//Since the value is getting changed this time, a second notification should be sent
 		conf.setConfigurationOption("testProp", "test2");
@@ -94,8 +104,9 @@ public class DefaultConfigurationTest {
 		assertEquals("NotificationInfo wrong", "testProp", gotNotifications.get(1).get("key"));
 		assertEquals("NotificationInfo wrong", "test2", gotNotifications.get(1).get("value"));
 		assertEquals("NotificationInfo wrong", "test", gotNotifications.get(1).get("oldValue"));
+		assertEquals("Classifier Notification Handler count incorrect", 0, gotNotificationsWithClassifier.size());
 
-		//Quick sanity check, should send a Notification
+		//Now test the classified value, should send a notification to both handlers
 		conf.setConfigurationOption("testProp2", "test");
 		val = conf.getConfigurationOption("testProp2");
 		assertEquals("Property Values do not match...set didn't work?", "test", val);
@@ -103,6 +114,11 @@ public class DefaultConfigurationTest {
 		assertEquals("NotificationInfo wrong", "testProp2", gotNotifications.get(2).get("key"));
 		assertEquals("NotificationInfo wrong", "test", gotNotifications.get(2).get("value"));
 		assertEquals("NotificationInfo wrong", null, gotNotifications.get(2).get("oldValue"));
+		assertEquals("Classifier Notification Handler count incorrect", 1, gotNotificationsWithClassifier.size());
+		assertEquals("NotificationInfo wrong", "testProp2", gotNotificationsWithClassifier.get(0).get("key"));
+		assertEquals("NotificationInfo wrong", "test", gotNotificationsWithClassifier.get(0).get("value"));
+		assertEquals("NotificationInfo wrong", null, gotNotificationsWithClassifier.get(0).get("oldValue"));
+
 		//Should send a Notification if we set the value to null
 		conf.setConfigurationOption("testProp2", null);
 		val = conf.getConfigurationOption("testProp2");
@@ -111,5 +127,9 @@ public class DefaultConfigurationTest {
 		assertEquals("NotificationInfo wrong", "testProp2", gotNotifications.get(3).get("key"));
 		assertEquals("NotificationInfo wrong", null, gotNotifications.get(3).get("value"));
 		assertEquals("NotificationInfo wrong", "test", gotNotifications.get(3).get("oldValue"));
+		assertEquals("Classifier Notification Handler count incorrect", 2, gotNotificationsWithClassifier.size());
+		assertEquals("NotificationInfo wrong", "testProp2", gotNotificationsWithClassifier.get(1).get("key"));
+		assertEquals("NotificationInfo wrong", null, gotNotificationsWithClassifier.get(1).get("value"));
+		assertEquals("NotificationInfo wrong", "test", gotNotificationsWithClassifier.get(1).get("oldValue"));
 	}
 }
