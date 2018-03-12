@@ -33,7 +33,7 @@ public class DefaultConfiguration implements Configuration {
 			notificationInfo.put("key", key);
 			notificationInfo.put("oldValue", oldValue);
 			notificationInfo.put("value", newValue);
-			_notificationCenter.postNotification(CONFIGURATION_DID_CHANGE_NOTIFICATION_TYPE, null, notificationInfo);
+			_notificationCenter.postNotification(CONFIGURATION_DID_CHANGE_NOTIFICATION_TYPE, key, notificationInfo);
 		}
 	}
 
