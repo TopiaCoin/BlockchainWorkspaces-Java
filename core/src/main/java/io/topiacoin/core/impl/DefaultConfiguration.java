@@ -1,14 +1,17 @@
 package io.topiacoin.core.impl;
 
 import io.topiacoin.core.Configuration;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import io.topiacoin.util.NotificationCenter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class DefaultConfiguration implements Configuration {
 
 	private final Properties DEFAULT_PROPERTIES = new Properties();
 	protected Properties _overrides = new Properties(DEFAULT_PROPERTIES);
+	private final NotificationCenter _notificationCenter = NotificationCenter.defaultCenter();
 	/**
 	 * Posted when a configuration value is changed. The classifier is the name of the notification that was changed.
 	 * The notification info contains the old value under the key 'oldValue' and the new value under the key
@@ -26,8 +29,11 @@ public class DefaultConfiguration implements Configuration {
 
 	private void notifyOfConfigurationChange(String key, String oldValue, String newValue) {
 		if(oldValue == null || (oldValue != null && newValue == null) || !oldValue.equals(newValue)) {
-			throw new NotImplementedException(); //Once you implement this, you need to update the Unit Test DefaultConfigurationTest
-			//Notify(CONFIGURATION_DID_CHANGE_NOTIFICATION_TYPE, key, oldValue, newValue);
+			Map<String, Object> notificationInfo = new HashMap<String, Object>();
+			notificationInfo.put("key", key);
+			notificationInfo.put("oldValue", oldValue);
+			notificationInfo.put("value", newValue);
+			_notificationCenter.postNotification(CONFIGURATION_DID_CHANGE_NOTIFICATION_TYPE, null, notificationInfo);
 		}
 	}
 
