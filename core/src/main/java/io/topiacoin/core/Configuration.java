@@ -6,49 +6,20 @@ package io.topiacoin.core;
  * out allowing all interested components to re-read their configuration from the server. The notification will include
  * the name of the configuration that has been changed along with its new value.
  */
-public class Configuration {
+public interface Configuration {
 
     /**
-     * Posted when a configuration value is changed. The classifier is the name of the notification that was changed.
-     * The notification info contains the old value under the key 'oldValue' and the new value under the key
-     * 'newValue'.
+     * Updates the configuration with the specified name and value. If (and only if) the value is different than the one already stored, a Notification will be
+     * posted, indicating that the configuration has changed
+     * @param name the name of the configuration property to change
+     * @param value the new value of the configuration property
      */
-    public static final String CONFIGURATION_DID_CHANGE_NOTIFICATION_TYPE = "ConfigurationDidChange";
+    void setConfigurationOption(String name, String value);
 
     /**
-     *
+     * Returns the configuration value associated with the given name, or null if no such name exists
+     * @param name the name of the configuration value to return
+     * @return the value of the configuration property, or null if no such property exists
      */
-    void setConfigurationOption(String name, Object value) {
-
-    }
-
-    /**
-     *
-     */
-    Object getConfigurationOption(String name) {
-        return null;
-    }
-
-    /**
-     * It is expected that the Configuration singleton will have convienence methods added to it that simplify and
-     * strongly type commonly used configuration values. Examples of such convienence methods might include:
-     */
-    Object getConfigurationOption(String name, Object defaultValue) {
-        return null;
-    }
-
-    /**
-     *
-     */
-    String getServerURL() {
-        return null;
-    }
-
-    /**
-     *
-     */
-    int getMaxSimultaneousUploads() {
-        return 0;
-    }
-
+    String getConfigurationOption(String name);
 }
