@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DefaultConfigurationTest {
@@ -52,6 +51,14 @@ public class DefaultConfigurationTest {
 		conf.setConfigurationOption("testProp", null);
 		val = conf.getConfigurationOption("testProp");
 		assertEquals("Property Values do not match...set didn't work?", null, val);
+		//Test that overriding default values works
+		conf.setConfigurationOption(oneOfTheDefaultPropertyNames, theDefaultValueOfThatProperty + "1");
+		val = conf.getConfigurationOption(oneOfTheDefaultPropertyNames);
+		assertEquals("Property Values do not match...set didn't work?", theDefaultValueOfThatProperty + "1", val);
+		//Test that nullifying an override reverts back to the default config value...?
+		conf.setConfigurationOption(oneOfTheDefaultPropertyNames, null);
+		val = conf.getConfigurationOption(oneOfTheDefaultPropertyNames);
+		assertEquals("Property Values do not match...set didn't work?", theDefaultValueOfThatProperty, val);
 	}
 
 	@org.junit.Test
