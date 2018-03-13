@@ -12,6 +12,7 @@ public class MessageFactoryTest {
     @Test
     public void testMessageFactory() {
         MessageFactory messageFactory = new MessageFactory() ;
+        messageFactory.initialize();
 
         TestMessage testMessage = new TestMessage("arrivederci") ;
 

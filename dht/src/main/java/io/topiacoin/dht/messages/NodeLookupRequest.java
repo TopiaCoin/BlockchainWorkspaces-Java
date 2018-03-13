@@ -1,24 +1,23 @@
 package io.topiacoin.dht.messages;
 
 import io.topiacoin.dht.intf.Message;
-import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 
 import java.nio.ByteBuffer;
 
-public class NodeLookupMessage implements Message {
+public class NodeLookupRequest implements Message {
 
-    private static final int TYPE = 0;
+    public static final int TYPE = (byte)0x03;
     private NodeID lookupID;
 
-    public NodeLookupMessage(NodeID lookupID) {
+    public NodeLookupRequest(NodeID lookupID) {
         if ( lookupID == null ) {
             throw new IllegalArgumentException("Must specify a NodeID to lookup");
         }
         this.lookupID = lookupID ;
     }
 
-    public NodeLookupMessage(ByteBuffer buffer) {
+    public NodeLookupRequest(ByteBuffer buffer) {
         decodeMessage(buffer);
     }
 
@@ -49,7 +48,7 @@ public class NodeLookupMessage implements Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        NodeLookupMessage that = (NodeLookupMessage) o;
+        NodeLookupRequest that = (NodeLookupRequest) o;
 
         return lookupID != null ? lookupID.equals(that.lookupID) : that.lookupID == null;
     }
@@ -57,5 +56,12 @@ public class NodeLookupMessage implements Message {
     @Override
     public int hashCode() {
         return lookupID != null ? lookupID.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "NodeLookupMessage{" +
+                "lookupID=" + lookupID +
+                '}';
     }
 }

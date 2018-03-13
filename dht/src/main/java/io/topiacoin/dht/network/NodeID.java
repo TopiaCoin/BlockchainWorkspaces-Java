@@ -1,10 +1,13 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.util.Utilities;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -28,7 +31,7 @@ import java.util.Random;
  * validation value.  In either case the class will validate the the keyPair represents a valid NodeID, and that the
  * validation value properly validates the nodeID.
  */
-public class NodeID {
+public class NodeID implements Comparable<NodeID>{
 
     private Log _log = LogFactory.getLog(this.getClass());
 
@@ -52,6 +55,16 @@ public class NodeID {
     public NodeID(byte[] nodeID, byte[] validation) throws IllegalArgumentException {
         this.nodeID = nodeID;
         this.validation = validation;
+    }
+
+    public NodeID(String key) throws IllegalArgumentException {
+        try {
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            this.nodeID = sha1.digest(key.getBytes());
+            this.validation = null;
+        } catch ( NoSuchAlgorithmException e ) {
+            throw new RuntimeException("Java no longer supports SHA-1!", e);
+        }
     }
 
     /**
@@ -126,12 +139,12 @@ public class NodeID {
         byte[] thatNodeID = other.getNodeID();
 
         // Assume the nodes are as far apart as possible.
-        int distance = thisNodeID.length * 8;
+        int firstCommonBit = 0;
 
         for (int i = 0; i < thisNodeID.length; i++) {
             if (thisNodeID[i] == thatNodeID[i]) {
-                // This byte matches between the two NodeIDs, so subtract 8 from the distance.
-                distance -= 8;
+                // This byte matches between the two NodeIDs, so subtract 8 from the firstCommonBit.
+                firstCommonBit += 8;
             } else {
                 byte thisByte = thisNodeID[i];
                 byte thatByte = thatNodeID[i];
@@ -139,7 +152,7 @@ public class NodeID {
 
                 for (i = 7; i >= 0; i--) {
                     if ((xorByte & (1 << i)) == 0) {
-                        distance--;
+                        firstCommonBit++;
                     } else {
                         // These bytes do not match.  We have found the end!
                         break;
@@ -150,6 +163,8 @@ public class NodeID {
                 break;
             }
         }
+
+        int distance = thisNodeID.length * 8 - firstCommonBit;
 
         return distance;
     }
@@ -213,6 +228,54 @@ public class NodeID {
         int result = Arrays.hashCode(nodeID);
         result = 31 * result + Arrays.hashCode(validation);
         return result;
+    }
+
+    public int compareTo(NodeID o) {
+        for ( int i = 0 ; i < this.nodeID.length ; i++ ) {
+            if ( this.nodeID[i] < o.nodeID[i] ) return -1 ;
+            if ( this.nodeID[i] > o.nodeID[i] ) return 1 ;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "NodeID{" +
+                "nodeID=" + Hex.encodeHexString(nodeID) +
+                ",validation=" + (validation != null ? Hex.encodeHexString(validation) : "null") +
+                '}';
+    }
+
+
+    // -------- Serialization and Deserialization of NodeID --------
+
+
+    public void encode(ByteBuffer buffer) {
+
+        buffer.putInt(nodeID.length) ;
+        buffer.put(nodeID) ;
+        buffer.putInt(validation.length) ;
+        buffer.put(validation) ;
+
+    }
+
+    public static NodeID decode(ByteBuffer buffer) {
+        byte[] nodeID ;
+        int nodeIDLength;
+        byte[] validation;
+        int validationLength;
+
+        nodeIDLength = buffer.getInt();
+        nodeID = new byte[nodeIDLength] ;
+        buffer.get(nodeID);
+        validationLength = buffer.getInt();
+        validation = new byte[validationLength];
+        buffer.get(validation);
+
+        NodeID newNodeID = new NodeID(nodeID, validation);
+
+        return newNodeID;
     }
 
 

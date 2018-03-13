@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.Assert.*;
 
@@ -159,5 +161,138 @@ public class RouteBucketTest {
 
         assertNotEquals(lastSeenTime, nodeInfo.getLastContactTime());
         assertEquals(0, nodeInfo.getStaleCount());
+    }
+
+    @Test
+    public void testGetAllNodes() throws  Exception {
+        RouteBucket routeBucket = new RouteBucket(1, _configuration);
+
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(_configuration);
+
+        List<Node> nodes = new ArrayList<Node>();
+        List<Node> extraNodes = new ArrayList<Node>();
+
+        int k = _configuration.getK();
+
+        for (int i = 0; i < k; i++) {
+            NodeID nodeID = nodeIDGenerator.generateNodeID();
+            Node node = new Node(nodeID, "localhost", 8345);
+            nodes.add(node);
+            routeBucket.insert(node);
+        }
+    }
+
+    @Test
+    public void testNodeInfoSetHandling() throws Exception {
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(_configuration);
+
+        NodeID nodeID1 = nodeIDGenerator.generateNodeID();
+        NodeID nodeID2 = nodeIDGenerator.generateNodeID();
+
+        Node node1 = new Node(nodeID1, "localhost", 34567) ;
+        Node node1a = new Node(nodeID1, "localhost", 34567) ;
+        Node node2 = new Node(nodeID2, "localhost", 34568) ;
+
+        RouteBucket.NodeInfo info1 = new RouteBucket.NodeInfo(node1) ;
+        Thread.sleep ( 10) ;
+        RouteBucket.NodeInfo info1a = new RouteBucket.NodeInfo(node1) ;
+        Thread.sleep ( 10) ;
+        RouteBucket.NodeInfo info2 = new RouteBucket.NodeInfo(node2) ;
+
+        Set<RouteBucket.NodeInfo> sortedSet = new TreeSet<RouteBucket.NodeInfo>();
+
+        // Add Order -- 1 -> 2 -> 1a
+        assertEquals(0, sortedSet.size());
+        sortedSet.add(info1) ;
+        assertEquals(1, sortedSet.size());
+        sortedSet.add(info2);
+        assertEquals(2, sortedSet.size());
+        sortedSet.add(info1a) ;
+        assertEquals(2, sortedSet.size()) ;
+
+        System.out.println ( sortedSet ) ;
+
+
+        // Add Order -- 1 -> 1a -> 2
+        sortedSet.clear();
+        assertEquals(0, sortedSet.size());
+        sortedSet.add(info1) ;
+        assertEquals(1, sortedSet.size());
+        sortedSet.add(info1a) ;
+        assertEquals(1, sortedSet.size()) ;
+        sortedSet.add(info2);
+        assertEquals(2, sortedSet.size());
+
+        System.out.println ( sortedSet ) ;
+
+
+        // Add Order -- 2 -> 1 -> 1a
+        sortedSet.clear();
+        assertEquals(0, sortedSet.size());
+        sortedSet.add(info2);
+        assertEquals(1, sortedSet.size());
+        sortedSet.add(info1) ;
+        assertEquals(2, sortedSet.size()) ;
+        sortedSet.add(info1a) ;
+        assertEquals(2, sortedSet.size());
+
+        System.out.println ( sortedSet ) ;
+
+    }
+
+    @Test
+    public void testInsertingNodes() throws Exception {
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(_configuration);
+
+        NodeID nodeID1 = nodeIDGenerator.generateNodeID();
+        NodeID nodeID2 = nodeIDGenerator.generateNodeID();
+
+        System.out.println("Node 1: " + nodeID1);
+        System.out.println("Node 2: " + nodeID2);
+
+        Node node1 = new Node(nodeID1, "localhost", 34567) ;
+        Node node1a = new Node(nodeID1, "localhost", 34567) ;
+        Node node2 = new Node(nodeID2, "localhost", 34568) ;
+
+
+        RouteBucket routeBucket = new RouteBucket(1, _configuration) ;
+
+        // Add Order -- 1 -> 2 -> 1a
+        assertEquals(0, routeBucket.numNodes());
+        routeBucket.insert(node1);
+        assertEquals(1, routeBucket.numNodes());
+        routeBucket.insert(node2);
+        assertEquals(2, routeBucket.numNodes());
+        routeBucket.insert(node1a);
+        assertEquals(2, routeBucket.numNodes()) ;
+
+        System.out.println ( routeBucket ) ;
+
+
+        // Add Order -- 1 -> 1a -> 2
+        routeBucket = new RouteBucket(1, _configuration) ;
+        assertEquals(0, routeBucket.numNodes());
+        routeBucket.insert(node1);
+        assertEquals(1, routeBucket.numNodes());
+        routeBucket.insert(node1a);
+        assertEquals(1, routeBucket.numNodes());
+        routeBucket.insert(node2);
+        assertEquals(2, routeBucket.numNodes()) ;
+
+        System.out.println ( routeBucket ) ;
+
+
+        // Add Order -- 2 -> 1 -> 1a
+        routeBucket = new RouteBucket(1, _configuration) ;
+        assertEquals(0, routeBucket.numNodes());
+        routeBucket.insert(node2);
+        assertEquals(1, routeBucket.numNodes());
+        routeBucket.insert(node1);
+        assertEquals(2, routeBucket.numNodes());
+        routeBucket.insert(node1a);
+        assertEquals(2, routeBucket.numNodes()) ;
+
+        System.out.println ( routeBucket ) ;
+
     }
 }

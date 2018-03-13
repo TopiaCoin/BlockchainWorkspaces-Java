@@ -33,4 +33,6 @@ public interface Configuration {
     String getNodeDataFolder();
 
     void setNodeDataFolder(String nodeDataFolder);
+
+    long getOperationTimeout();
 }

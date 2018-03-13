@@ -3,8 +3,9 @@ package io.topiacoin.dht.network;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
-public class Node {
+public class Node implements Comparable<Node>{
 
     private NodeID nodeID;
     private InetAddress address;
@@ -44,5 +45,59 @@ public class Node {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Node node = (Node) o;
+
+        return nodeID != null ? nodeID.equals(node.nodeID) : node.nodeID == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return nodeID != null ? nodeID.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "nodeID=" + nodeID +
+                ", address=" + address.getHostAddress() +
+                ", port=" + port +
+                '}';
+    }
+
+    public int compareTo(Node o) {
+        // Compare the NodeIDs first, then the InetAddresses, and finally the port numbers
+        int nodeCompare = this.nodeID.compareTo(o.nodeID) ;
+        if ( nodeCompare != 0 )
+            return nodeCompare ;
+
+        // NodeIDs match, so now we compare the InetAddresses.
+        byte[] thisAddress = address.getAddress();
+        byte[] thatAddress = o.address.getAddress();
+
+        // Inet4Addresses are "less than" Inet6Addresses
+        if ( thisAddress.length < thatAddress.length )
+            return -1 ;
+        if ( thisAddress.length > thatAddress.length )
+            return 1 ;
+
+        // Addresses are the same size, so compare them byte by byte, ordering by byte.
+        for ( int i = 0 ; i < thisAddress.length ; i++ ) {
+            if ( thisAddress[i] < thatAddress[i] ) return -1;
+            if ( thisAddress[i] > thatAddress[i] ) return 1;
+        }
+
+        // Addresses are identical.  Compare ports
+
+        if ( this.port < o.port ) return -1 ;
+        if ( this.port > o.port ) return 1 ;
+
+        return 0;
     }
 }

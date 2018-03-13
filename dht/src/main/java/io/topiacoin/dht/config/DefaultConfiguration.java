@@ -4,6 +4,7 @@ public class DefaultConfiguration implements Configuration {
 
     private long restoreInterval = 60 * 1000;
     private long responseTimeout = 2000;
+    private long operationTimeout = 2000;
     private int maxConcurrentMessages = 10;
     private int c1 = 10 ;
     private int c2 = 20 ;
@@ -29,6 +30,14 @@ public class DefaultConfiguration implements Configuration {
 
     public void setResponseTimeout(long responseTimeout) {
         this.responseTimeout = responseTimeout;
+    }
+
+    public long getOperationTimeout() {
+        return operationTimeout;
+    }
+
+    public void setOperationTimeout(long operationTimeout) {
+        this.operationTimeout = operationTimeout;
     }
 
     public int getMaxConcurrentMessages() {

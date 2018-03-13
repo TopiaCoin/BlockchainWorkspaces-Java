@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 
 public class TestMessage implements Message {
 
-    public static final byte TYPE = 0x01;
+    public static final byte TYPE = 0x00;
 
     private String message;
 

@@ -6,6 +6,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -91,6 +92,7 @@ public class NodeIDTest {
 
 
 
+    @Test
     public void testNodeIDCreationFromNodeIDAndValidationWhenNodeIDIsInvalid() throws Exception {
 
         Configuration configuration = new DefaultConfiguration();
@@ -109,6 +111,7 @@ public class NodeIDTest {
 
 
 
+    @Test
     public void testNodeIDCreationFromNodeIDAndValidationWhenValidationIsInvalid() throws Exception {
 
         Configuration configuration = new DefaultConfiguration();
@@ -127,6 +130,7 @@ public class NodeIDTest {
 
 
 
+    @Test
     public void testNodeIDCreationFromKeyPairAndValidationWhenKeyPairIsInvalid() throws Exception {
 
         Configuration configuration = new DefaultConfiguration();
@@ -149,6 +153,7 @@ public class NodeIDTest {
 
 
 
+    @Test
     public void testNodeIDCreationFromKeyPairAndValidationWhenValidationIsInvalid() throws Exception {
 
         Configuration configuration = new DefaultConfiguration();
@@ -278,6 +283,27 @@ public class NodeIDTest {
             NodeID distantNodeID1 = nodeID.generateNodeIDByDistance(distance);
             assertFalse("Calculated Node ID should not have been valid", nodeIDGenerator.validateNodeID(distantNodeID1));
         }
+    }
+
+
+    @Test
+    public void testEncodingAndDecoding() throws  Exception {
+        Configuration configuration = new DefaultConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
+
+        NodeID nodeID = nodeIDGenerator.generateNodeID();
+
+        ByteBuffer buffer = ByteBuffer.allocate(65535) ;
+
+        nodeID.encode(buffer);
+        buffer.flip();
+
+        NodeID decodedNodeID = NodeID.decode(buffer) ;
+
+        assertEquals ( nodeID, decodedNodeID) ;
     }
 
     // -------- Private validation methods --------

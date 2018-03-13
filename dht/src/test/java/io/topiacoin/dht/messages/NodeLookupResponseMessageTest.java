@@ -2,9 +2,9 @@ package io.topiacoin.dht.messages;
 
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -17,38 +17,45 @@ import static org.junit.Assert.*;
 public class NodeLookupResponseMessageTest implements MessageTest {
 
     private static List<NodeID> _nodeIDs;
+    private static List<Node> _nodes;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         Configuration configuration = new DefaultConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
         _nodeIDs = new ArrayList<NodeID>();
+        _nodes = new ArrayList<Node>();
         for ( int i = 0 ; i < 6 ; i++ ) {
-            _nodeIDs.add(nodeIDGenerator.generateNodeID()) ;
+            NodeID nodeID = nodeIDGenerator.generateNodeID();
+            _nodeIDs.add(nodeID) ;
+            Node node = new Node(nodeID, "localhost", 12345);
+            _nodes.add(node);
         }
     }
 
     @Test
     public void testConstructorAndAccessors() throws Exception {
 
-        NodeLookupResponseMessage testMessage = new NodeLookupResponseMessage(_nodeIDs) ;
+        NodeLookupResponse testMessage = new NodeLookupResponse(_nodes) ;
 
-        assertEquals(_nodeIDs, testMessage.getNodeIDs());
+        assertEquals(_nodes, testMessage.getNodes());
     }
 
     @Test
     public void testEncodingAndDecoding() throws Exception {
 
-        NodeLookupResponseMessage testMessage = new NodeLookupResponseMessage(_nodeIDs) ;
+        NodeLookupResponse testMessage = new NodeLookupResponse(_nodes) ;
 
         ByteBuffer buffer = ByteBuffer.allocate(64000) ;
         testMessage.encodeMessage(buffer);
         buffer.flip();
 
-        NodeLookupResponseMessage decodedMessage = new NodeLookupResponseMessage(buffer) ;
-        assertEquals ( testMessage.getNodeIDs(), ((NodeLookupResponseMessage)decodedMessage).getNodeIDs() );
+        NodeLookupResponse decodedMessage = new NodeLookupResponse(buffer) ;
+        assertEquals ( testMessage.getNodes(), ((NodeLookupResponse)decodedMessage).getNodes() );
         assertEquals ( testMessage, decodedMessage ) ;
     }
 }

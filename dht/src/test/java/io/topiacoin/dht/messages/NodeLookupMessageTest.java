@@ -4,7 +4,6 @@ import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -29,7 +28,7 @@ public class NodeLookupMessageTest implements MessageTest {
     public void testConstructorAndAccessors() throws Exception {
         NodeID lookupNodeID = _baseNodeID.generateNodeIDByDistance(16) ;
 
-        NodeLookupMessage testMessage = new NodeLookupMessage(lookupNodeID) ;
+        NodeLookupRequest testMessage = new NodeLookupRequest(lookupNodeID) ;
 
         assertEquals(lookupNodeID, testMessage.getLookupID());
     }
@@ -39,14 +38,14 @@ public class NodeLookupMessageTest implements MessageTest {
 
         NodeID lookupNodeID = _baseNodeID.generateNodeIDByDistance(16) ;
 
-        NodeLookupMessage testMessage = new NodeLookupMessage(lookupNodeID) ;
+        NodeLookupRequest testMessage = new NodeLookupRequest(lookupNodeID) ;
 
         ByteBuffer buffer = ByteBuffer.allocate(64000) ;
         testMessage.encodeMessage(buffer);
         buffer.flip();
 
-        NodeLookupMessage decodedMessage = new NodeLookupMessage(buffer) ;
-        assertEquals ( testMessage.getLookupID(), ((NodeLookupMessage)decodedMessage).getLookupID() );
+        NodeLookupRequest decodedMessage = new NodeLookupRequest(buffer) ;
+        assertEquals ( testMessage.getLookupID(), ((NodeLookupRequest)decodedMessage).getLookupID() );
         assertEquals ( testMessage, decodedMessage ) ;
     }
 }

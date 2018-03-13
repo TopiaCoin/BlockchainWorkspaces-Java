@@ -2,32 +2,24 @@ package io.topiacoin.dht.messages;
 
 import io.topiacoin.core.util.StringUtilities;
 import io.topiacoin.dht.intf.Message;
-import io.topiacoin.dht.network.Node;
 
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.SignatureException;
 
-public class StoreValueRequest implements Message {
+public class RemoveValueRequest implements Message {
 
-    public static final int TYPE = (byte)0x05;
+    public static final int TYPE = (byte)0x04;
 
     private String key;
     private String value;
     private byte[] signature;
 
-    public StoreValueRequest(String key, String value) {
+    public RemoveValueRequest(String key, String value) {
         this.key = key;
         this.value = value;
     }
 
-    public StoreValueRequest(ByteBuffer buffer) {
+    public RemoveValueRequest(ByteBuffer buffer) {
         decodeMessage(buffer);
     }
 
@@ -92,7 +84,7 @@ public class StoreValueRequest implements Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        StoreValueRequest that = (StoreValueRequest) o;
+        RemoveValueRequest that = (RemoveValueRequest) o;
 
         if (key != null ? !key.equals(that.key) : that.key != null) return false;
         return value != null ? value.equals(that.value) : that.value == null;

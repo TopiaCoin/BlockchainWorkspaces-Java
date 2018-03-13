@@ -29,7 +29,7 @@ public class RouteBucket {
     public void insert(Node node) {
         NodeInfo newNodeInfo = new NodeInfo(node);
 
-        if (nodes.contains(newNodeInfo)) {
+        if (containsNode(node)) {
 
             // Grab the existing nodeInfo object out of the list, mark it as seen, then put it back in.
             // This will insure it re-sorts correctly.
@@ -176,11 +176,11 @@ public class RouteBucket {
         }
 
         public int compareTo(NodeInfo o) {
-            if (this.getNode().equals(o.getNode())) {
-                return 0;
-            }
+            int nodeCompare = this.getNode().compareTo(o.getNode());
+            if (nodeCompare != 0) return nodeCompare;
 
-            return (this.getLastContactTime() > o.getLastContactTime()) ? 1 : -1;
+            return nodeCompare ;
+//            return (this.getLastContactTime() > o.getLastContactTime()) ? 1 : -1;
         }
 
         @Override

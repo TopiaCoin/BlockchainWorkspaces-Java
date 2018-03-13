@@ -30,15 +30,25 @@ public class CommunicationServerTest {
 
         DefaultConfiguration config = new DefaultConfiguration();
         MessageFactory messageFactory = new MessageFactory();
+        messageFactory.initialize();
 
         KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         MessageSigner messageSigner = new DSAMessageSigner();
 
-        CommunicationServer communicationServer = new CommunicationServer(12345, config, messageFactory, keyPair, messageSigner);
-
         Configuration configuration = new DefaultConfiguration();
 
+        DHTComponents dhtComponents = new DHTComponents();
+        dhtComponents.setMessageFactory(messageFactory);
+        dhtComponents.setMessageSigner(messageSigner);
+        dhtComponents.setConfiguration(configuration);
+
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
+        NodeID thisNodeID = nodeIDGenerator.generateNodeID();
+        Node node = new Node(thisNodeID, "localhost", 12345);
+
+        CommunicationServer communicationServer = new CommunicationServer(12345, keyPair, node);
+        communicationServer.setDHTComponents(dhtComponents);
+        communicationServer.start();
 
         NodeID nodeID = nodeIDGenerator.generateNodeID();
 
@@ -47,7 +57,7 @@ public class CommunicationServerTest {
 
         success = false ;
         communicationServer.sendMessage(recipient, message, new ResponseHandler() {
-            public void receive(Message msg, int msgID) {
+            public void receive(Node origin, Message msg, int msgID) {
                 success = true ;
             }
 
