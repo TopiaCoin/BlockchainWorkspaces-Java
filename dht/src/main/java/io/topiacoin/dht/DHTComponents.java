@@ -1,7 +1,7 @@
 package io.topiacoin.dht;
 
 import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.content.ValueStorage;
+import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.messages.MessageFactory;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.routing.RoutingTable;

@@ -13,6 +13,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Arrays;
 
 public class StoreValueRequest implements Message {
 
@@ -20,7 +21,6 @@ public class StoreValueRequest implements Message {
 
     private String key;
     private String value;
-    private byte[] signature;
 
     public StoreValueRequest(String key, String value) {
         this.key = key;
@@ -103,5 +103,13 @@ public class StoreValueRequest implements Message {
         int result = key != null ? key.hashCode() : 0;
         result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "StoreValueRequest{" +
+                "key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                '}';
     }
 }

@@ -255,8 +255,8 @@ public class NodeID implements Comparable<NodeID>{
 
         buffer.putInt(nodeID.length) ;
         buffer.put(nodeID) ;
-        buffer.putInt(validation.length) ;
-        buffer.put(validation) ;
+        buffer.putInt((validation != null ? validation.length : 0)) ;
+        buffer.put((validation != null ? validation : new byte[0])) ;
 
     }
 
@@ -270,8 +270,12 @@ public class NodeID implements Comparable<NodeID>{
         nodeID = new byte[nodeIDLength] ;
         buffer.get(nodeID);
         validationLength = buffer.getInt();
-        validation = new byte[validationLength];
-        buffer.get(validation);
+        if ( validationLength > 0 ) {
+            validation = new byte[validationLength];
+            buffer.get(validation);
+        } else {
+            validation = null;
+        }
 
         NodeID newNodeID = new NodeID(nodeID, validation);
 

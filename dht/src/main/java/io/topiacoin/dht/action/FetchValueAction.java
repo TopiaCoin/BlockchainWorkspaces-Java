@@ -13,6 +13,7 @@ import io.topiacoin.dht.routing.NodeIDComparator;
 import io.topiacoin.dht.routing.RoutingTable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -111,10 +112,10 @@ public class FetchValueAction implements Action, ResponseHandler{
             _activeQueryMap.remove(msgID) ;
             _nodeQueryStateMap.put(origin, ASKED);
 
-            String content = response.getValue() ;
+            Collection<String> content = response.getValues() ;
 
             this._content = new ArrayList<String>() ;
-            this._content.add(content) ;
+            this._content.addAll(content) ;
             this._contentFound = true ;
 
             // Notify whoever is in the execute method that we have found the requested content

@@ -69,6 +69,7 @@ public class CommunicationServer {
     }
 
     private void listen() {
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(_dhtComponents.getConfiguration());
         while (this.isRunning) {
             try {
                 MessageSigner messageSigner = _dhtComponents.getMessageSigner();
@@ -104,6 +105,10 @@ public class CommunicationServer {
                     packetBuffer.get(validationBytes);
 
                     NodeID originNodeID = new NodeID(nodeIDBytes, validationBytes) ;
+                    if ( !nodeIDGenerator.validateNodeID(originNodeID)) {
+                        _log.warn ( "Ignoring a message with an Invalid Node ID: " + originNodeID);
+                        continue;
+                    }
                     Node originNode = new Node(originNodeID, packet.getAddress(), packet.getPort()) ;
 
                     int msgID = packetBuffer.getInt();
@@ -111,7 +116,7 @@ public class CommunicationServer {
 
                     Message message = messageFactory.createMessage(msgType, packetBuffer);
 
-                    System.out.println ( "Received Message: Src -> " + originNode + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
+                    System.out.println ( "Received Message: " + originNode.getPort() + "->" + this.socket.getLocalPort() + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
 
                     // Find the Response Handler
                     ResponseHandler responseHandler = null;
@@ -181,7 +186,7 @@ public class CommunicationServer {
 
         MessageSigner messageSigner = _dhtComponents.getMessageSigner();
 
-        System.out.println ( "Sending Message:  Dst -> " + recipient + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
+        System.out.println ( "Sending Message:  " + this.socket.getLocalPort() + "->" + recipient.getPort() + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
 
         // Encode the message for sending
         ByteBuffer messageBuffer = ByteBuffer.allocate(BUFFER_SIZE);

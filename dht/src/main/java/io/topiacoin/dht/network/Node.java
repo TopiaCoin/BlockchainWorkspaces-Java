@@ -1,8 +1,10 @@
 package io.topiacoin.dht.network;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class Node implements Comparable<Node>{
@@ -21,6 +23,10 @@ public class Node implements Comparable<Node>{
         this.nodeID = nodeID;
         this.address = InetAddress.getByName(address);
         this.port = port;
+    }
+
+    public Node(ByteBuffer buffer) throws IOException {
+        decode(buffer);
     }
 
     public NodeID getNodeID() {
@@ -45,6 +51,23 @@ public class Node implements Comparable<Node>{
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public void encode(ByteBuffer buffer) {
+        nodeID.encode(buffer);
+        byte[] addressBytes = this.address.getAddress();
+        buffer.putInt(addressBytes.length);
+        buffer.put(addressBytes);
+        buffer.putInt(port);
+    }
+
+    private void decode(ByteBuffer buffer) throws IOException {
+        nodeID = NodeID.decode(buffer);
+        int addressLength = buffer.getInt();
+        byte[] addressBytes = new byte[addressLength] ;
+        buffer.get(addressBytes);
+        address = InetAddress.getByAddress(addressBytes);
+        port = buffer.getInt();
     }
 
     @Override

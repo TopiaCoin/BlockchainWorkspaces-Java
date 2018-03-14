@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -294,5 +295,36 @@ public class RouteBucketTest {
 
         System.out.println ( routeBucket ) ;
 
+    }
+
+    @Test
+    public void testEncodeDecode() throws Exception {
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(_configuration);
+
+        NodeID nodeID1 = nodeIDGenerator.generateNodeID();
+        NodeID nodeID2 = nodeIDGenerator.generateNodeID();
+
+        System.out.println("Node 1: " + nodeID1);
+        System.out.println("Node 2: " + nodeID2);
+
+        Node node1 = new Node(nodeID1, "localhost", 34567) ;
+        Node node2 = new Node(nodeID2, "localhost", 34568) ;
+
+        RouteBucket routeBucket = new RouteBucket(1, _configuration);
+
+        routeBucket.insert(node1);
+        routeBucket.insert(node2);
+
+        ByteBuffer buffer = ByteBuffer.allocate(65536);
+
+        routeBucket.encode(buffer);
+
+        buffer.flip();
+
+        RouteBucket decodedBucket = new RouteBucket(buffer, _configuration) ;
+
+        assertTrue ("Decoded Bucket does not contain Node 1", decodedBucket.containsNode(node1));
+        assertTrue ("Decoded Bucket does not contain Node 2", decodedBucket.containsNode(node2));
+        assertEquals("Wrong number of Nodes in Decoded Bucket", routeBucket.numNodes(), decodedBucket.numNodes()) ;
     }
 }

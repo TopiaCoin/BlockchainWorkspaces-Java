@@ -10,6 +10,10 @@ public interface Configuration {
 
     void setResponseTimeout(long responseTimeout);
 
+    long getOperationTimeout();
+
+    void setOperationTimeout(long timeout);
+
     int getMaxConcurrentMessages();
 
     void setMaxConcurrentMessages(int maxConcurrentMessages);
@@ -33,6 +37,4 @@ public interface Configuration {
     String getNodeDataFolder();
 
     void setNodeDataFolder(String nodeDataFolder);
-
-    long getOperationTimeout();
 }

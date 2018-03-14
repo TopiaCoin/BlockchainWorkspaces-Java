@@ -5,6 +5,8 @@ import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -18,6 +20,11 @@ public class RoutingTable {
     private RouteBucket routeBuckets[] ;
 
     public RoutingTable () {
+    }
+
+    public RoutingTable(ByteBuffer buffer, DHTComponents dhtComponents) throws IOException {
+        this._dhtComponents = dhtComponents;
+        decode(buffer);
     }
 
     public void initialize() {
@@ -62,7 +69,8 @@ public class RoutingTable {
         List<Node> allNodes = new ArrayList<Node>();
 
         for ( RouteBucket bucket : routeBuckets ) {
-            for (RouteBucket.NodeInfo nodeInfo : bucket.getNodeInfos() ) {
+            List<RouteBucket.NodeInfo> nodeInfos = bucket.getNodeInfos();
+            for (RouteBucket.NodeInfo nodeInfo : nodeInfos) {
                 allNodes.add(nodeInfo.getNode()) ;
             }
         }
@@ -94,6 +102,24 @@ public class RoutingTable {
 
     public void setUnresponsiveNode(Node node) {
 
+    }
+
+    public void encode (ByteBuffer buffer) {
+        nodeID.encode(buffer);
+        buffer.putInt(routeBuckets.length);
+        for ( RouteBucket bucket : routeBuckets) {
+            bucket.encode(buffer);
+        }
+    }
+
+    private void decode (ByteBuffer buffer) throws IOException {
+        nodeID = NodeID.decode(buffer);
+        int bucketCount = buffer.getInt();
+        routeBuckets = new RouteBucket[bucketCount];
+        for ( int i = 0 ; i < bucketCount ; i++ ){
+            RouteBucket routeBucket = new RouteBucket(buffer, _dhtComponents.getConfiguration());
+            routeBuckets[i] = routeBucket;
+        }
     }
 
     @Override

@@ -53,9 +53,17 @@ public class StoreValueResponse implements Message {
         byte successByte = buffer.get() ;
         int keyLength = buffer.getInt();
         byte[] keyBytes = new byte[keyLength] ;
-        buffer.get(keyLength);
+        buffer.get(keyBytes);
 
         this.success = (successByte > 0 ) ;
         this.key = new String(keyBytes);
+    }
+
+    @Override
+    public String toString() {
+        return "StoreValueResponse{" +
+                "key='" + key + '\'' +
+                ", success=" + success +
+                '}';
     }
 }

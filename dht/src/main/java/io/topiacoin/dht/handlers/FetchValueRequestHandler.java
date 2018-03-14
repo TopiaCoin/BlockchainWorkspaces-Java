@@ -1,7 +1,7 @@
 package io.topiacoin.dht.handlers;
 
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.content.ValueStorage;
+import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
 import io.topiacoin.dht.messages.FetchValueRequest;
@@ -15,7 +15,11 @@ import org.apache.commons.logging.LogFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class FetchValueRequestHandler implements ResponseHandler{
 
@@ -32,22 +36,24 @@ public class FetchValueRequestHandler implements ResponseHandler{
             FetchValueRequest fvrMsg = (FetchValueRequest)msg;
 
             String key = fvrMsg.getKey();
-            String value = null;
+            Set<String> values = new TreeSet<String>();
 
             // Get the value from the Hash Table
             ValueStorage valueStorage = _dhtComponents.getValueStorage();
-            value = valueStorage.getValue(key);
+            Collection<String> localValues = valueStorage.getValues(key);
 
-            if ( value != null ) {
+            if ( localValues != null ) {
+                values.addAll(localValues) ;
+
                 FetchValueResponse response = new FetchValueResponse();
                 response.setKey(key);
-                response.setValue(value);
+                response.setValues(values);
 
                 CommunicationServer communicationServer = this._dhtComponents.getCommunicationServer();
 
                 communicationServer.reply(origin, response, msgID);
             } else {
-                // TODO - Respond with a NodeLookUpResponse Message containing the closet nodes to the requested Key
+                // Respond with a NodeLookUpResponse Message containing the closet nodes to the requested Key
                 try {
                     MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
                     byte[] keyIDBytes = sha1.digest(key.getBytes());

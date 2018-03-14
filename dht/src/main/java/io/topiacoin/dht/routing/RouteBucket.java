@@ -3,6 +3,8 @@ package io.topiacoin.dht.routing;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.network.Node;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -20,6 +22,14 @@ public class RouteBucket {
         this.distance = distance;
         this.nodes = new TreeSet<NodeInfo>();
         this.replacementCache = new TreeSet<NodeInfo>();
+    }
+
+    public RouteBucket(ByteBuffer buffer, Configuration configuration) throws IOException {
+        this.configuration = configuration;
+        this.nodes = new TreeSet<NodeInfo>();
+        this.replacementCache = new TreeSet<NodeInfo>();
+
+        decode(buffer);
     }
 
     public int getDistance() {
@@ -64,6 +74,10 @@ public class RouteBucket {
                     nodes.add(newNodeInfo);
                 } else {
                     // No stale nodes were found, stick this into the replacement cache.
+                    if ( replacementCache.size() > this.configuration.getK() ) {
+                        // The replacement cache is full, so remove the last one, which is the oldest.
+                        replacementCache.remove(replacementCache.last()) ;
+                    }
                     replacementCache.add(newNodeInfo);
                 }
             }
@@ -97,6 +111,32 @@ public class RouteBucket {
 
     public List<NodeInfo> getReplacementCache() {
         return new ArrayList<NodeInfo>(this.replacementCache);
+    }
+
+    public void encode(ByteBuffer buffer) {
+        buffer.putInt(distance);
+        buffer.putInt(nodes.size());
+        for (NodeInfo nodeInfo : nodes) {
+            nodeInfo.encode(buffer) ;
+        }
+        buffer.putInt(replacementCache.size());
+        for ( NodeInfo nodeInfo : replacementCache ) {
+            nodeInfo.encode(buffer) ;
+        }
+    }
+
+    private void decode(ByteBuffer buffer) throws IOException {
+        distance = buffer.getInt();
+        int nodeCount = buffer.getInt();
+        for (int i = 0; i < nodeCount; i++) {
+            NodeInfo nodeInfo = new NodeInfo(buffer);
+            nodes.add(nodeInfo);
+        }
+        int replacementCount = buffer.getInt();
+        for (int i = 0; i < replacementCount; i++) {
+            NodeInfo nodeInfo = new NodeInfo(buffer);
+            replacementCache.add(nodeInfo);
+        }
     }
 
     @Override
@@ -139,6 +179,10 @@ public class RouteBucket {
             this.lastContactTime = System.currentTimeMillis();
         }
 
+        public NodeInfo(ByteBuffer buffer) throws IOException  {
+            decode(buffer);
+        }
+
         public void markAsSeen() {
             this.lastContactTime = System.currentTimeMillis();
             this.staleCount = 0;
@@ -160,6 +204,14 @@ public class RouteBucket {
             staleCount++;
         }
 
+        public void encode(ByteBuffer buffer) {
+            node.encode(buffer);
+        }
+
+        private void decode(ByteBuffer buffer) throws IOException {
+            this.node = new Node(buffer);
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -179,7 +231,7 @@ public class RouteBucket {
             int nodeCompare = this.getNode().compareTo(o.getNode());
             if (nodeCompare != 0) return nodeCompare;
 
-            return nodeCompare ;
+            return nodeCompare;
 //            return (this.getLastContactTime() > o.getLastContactTime()) ? 1 : -1;
         }
 
