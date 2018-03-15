@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+@Deprecated
 public class InMemoryValueStorage implements ValueStorage {
 
     private Map<String, Collection<String>> valueMap;

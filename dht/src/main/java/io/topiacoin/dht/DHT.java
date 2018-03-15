@@ -6,6 +6,7 @@ import io.topiacoin.dht.action.PeriodicRefreshAction;
 import io.topiacoin.dht.action.RemoveValueAction;
 import io.topiacoin.dht.action.StoreValueAction;
 import io.topiacoin.dht.config.Configuration;
+import io.topiacoin.dht.content.InMemoryExpiringValueStorage;
 import io.topiacoin.dht.content.InMemoryValueStorage;
 import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.intf.FetchContentCallback;
@@ -69,7 +70,9 @@ public class DHT {
 
         CommunicationServer communicationServer = new CommunicationServer(udpPort, keyPair, this._node);
 
-        ValueStorage valueStorage = new InMemoryValueStorage();
+        int entryExpirationTime = configuration.getEntryExpirationTime();
+
+        ValueStorage valueStorage = new InMemoryExpiringValueStorage(entryExpirationTime);
 
         Semaphore refreshSemaphore = new Semaphore(1);
 

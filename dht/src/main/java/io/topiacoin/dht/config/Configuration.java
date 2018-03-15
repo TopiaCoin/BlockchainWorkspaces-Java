@@ -37,4 +37,8 @@ public interface Configuration {
     String getNodeDataFolder();
 
     void setNodeDataFolder(String nodeDataFolder);
+
+    int getEntryExpirationTime();
+
+    void setEntryExpirationTime(int entryExpirationTime );
 }

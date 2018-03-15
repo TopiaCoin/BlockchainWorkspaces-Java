@@ -11,6 +11,7 @@ public class DefaultConfiguration implements Configuration {
     private int k = 20;
     private int staleLimit = 1;
     private String nodeDataFolder = "kademlia";
+    private int entryExpirationTime = 86400000; // 24 hours
 
     public DefaultConfiguration() {
         // NOOP
@@ -86,5 +87,15 @@ public class DefaultConfiguration implements Configuration {
 
     public void setNodeDataFolder(String nodeDataFolder) {
         this.nodeDataFolder = nodeDataFolder;
+    }
+
+    @Override
+    public int getEntryExpirationTime() {
+        return entryExpirationTime;
+    }
+
+    @Override
+    public void setEntryExpirationTime(int entryExpirationTime) {
+        this.entryExpirationTime = entryExpirationTime;
     }
 }
