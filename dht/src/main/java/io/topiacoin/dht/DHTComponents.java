@@ -6,6 +6,8 @@ import io.topiacoin.dht.messages.MessageFactory;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.routing.RoutingTable;
 
+import java.util.concurrent.Semaphore;
+
 public class DHTComponents {
 
     private CommunicationServer _communicationServer;
@@ -14,6 +16,7 @@ public class DHTComponents {
     private Configuration _configuration;
     private MessageFactory _messageFactory;
     private ValueStorage _valueStorage;
+    private Semaphore _refreshSemaphore;
 
     public CommunicationServer getCommunicationServer() {
         return _communicationServer;
@@ -61,5 +64,13 @@ public class DHTComponents {
 
     public ValueStorage getValueStorage() {
         return _valueStorage;
+    }
+
+    public Semaphore getRefreshSemaphore() {
+        return _refreshSemaphore;
+    }
+
+    public void setRefreshSemaphore(Semaphore refreshSemaphore) {
+        _refreshSemaphore = refreshSemaphore;
     }
 }

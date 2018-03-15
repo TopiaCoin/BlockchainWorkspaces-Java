@@ -9,6 +9,8 @@ import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.routing.RoutingTable;
 
+import java.util.concurrent.Semaphore;
+
 public class BucketRefreshAction implements Action {
 
     private final Node _thisNode;
@@ -26,19 +28,28 @@ public class BucketRefreshAction implements Action {
     }
 
     public void execute() {
-        System.out.println ( "Executing a Bucket Refresh" ) ;
+        Semaphore executionSemaphore = _dhtComponents.getRefreshSemaphore();
+        if (executionSemaphore == null || executionSemaphore.tryAcquire()) {
+            System.out.println("Executing a Bucket Refresh");
 
-        // For each Bucket in the Routing Table, perform a Node Lookup
+            // For each Bucket in the Routing Table, perform a Node Lookup
 
-        // Populate the Routing Table by asking the bootstrap node for nodes that fit in each of our buckets
+            // Populate the Routing Table by asking the bootstrap node for nodes that fit in each of our buckets
 
-        for (int i = 0; i < 160; i++) {
-            NodeID bucketNodeID = _thisNode.getNodeID().generateNodeIDByDistance(i);
-            NodeLookupRequest nodeLookupMessage = new NodeLookupRequest(bucketNodeID);
+            for (int i = 0; i < 160; i++) {
+                NodeID bucketNodeID = _thisNode.getNodeID().generateNodeIDByDistance(i);
+                NodeLookupRequest nodeLookupMessage = new NodeLookupRequest(bucketNodeID);
 
-            new NodeLookupAction(_thisNode, bucketNodeID, this._dhtComponents).execute();
+                new NodeLookupAction(_thisNode, bucketNodeID, this._dhtComponents).execute();
+            }
+
+            System.out.println("Executed a Bucket Refresh");
+
+            if (executionSemaphore != null) {
+                executionSemaphore.release();
+            }
+        } else {
+            System.out.println("Bucket Refresh already executing");
         }
-
-        System.out.println ( "Executed a Bucket Refresh" ) ;
     }
 }

@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import java.util.concurrent.Semaphore;
 
 public class DHT {
 
@@ -70,6 +71,8 @@ public class DHT {
 
         ValueStorage valueStorage = new InMemoryValueStorage();
 
+        Semaphore refreshSemaphore = new Semaphore(1);
+
         _dhtComponents = new DHTComponents();
         _dhtComponents.setConfiguration(configuration);
         _dhtComponents.setMessageSigner(messageSigner);
@@ -77,6 +80,7 @@ public class DHT {
         _dhtComponents.setRoutingTable(routingTable);
         _dhtComponents.setMessageFactory(messageFactory);
         _dhtComponents.setValueStorage(valueStorage);
+        _dhtComponents.setRefreshSemaphore(refreshSemaphore);
 
         messageFactory.setDhtComponents(_dhtComponents);
         communicationServer.setDHTComponents(_dhtComponents);
