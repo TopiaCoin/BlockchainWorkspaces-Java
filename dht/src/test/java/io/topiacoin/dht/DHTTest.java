@@ -172,6 +172,7 @@ public class DHTTest {
             assertTrue("Fetched Values does not contain stored values", fetchedValues.containsAll(allValues));
         } finally {
             dht1.shutdown(false);
+            dht2.shutdown(false);
         }
     }
 
@@ -196,6 +197,7 @@ public class DHTTest {
         KeyPair keyPair2 = ecGenerator.generateKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
+        DHT dht2 = new DHT(port2, keyPair2, configuration);
 
         dht1.start(false);
 
@@ -204,7 +206,6 @@ public class DHTTest {
                 dht1.storeContent(key, value);
             }
 
-            DHT dht2 = new DHT(port2, keyPair2, configuration);
             dht2.bootstrap(dht1.getNode());
 
             Thread.sleep(1000);
@@ -216,6 +217,7 @@ public class DHTTest {
             assertTrue("Fetched Values does not contain stored values", fetchedValues.containsAll(values1));
         } finally {
             dht1.shutdown(false);
+            dht2.shutdown(false);
         }
     }
 
@@ -377,6 +379,7 @@ public class DHTTest {
         KeyPair keyPair2 = ecGenerator.generateKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
+        DHT dht2 = new DHT(port2, keyPair2, configuration);
 
         dht1.start(false);
 
@@ -385,7 +388,6 @@ public class DHTTest {
                 dht1.storeContent(key, value);
             }
 
-            DHT dht2 = new DHT(port2, keyPair2, configuration);
             dht2.bootstrap(dht1.getNode());
 
             Thread.sleep(1000);
@@ -401,6 +403,7 @@ public class DHTTest {
             assertTrue("Fetched Values does not contain stored values", fetchedValues.containsAll(values1));
         } finally {
             dht1.shutdown(false);
+            dht2.shutdown(false);
         }
     }
 
@@ -499,40 +502,46 @@ public class DHTTest {
         configuration1.setNodeDataFolder("./target/node1");
 
         int port1 = getPortNumber();
+        int port2 = getPortNumber();
 
         KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
         KeyPair keyPair1 = ecGenerator.generateKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration1);
+        DHT dht2 = new DHT(port2, keyPair1, configuration1);
+        try {
 
 //        dht1.start(false);
 
-        // Load the DHT up with a bunch of routing info (Note that these NodeIDs are not actually valid for Routing)
-        for (int i = 0; i < 160 * 40; i++) {
-            NodeID nodeID = dht1.getNode().getNodeID().generateNodeIDByDistance(i % 161);
-            int port = 33000 + i;
+            // Load the DHT up with a bunch of routing info (Note that these NodeIDs are not actually valid for Routing)
+            for (int i = 0; i < 160 * 40; i++) {
+                NodeID nodeID = dht1.getNode().getNodeID().generateNodeIDByDistance(i % 161);
+                int port = 33000 + i;
 
-            Node node = new Node(nodeID, "::1", port);
-            dht1._dhtComponents.getRoutingTable().insert(node);
+                Node node = new Node(nodeID, "::1", port);
+                dht1._dhtComponents.getRoutingTable().insert(node);
+            }
+            List<Node> insertedNodes = dht1._dhtComponents.getRoutingTable().getAllNodes();
+
+            System.out.println(dht1._dhtComponents.getRoutingTable());
+
+            // Shutdown the DHT and save its state
+            dht1.shutdown(true);
+
+            // Instantiate a new DHT and load its state from the previous DHT's saved state
+            dht2.start();
+
+            System.out.println(dht2._dhtComponents.getRoutingTable());
+
+            // Verify that DHT2 is able to fetch the stored content
+            List<Node> restoredNodes = dht2._dhtComponents.getRoutingTable().getAllNodes();
+
+            assertEquals(insertedNodes.size(), restoredNodes.size());
+            assertTrue(restoredNodes.containsAll(insertedNodes));
+        } finally {
+            dht1.shutdown(false) ;
+            dht2.shutdown(false);
         }
-        List<Node> insertedNodes = dht1._dhtComponents.getRoutingTable().getAllNodes();
-
-        System.out.println ( dht1._dhtComponents.getRoutingTable()) ;
-
-        // Shutdown the DHT and save its state
-        dht1.shutdown(true);
-
-        // Instantiate a new DHT and load its state from the previous DHT's saved state
-        DHT dht2 = new DHT(port1, keyPair1, configuration1);
-        dht2.start();
-
-        System.out.println ( dht2._dhtComponents.getRoutingTable()) ;
-
-        // Verify that DHT2 is able to fetch the stored content
-        List<Node> restoredNodes = dht2._dhtComponents.getRoutingTable().getAllNodes();
-
-        assertEquals(insertedNodes.size(), restoredNodes.size());
-        assertTrue(restoredNodes.containsAll(insertedNodes));
     }
 
     @Test
@@ -551,9 +560,13 @@ public class DHTTest {
 
         DHT dht1 = new DHT(port1, keyPair1, configuration1);
 
-        dht1.start(false);
+        try {
+            dht1.start(false);
 
-        Thread.sleep ( 1500) ;
+            Thread.sleep(1500);
+        } finally {
+            dht1.shutdown(false);
+        }
     }
 
     @Test
@@ -575,9 +588,14 @@ public class DHTTest {
         DHT dht1 = new DHT(port1, keyPair1, configuration1);
         DHT dht2 = new DHT(port2, keyPair2, configuration1);
 
-        dht1.start(false);
-        dht2.bootstrap(dht1.getNode());
+        try {
+            dht1.start(false);
+            dht2.bootstrap(dht1.getNode());
 
-        Thread.sleep ( 1500) ;
+            Thread.sleep(1500);
+        } finally {
+            dht1.shutdown(false);
+            dht2.shutdown(false);
+        }
     }
 }

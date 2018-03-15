@@ -3,10 +3,12 @@ package io.topiacoin.dht;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.network.Node;
+import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
 import io.topiacoin.dht.routing.RoutingTable;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.List;
@@ -16,6 +18,13 @@ import static org.junit.Assert.*;
 
 public class DHTBootstrapTest {
 
+    public static int port = 37000;
+
+    public static int getPortNumber() {
+        return port++ ;
+    }
+
+
     @Test
     public void testBootstrapNode() throws Exception {
 
@@ -24,8 +33,8 @@ public class DHTBootstrapTest {
         configuration.setC2(8);
         configuration.setResponseTimeout(250);
 
-        int port1 = 33456;
-        int port2 = 33457;
+        int port1 = getPortNumber();
+        int port2 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
         KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
@@ -100,11 +109,11 @@ public class DHTBootstrapTest {
         configuration.setC1(4);
         configuration.setC2(8);
 
-        int port1 = 33466;
-        int port2 = 33467;
-        int port3 = 33468;
-        int port4 = 33469;
-        int port5 = 33460;
+        int port1 = getPortNumber();
+        int port2 = getPortNumber();
+        int port3 = getPortNumber();
+        int port4 = getPortNumber();
+        int port5 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
         KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
@@ -326,11 +335,11 @@ public class DHTBootstrapTest {
         configuration.setC2(8);
         configuration.setK(160);
 
-        int port1 = 33476;
-        int port2 = 33477;
-        int port3 = 33478;
-        int port4 = 33479;
-        int port5 = 33470;
+        int port1 = getPortNumber();
+        int port2 = getPortNumber();
+        int port3 = getPortNumber();
+        int port4 = getPortNumber();
+        int port5 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
         KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
@@ -552,8 +561,8 @@ public class DHTBootstrapTest {
         configuration.setC1(4);
         configuration.setC2(8);
 
-        int port1 = 33456;
-        int port2 = 33457;
+        int port1 = getPortNumber();
+        int port2 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
         KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
@@ -581,4 +590,66 @@ public class DHTBootstrapTest {
 
     }
 
+    @Test
+    public void testBootstrapWithNonExistentNode() throws Exception {
+        Configuration configuration = new DefaultConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+
+        int port1 = getPortNumber();
+        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
+        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
+
+        DHT dht1 = new DHT(port1, keyPair1, configuration);
+
+        NodeID randomNode = nodeIDGenerator.generateNodeID();
+        Node nonexistentNode = new Node(randomNode, "localhost", 40000);
+
+        try {
+            dht1.bootstrap(nonexistentNode);
+            fail ( "Expected IOException to be thrown" ) ;
+        } catch ( IOException e) {
+            // NOOP - Expected Exception
+        }
+
+        assertFalse ( dht1.isRunning() );
+    }
+
+    @Test
+    public void testStartAlreadyRunningDHT() throws Exception {
+        Configuration configuration = new DefaultConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+
+        int port1 = getPortNumber();
+        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
+        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+
+        NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
+
+        DHT dht1 = new DHT(port1, keyPair1, configuration);
+
+        NodeID randomNode = nodeIDGenerator.generateNodeID();
+        Node nonexistentNode = new Node(randomNode, "localhost", 40000);
+
+        try {
+            dht1.start(false);
+
+            Thread.sleep ( 250) ;
+            assertTrue ( dht1.isRunning() ) ;
+
+            try {
+                dht1.start(false);
+                fail("Expected IllegalStateException to be thrown");
+            } catch (IllegalStateException e) {
+                // NOOP - Expected Exception
+            }
+        } finally {
+            dht1.shutdown(false);
+        }
+
+        assertFalse ( dht1.isRunning() );
+    }
 }

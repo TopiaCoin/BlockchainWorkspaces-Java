@@ -296,6 +296,10 @@ public class DHT {
 
     }
 
+    public boolean isRunning() {
+        return isRunning;
+    }
+
     // -------- Timer Task that Performs the Periodic Refresh --------
 
     class PeriodicRefreshTask extends TimerTask {
@@ -305,7 +309,7 @@ public class DHT {
          */
         @Override
         public void run() {
-            System.out.println("Pretending to Refresh the DHT");
+            System.out.println("Refreshing the DHT");
             refresh();
         }
     }
