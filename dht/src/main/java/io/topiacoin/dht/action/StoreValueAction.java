@@ -29,7 +29,9 @@ public class StoreValueAction implements Action, ResponseHandler{
         _keyID = new NodeID(key);
 
         _dhtComponents = dhtComponents;
-        _request = new StoreValueRequest(key, value);
+        _request = new StoreValueRequest();
+        _request.setKey(key);
+        _request.setValue(value);
 
         _routingTable = dhtComponents.getRoutingTable();
         _communicationServer = dhtComponents.getCommunicationServer();

@@ -17,7 +17,7 @@ public class NodeLookupResponse implements Message {
 
     private final Log _log = LogFactory.getLog(this.getClass());
 
-    public static final int TYPE = (byte)0x83;
+    public static final byte TYPE = (byte)0x83;
 
     private List<Node> nodes;
 

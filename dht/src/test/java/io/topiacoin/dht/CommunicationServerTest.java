@@ -48,27 +48,34 @@ public class CommunicationServerTest {
 
         CommunicationServer communicationServer = new CommunicationServer(12345, keyPair, node);
         communicationServer.setDHTComponents(dhtComponents);
-        communicationServer.start();
 
-        NodeID nodeID = nodeIDGenerator.generateNodeID();
+        try {
+            communicationServer.start();
 
-        Node recipient = new Node(nodeID, InetAddress.getLocalHost(), 12345) ;
-        Message message = new StoreValueRequest(key, value);
+            NodeID nodeID = nodeIDGenerator.generateNodeID();
 
-        success = false ;
-        communicationServer.sendMessage(recipient, message, new ResponseHandler() {
-            public void receive(Node origin, Message msg, int msgID) {
-                success = true ;
-            }
+            Node recipient = new Node(nodeID, InetAddress.getLocalHost(), 12345);
+            StoreValueRequest message = new StoreValueRequest();
+            message.setKey(key);
+            message.setValue(value);
 
-            public void timeout(int msgID) {
-                success = false ;
-            }
-        });
+            success = false;
+            communicationServer.sendMessage(recipient, message, new ResponseHandler() {
+                public void receive(Node origin, Message msg, int msgID) {
+                    success = true;
+                }
 
-        Thread.sleep (1000) ;
+                public void timeout(int msgID) {
+                    success = false;
+                }
+            });
 
-        assertTrue ( success ) ;
+            Thread.sleep(1000);
+
+            assertTrue(success);
+        } finally {
+            communicationServer.shutdown();
+        }
     }
 
 }

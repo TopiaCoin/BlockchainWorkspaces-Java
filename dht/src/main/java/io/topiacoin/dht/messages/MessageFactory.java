@@ -6,7 +6,6 @@ import io.topiacoin.dht.handlers.FetchValueRequestHandler;
 import io.topiacoin.dht.handlers.NodeLookupRequestHandler;
 import io.topiacoin.dht.handlers.RemoveValueRequestHandler;
 import io.topiacoin.dht.handlers.StoreValueRequestHandler;
-import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
 
@@ -67,13 +66,13 @@ public class MessageFactory {
                 message = new RemoveValueResponse(messageData);
                 break;
             default:
-                System.err.println("Unrecognized msgType: " + msgType);
+                System.err.println("Unable to create message - Unrecognized msgType: " + msgType);
         }
 
         return message;
     }
 
-    public ResponseHandler createReceiver(byte msgType, CommunicationServer communicationServer) {
+    public ResponseHandler createReceiver(byte msgType) {
         ResponseHandler responseHandler = null;
 
         switch (msgType) {
@@ -91,6 +90,8 @@ public class MessageFactory {
                 break;
             case RemoveValueRequest.TYPE:
                 responseHandler = new RemoveValueRequestHandler(_dhtComponents);
+            default:
+                System.err.println("Unable to create handler - Unrecognized msgType: " + msgType);
         }
 
         return responseHandler;

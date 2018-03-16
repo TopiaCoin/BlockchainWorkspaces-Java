@@ -17,14 +17,12 @@ import java.util.Arrays;
 
 public class StoreValueRequest implements Message {
 
-    public static final int TYPE = (byte)0x05;
+    public static final byte TYPE = (byte)0x05;
 
     private String key;
     private String value;
 
-    public StoreValueRequest(String key, String value) {
-        this.key = key;
-        this.value = value;
+    public StoreValueRequest() {
     }
 
     public StoreValueRequest(ByteBuffer buffer) {

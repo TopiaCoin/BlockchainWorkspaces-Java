@@ -52,10 +52,36 @@ public class RemoveValueResponse implements Message {
 
         byte successByte = buffer.get() ;
         int keyLength = buffer.getInt();
-        byte[] keyBytes = new byte[keyLength] ;
-        buffer.get(keyLength);
+        byte[] keyBytes = new byte[keyLength];
+        buffer.get(keyBytes);
 
         this.success = (successByte > 0 ) ;
-        this.key = new String(keyBytes);
+        this.key = (keyLength > 0 ? new String(keyBytes) : null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RemoveValueResponse that = (RemoveValueResponse) o;
+
+        if (success != that.success) return false;
+        return key != null ? key.equals(that.key) : that.key == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = key != null ? key.hashCode() : 0;
+        result = 31 * result + (success ? 1 : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RemoveValueResponse{" +
+                "key='" + key + '\'' +
+                ", success=" + success +
+                '}';
     }
 }

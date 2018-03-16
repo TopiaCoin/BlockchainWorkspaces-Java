@@ -43,10 +43,14 @@ public class FetchValueRequest implements Message {
         int keyLength ;
 
         keyLength = buffer.getInt();
-        keyBytes = new byte[keyLength] ;
-        buffer.get(keyBytes);
+        if ( keyLength > 0 ) {
+            keyBytes = new byte[keyLength];
+            buffer.get(keyBytes);
 
-        this.key = new String(keyBytes);
+            this.key = new String(keyBytes);
+        } else {
+            this.key = null;
+        }
     }
 
     @Override

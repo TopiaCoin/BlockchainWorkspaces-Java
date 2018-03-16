@@ -7,14 +7,14 @@ import java.nio.ByteBuffer;
 
 public class NodeLookupRequest implements Message {
 
-    public static final int TYPE = (byte)0x03;
+    public static final byte TYPE = (byte)0x03;
     private NodeID lookupID;
 
     public NodeLookupRequest(NodeID lookupID) {
         if ( lookupID == null ) {
             throw new IllegalArgumentException("Must specify a NodeID to lookup");
         }
-        this.lookupID = lookupID ;
+        this.lookupID = new NodeID(lookupID.getNodeID(), null) ;
     }
 
     public NodeLookupRequest(ByteBuffer buffer) {

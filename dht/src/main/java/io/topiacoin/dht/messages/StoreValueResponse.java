@@ -56,7 +56,25 @@ public class StoreValueResponse implements Message {
         buffer.get(keyBytes);
 
         this.success = (successByte > 0 ) ;
-        this.key = new String(keyBytes);
+        this.key = (keyLength > 0 ? new String(keyBytes) : null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        StoreValueResponse response = (StoreValueResponse) o;
+
+        if (success != response.success) return false;
+        return key != null ? key.equals(response.key) : response.key == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = key != null ? key.hashCode() : 0;
+        result = 31 * result + (success ? 1 : 0);
+        return result;
     }
 
     @Override

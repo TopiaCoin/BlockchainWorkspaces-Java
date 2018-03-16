@@ -8,15 +8,13 @@ import java.nio.ByteBuffer;
 
 public class RemoveValueRequest implements Message {
 
-    public static final int TYPE = (byte)0x04;
+    public static final byte TYPE = (byte)0x04;
 
     private String key;
     private String value;
-    private byte[] signature;
 
-    public RemoveValueRequest(String key, String value) {
-        this.key = key;
-        this.value = value;
+    public RemoveValueRequest() {
+
     }
 
     public RemoveValueRequest(ByteBuffer buffer) {
@@ -95,5 +93,13 @@ public class RemoveValueRequest implements Message {
         int result = key != null ? key.hashCode() : 0;
         result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RemoveValueRequest{" +
+                "key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                '}';
     }
 }

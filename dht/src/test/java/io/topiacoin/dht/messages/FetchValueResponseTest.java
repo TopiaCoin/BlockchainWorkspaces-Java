@@ -33,6 +33,28 @@ public class FetchValueResponseTest {
         FetchValueResponse decodedResponse = new FetchValueResponse(buffer);
 
         assertEquals ( fetchValueResponse, decodedResponse);
+        assertEquals ( fetchValueResponse.getKey(), decodedResponse.getKey());
+        assertEquals ( fetchValueResponse.getValues(), decodedResponse.getValues());
+    }
+
+    @Test
+    public void testEncodeAndDecodeWithEmptyValues() throws  Exception {
+
+        String key = "TheMeaningOfLife";
+        List<String> values = new ArrayList<String>();
+
+        FetchValueResponse fetchValueResponse = new FetchValueResponse() ;
+        fetchValueResponse.setKey(key);
+        fetchValueResponse.setValues(values);
+
+        ByteBuffer buffer = ByteBuffer.allocate(65536);
+
+        fetchValueResponse.encodeMessage(buffer);
+        buffer.flip();
+
+        FetchValueResponse decodedResponse = new FetchValueResponse(buffer);
+
+        assertEquals ( fetchValueResponse, decodedResponse);
     }
 
     @Test

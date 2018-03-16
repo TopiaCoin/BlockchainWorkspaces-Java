@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class NodeLookupResponseMessageTest implements MessageTest {
+public class NodeLookupResponseTest implements MessageTest {
 
     private static List<NodeID> _nodeIDs;
     private static List<Node> _nodes;

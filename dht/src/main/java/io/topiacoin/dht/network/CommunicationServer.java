@@ -2,7 +2,6 @@ package io.topiacoin.dht.network;
 
 import io.topiacoin.dht.DHTComponents;
 import io.topiacoin.dht.MessageSigner;
-import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
 import io.topiacoin.dht.messages.MessageFactory;
@@ -116,7 +115,7 @@ public class CommunicationServer {
 
                     Message message = messageFactory.createMessage(msgType, packetBuffer);
 
-                    System.out.println ( "Received Message: " + originNode.getPort() + "->" + this.socket.getLocalPort() + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
+                    _log.debug ( "Received Message: " + originNode.getPort() + "->" + this.socket.getLocalPort() + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
 
                     // Find the Response Handler
                     ResponseHandler responseHandler = null;
@@ -129,7 +128,7 @@ public class CommunicationServer {
                             }
                         }
                     } else {
-                        responseHandler = messageFactory.createReceiver(msgType, this);
+                        responseHandler = messageFactory.createReceiver(msgType);
                     }
 
                     if (responseHandler != null) {
@@ -186,7 +185,7 @@ public class CommunicationServer {
 
         MessageSigner messageSigner = _dhtComponents.getMessageSigner();
 
-        System.out.println ( "Sending Message:  " + this.socket.getLocalPort() + "->" + recipient.getPort() + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
+        _log.debug ( "Sending Message:  " + this.socket.getLocalPort() + "->" + recipient.getPort() + " -- " + Integer.toString(msgID, 16) + " -- " + message) ;
 
         // Encode the message for sending
         ByteBuffer messageBuffer = ByteBuffer.allocate(BUFFER_SIZE);

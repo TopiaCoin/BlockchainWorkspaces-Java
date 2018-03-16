@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.*;
 
-public class NodeLookupMessageTest implements MessageTest {
+public class NodeLookupRequestTest implements MessageTest {
 
     private static NodeID _baseNodeID;
 

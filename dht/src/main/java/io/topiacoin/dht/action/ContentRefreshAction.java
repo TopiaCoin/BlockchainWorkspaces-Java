@@ -43,7 +43,9 @@ public class ContentRefreshAction implements Action, ResponseHandler{
             List<Node> closestNodes = routingTable.findClosest(keyID, numNodes) ;
 
             for ( String value : values ) {
-                StoreValueRequest storeValueRequest = new StoreValueRequest(key, value);
+                StoreValueRequest storeValueRequest = new StoreValueRequest();
+                storeValueRequest.setKey(key);
+                storeValueRequest.setValue(value);
 
                 // Send a Store Value message to each Node
                 for (Node node : closestNodes) {

@@ -31,7 +31,9 @@ public class RemoveValueAction implements Action, ResponseHandler{
         _keyID = new NodeID(key);
 
         _dhtComponents = dhtComponents;
-        _request = new RemoveValueRequest(key, value);
+        _request = new RemoveValueRequest();
+        _request.setKey(key);
+        _request.setValue(value);
 
         _routingTable = dhtComponents.getRoutingTable();
         _communicationServer = dhtComponents.getCommunicationServer();
