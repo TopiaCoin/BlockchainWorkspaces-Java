@@ -6,13 +6,13 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.*;
 
-public class StoreValueRequestTest implements MessageTest {
+public class RemoveValueRequestTest implements MessageTest {
 
     @Test
     public void testConstructorAndAccessors() throws Exception {
         String key = "helloKey";
         String value = "arrivederci";
-        StoreValueRequest testMessage = new StoreValueRequest() ;
+        RemoveValueRequest testMessage = new RemoveValueRequest() ;
         testMessage.setKey(key);
         testMessage.setValue(value);
 
@@ -24,7 +24,7 @@ public class StoreValueRequestTest implements MessageTest {
     public void testEncodingAndDecoding() {
         String key = "helloKey";
         String value = "arrivederci";
-        StoreValueRequest testMessage = new StoreValueRequest() ;
+        RemoveValueRequest testMessage = new RemoveValueRequest() ;
         testMessage.setKey(key);
         testMessage.setValue(value);
 
@@ -32,9 +32,9 @@ public class StoreValueRequestTest implements MessageTest {
         testMessage.encodeMessage(buffer);
         buffer.flip();
 
-        StoreValueRequest decodedMessage = new StoreValueRequest(buffer) ;
-        assertEquals ( testMessage.getKey(), ((StoreValueRequest)decodedMessage).getKey() );
-        assertEquals ( testMessage.getValue(), ((StoreValueRequest)decodedMessage).getValue() );
+        RemoveValueRequest decodedMessage = new RemoveValueRequest(buffer) ;
+        assertEquals ( testMessage.getKey(), decodedMessage.getKey() );
+        assertEquals ( testMessage.getValue(), decodedMessage.getValue() );
         assertEquals ( testMessage, decodedMessage ) ;
     }
 }

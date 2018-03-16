@@ -1,13 +1,18 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.dht.intf.Message;
+import io.topiacoin.dht.util.Utilities;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -26,7 +31,7 @@ import java.util.Random;
  * validation value.  In either case the class will validate the the keyPair represents a valid NodeID, and that the
  * validation value properly validates the nodeID.
  */
-public class NodeID {
+public class NodeID implements Comparable<NodeID>{
 
     private Log _log = LogFactory.getLog(this.getClass());
 
@@ -36,44 +41,6 @@ public class NodeID {
 
     private int c1 = 11;
     private int c2 = 20;
-
-    /**
-     * Creates a new NodeID object from scratch.  This will result in the generation of the cryptographic keypair that
-     * can be used to encrypt and sign requests as well as a validation value that is used to prove that the requisite
-     * amount of work has been performed to generate this NodeID.
-     */
-    public NodeID() {
-
-        try {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            Random random = new Random();
-
-            boolean part1Done = false;
-            boolean part2Done = false;
-
-            // Find a key that conforms to the First check: H(H(pubKey)) < 2^(160-c1)
-            while (!part1Done) {
-                _keyPair = kpg.generateKeyPair();
-
-                byte[] encodedPublicKey = _keyPair.getPublic().getEncoded();
-                nodeID = sha1.digest(encodedPublicKey);
-                part1Done = isValidSolution(c1, sha1, nodeID);
-            }
-
-            validation = new byte[nodeID.length];
-            while (!part2Done) {
-                random.nextBytes(validation);
-
-                byte[] xoredNodeID = xorByteArrays(nodeID, validation);
-                part2Done = isValidSolution(c2, sha1, xoredNodeID);
-            }
-
-        } catch (NoSuchAlgorithmException e) {
-            _log.fatal("Unable to find required cryptographic Algorithms", e);
-            throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
-        }
-    }
 
     /**
      * Creates a new NodeID from the specified nodeID and Validation value.  If the nodeID is not a valid value, or if
@@ -88,9 +55,15 @@ public class NodeID {
     public NodeID(byte[] nodeID, byte[] validation) throws IllegalArgumentException {
         this.nodeID = nodeID;
         this.validation = validation;
+    }
 
-        if (!isValid()) {
-            throw new IllegalArgumentException("The NodeID and Validation data specified do not form a Valid NodeID");
+    public NodeID(String key) throws IllegalArgumentException {
+        try {
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            this.nodeID = sha1.digest(key.getBytes());
+            this.validation = null;
+        } catch ( NoSuchAlgorithmException e ) {
+            throw new RuntimeException("Java no longer supports SHA-1!", e);
         }
     }
 
@@ -112,10 +85,6 @@ public class NodeID {
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
             this.nodeID = sha1.digest(_keyPair.getPublic().getEncoded());
-
-            if (!isValid()) {
-                throw new IllegalArgumentException("The KeyPair and Validation specified do not form a Valid NodeID");
-            }
         } catch (NoSuchAlgorithmException e) {
             _log.fatal("Unable to find required cryptographic Algorithms", e);
             throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
@@ -156,32 +125,6 @@ public class NodeID {
 
 
     /**
-     * Returns true if this NodeID is valid.  A NodeID is valid if the ID and its associated validation code satisfy the
-     * requirements described above.
-     *
-     * @return True if this NodeID is valid.  False if this NodeID is not valid.
-     */
-    public boolean isValid() {
-        boolean valid = (nodeID != null) && (validation != null);
-
-        try {
-            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-
-            valid &= isValidSolution(c1, sha1, nodeID);
-
-            if (valid) {
-                byte[] xoredNodeID = xorByteArrays(nodeID, validation);
-                valid &= isValidSolution(c2, sha1, xoredNodeID);
-            }
-        } catch (NoSuchAlgorithmException e) {
-            _log.fatal("Unable to find required cryptographic Algorithms", e);
-            throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
-        }
-
-        return valid;
-    }
-
-    /**
      * Returns the distance between this nodeID and another nodeID.  Distance is calculated as being the number of
      * leading bits the node IDs have in common.
      *
@@ -196,12 +139,12 @@ public class NodeID {
         byte[] thatNodeID = other.getNodeID();
 
         // Assume the nodes are as far apart as possible.
-        int distance = thisNodeID.length * 8;
+        int firstCommonBit = 0;
 
         for (int i = 0; i < thisNodeID.length; i++) {
             if (thisNodeID[i] == thatNodeID[i]) {
-                // This byte matches between the two NodeIDs, so subtract 8 from the distance.
-                distance -= 8;
+                // This byte matches between the two NodeIDs, so subtract 8 from the firstCommonBit.
+                firstCommonBit += 8;
             } else {
                 byte thisByte = thisNodeID[i];
                 byte thatByte = thatNodeID[i];
@@ -209,7 +152,7 @@ public class NodeID {
 
                 for (i = 7; i >= 0; i--) {
                     if ((xorByte & (1 << i)) == 0) {
-                        distance--;
+                        firstCommonBit++;
                     } else {
                         // These bytes do not match.  We have found the end!
                         break;
@@ -220,6 +163,8 @@ public class NodeID {
                 break;
             }
         }
+
+        int distance = thisNodeID.length * 8 - firstCommonBit;
 
         return distance;
     }
@@ -267,6 +212,76 @@ public class NodeID {
         return nodeID;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NodeID nodeID1 = (NodeID) o;
+
+        if (!Arrays.equals(nodeID, nodeID1.nodeID)) return false;
+        return Arrays.equals(validation, nodeID1.validation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(nodeID);
+        result = 31 * result + Arrays.hashCode(validation);
+        return result;
+    }
+
+    public int compareTo(NodeID o) {
+        for ( int i = 0 ; i < this.nodeID.length ; i++ ) {
+            if ( this.nodeID[i] < o.nodeID[i] ) return -1 ;
+            if ( this.nodeID[i] > o.nodeID[i] ) return 1 ;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "NodeID{" +
+                "nodeID=" + Hex.encodeHexString(nodeID) +
+                ",validation=" + (validation != null ? Hex.encodeHexString(validation) : "null") +
+                '}';
+    }
+
+
+    // -------- Serialization and Deserialization of NodeID --------
+
+
+    public void encode(ByteBuffer buffer) {
+
+        buffer.putInt(nodeID.length) ;
+        buffer.put(nodeID) ;
+        buffer.putInt((validation != null ? validation.length : 0)) ;
+        buffer.put((validation != null ? validation : new byte[0])) ;
+
+    }
+
+    public static NodeID decode(ByteBuffer buffer) {
+        byte[] nodeID ;
+        int nodeIDLength;
+        byte[] validation;
+        int validationLength;
+
+        nodeIDLength = buffer.getInt();
+        nodeID = new byte[nodeIDLength] ;
+        buffer.get(nodeID);
+        validationLength = buffer.getInt();
+        if ( validationLength > 0 ) {
+            validation = new byte[validationLength];
+            buffer.get(validation);
+        } else {
+            validation = null;
+        }
+
+        NodeID newNodeID = new NodeID(nodeID, validation);
+
+        return newNodeID;
+    }
+
 
     // -------- Package Scope Methods - Mostly for Testing --------
 
@@ -293,48 +308,7 @@ public class NodeID {
      */
     private boolean isValidSolution(int c1, MessageDigest digest, byte[] value) {
         byte[] hash1 = digest.digest(value);
-        return hasSufficientZeros(hash1, c1);
-    }
-
-    /**
-     * Performs a bitwise XOR on two byte arrays, returning the result.  This method requires that both arrays be of the
-     * same length.
-     *
-     * @param firstArray  The first array to be used in the XOR operation.
-     * @param secondArray The second array to be used in the XOR operation.
-     *
-     * @return A new byte array containing the result of bitwise XORing the two arrays.
-     *
-     * @throws IllegalArgumentException If the two arrays are not the same length.
-     */
-    private byte[] xorByteArrays(byte[] firstArray, byte[] secondArray) throws IllegalArgumentException {
-        if (firstArray.length != secondArray.length)
-            throw new IllegalArgumentException("Arrays must be of the same length");
-
-        byte[] result = new byte[firstArray.length];
-
-        for (int i = 0; i < result.length; i++) {
-            result[i] = (byte) (firstArray[i] ^ secondArray[i]);
-        }
-
-        return result;
-    }
-
-    /**
-     * Tests whether the specified data has the required number of leading zeros.
-     *
-     * @param data          The data that is being checked for leading zeros
-     * @param requiredZeros The number of leading zeros required in the data.
-     *
-     * @return True if data has the required number of leading zeros.  False if the data does not have the required
-     * number of leading zeros.
-     */
-    private boolean hasSufficientZeros(byte[] data, int requiredZeros) {
-        BigInteger intVersion = new BigInteger(1, data);
-        BigInteger limit = BigInteger.valueOf(1L);
-        limit = limit.shiftLeft((data.length * 8) - requiredZeros);
-
-        return (intVersion.compareTo(limit) < 0);
+        return Utilities.hasSufficientZeros(hash1, c1);
     }
 
 }

@@ -1,6 +1,7 @@
 package io.topiacoin.dht.config;
 
 public interface Configuration {
+
     long getRestoreInterval();
 
     void setRestoreInterval(long restoreInterval);
@@ -9,9 +10,21 @@ public interface Configuration {
 
     void setResponseTimeout(long responseTimeout);
 
+    long getOperationTimeout();
+
+    void setOperationTimeout(long timeout);
+
     int getMaxConcurrentMessages();
 
     void setMaxConcurrentMessages(int maxConcurrentMessages);
+
+    int getC1() ;
+
+    void setC1(int c1) ;
+
+    int getC2() ;
+
+    void setC2(int c2) ;
 
     int getK();
 
@@ -24,4 +37,8 @@ public interface Configuration {
     String getNodeDataFolder();
 
     void setNodeDataFolder(String nodeDataFolder);
+
+    int getEntryExpirationTime();
+
+    void setEntryExpirationTime(int entryExpirationTime );
 }
