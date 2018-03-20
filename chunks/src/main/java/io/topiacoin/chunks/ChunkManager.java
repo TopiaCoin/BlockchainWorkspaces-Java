@@ -133,7 +133,7 @@ public class ChunkManager {
             }
         }
         ChunksTransferHandler chunkFetchHandler = new ChunksTransferHandler() {
-            @Override public void didFetchChunk(String chunkID, Object state, byte[] chunkdata) {
+            @Override public void didFetchChunk(String chunkID, byte[] chunkdata, Object state) {
                 try {
                     addChunk(chunkID, chunkdata);
                     successfulChunks.add(chunkID);
