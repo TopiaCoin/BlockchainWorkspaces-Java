@@ -40,21 +40,25 @@ public abstract class ProtocolJsonMessage extends ProtocolMessage {
 			String msgString = new String(new BASE64Decoder().decodeBuffer(new String(data)));
 			System.out.println("Parsing JSON: " + msgString);
 			JsonObject message = new JsonParser().parse(msgString).getAsJsonObject();
-			JsonElement requestObj = message.get("request");
-			if (requestObj != null) {
-				JsonObject request = requestObj.getAsJsonObject();
-				String requestType = request.get("request_type").getAsString();
-				String signatureB64 = message.get("signature").getAsString();
-				verifySignature(pubKey, request, signatureB64);
-				if (requestType.equalsIgnoreCase("QUERY_CHUNKS")) {
-					return new QueryChunksProtocolJsonRequest(message);
-				}
+			JsonElement msgData = message.get("request");
+			JsonObject msgObj = null;
+			String msgType = null;
+			if(msgData != null) {
+				msgObj = msgData.getAsJsonObject();
+				msgType = msgObj.get("request_type").getAsString();
 			} else {
-				JsonElement responseObj = message.get("response");
-				if (responseObj != null) {
-					JsonObject response = requestObj.getAsJsonObject();
-					String responseType = response.get("response_type").getAsString();
-				}
+				msgData = message.get("response");
+				msgObj = msgData.getAsJsonObject();
+				msgType = msgObj.get("response_type").getAsString();
+			}
+			String signatureB64 = message.get("signature").getAsString();
+			verifySignature(pubKey, msgObj, signatureB64);
+			if (msgType.equalsIgnoreCase("QUERY_CHUNKS")) {
+				return new QueryChunksProtocolJsonRequest(message);
+			} else if (msgType.equalsIgnoreCase("HAVE_CHUNKS")) {
+				return new QueryChunksProtocolJsonResponse(message);
+			}  else if (msgType.equalsIgnoreCase("REQUEST_CHUNK")) {
+				throw new UnsupportedOperationException("Uhh");
 			}
 		}
 		return null;

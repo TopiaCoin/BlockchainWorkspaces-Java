@@ -8,7 +8,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SignatureException;
 
-public class QueryChunksProtocolJsonResponse extends ProtocolJsonRequest {
+public class QueryChunksProtocolJsonResponse extends ProtocolJsonResponse {
 	private static final String REQUEST_TYPE = "HAVE_CHUNKS";
 
 	private String[] _chunkIDs;
