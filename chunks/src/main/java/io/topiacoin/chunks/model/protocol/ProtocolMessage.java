@@ -57,19 +57,6 @@ public abstract class ProtocolMessage {
 		return pm;
 	}
 
-	public static boolean containsFullMessage(ByteBuffer buffer) {
-		if (buffer == null || !buffer.hasRemaining() || buffer.remaining() <= FRAME_META_LENGTH) {
-			return false;
-		} else {
-			buffer.mark();
-			byte ignored = buffer.get();
-			int length = buffer.getInt();
-			boolean toReturn = length <= buffer.remaining();
-			buffer.reset();
-			return toReturn;
-		}
-	}
-
 	public static int getMessageLength(ByteBuffer buffer) {
 		if (!buffer.hasRemaining() || buffer.remaining() <= FRAME_META_LENGTH) {
 			return -1;
