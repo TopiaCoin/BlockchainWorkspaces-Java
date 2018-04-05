@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.impl.transferRunnables.tcp;
 
+import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.intf.ProtocolCommsHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
@@ -47,6 +48,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	private KeyPair _chunkTransferKeyPair;
 	private Thread _listenerThread;
 	private TCPListenerRunnable _listenerRunnable;
+	private Throwable _listenerRunnableThrowable = null;
 	private Map<SocketChannel, ByteBuffer> _packetReadBuffers = new HashMap<>();
 	private Map<SocketChannel, ArrayList<ByteBuffer>> _writeBuffers = new HashMap<>();
 	private Map<SocketAddress, Integer> _messageIDs = new HashMap<>();
@@ -55,7 +57,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	private Map<Integer, byte[]> _messageAuthKeys = new HashMap<>();
 	private Map<Integer, KeyPair> _messageRequestKeypairs = new HashMap<>();
 	private Map<Integer, SocketAddress> _replyAddresses = new HashMap<>();
-	private Map<Integer, SocketChannel> _connections = new HashMap<>();
+	Map<Integer, SocketChannel> _connections = new HashMap<>();
 	private Map<SocketAddress, Integer> _requestResponseSplits = new HashMap<>();
 	private Map<String, Byte> _messageTypes = new HashMap<>();
 	private int _messageIdTracker = 0;
@@ -99,7 +101,10 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					requestKeyPair = generateRequestKeyPair(messageID);
 					sendPubKey = true;
 				}
-				SecretKey requestKey = null;
+				SecretKey requestKey;
+				if(transferPublicKey == null) {
+					transferPublicKey = _transferPublicKeys.get(messageID);
+				}
 				try {
 					requestKey = buildRequestKey(transferPublicKey, messageID);
 				} catch (InvalidKeySpecException e) {
@@ -288,7 +293,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 	}
 
-	@Override public void reply(ProtocolMessage message, int messageID) throws SignatureException, InvalidKeyException {
+	@Override public void reply(ProtocolMessage message, int messageID) throws InvalidKeyException {
 		if (!message.isRequest()) {
 			SocketAddress addr = _replyAddresses.get(messageID);
 			if (addr != null) {
@@ -334,11 +339,32 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_handler = handler;
 	}
 
-	public void start() {
+	private void setListenerRunnableThrowable(Throwable t) {
+		_listenerRunnableThrowable = t;
+	}
+
+	public void start() throws FailedToStartCommsListenerException {
 		if (_handler == null) {
 			throw new IllegalStateException("Cannot start without a message handler");
 		}
+		Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+			@Override public void uncaughtException(Thread t, Throwable e) {
+				_handler.error(e);
+				setListenerRunnableThrowable(e);
+			}
+		};
+		_listenerThread.setUncaughtExceptionHandler(h);
 		_listenerThread.start();
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+
+		}
+		if(_listenerRunnableThrowable != null) {
+			Throwable t = _listenerRunnableThrowable;
+			stop();
+			throw new FailedToStartCommsListenerException("Comms listener failed to start", t);
+		}
 	}
 
 	public void stop() {
@@ -348,6 +374,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		if (_listenerThread != null) {
 			_listenerThread.interrupt();
 		}
+		_listenerRunnableThrowable = null;
 	}
 
 	private class TCPListenerRunnable implements Runnable {
@@ -502,8 +529,9 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 						writeChannel.register(_selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 					}
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (Throwable e) {
+				Thread t = Thread.currentThread();
+				t.getUncaughtExceptionHandler().uncaughtException(t, e);
 			} finally {
 				stop();
 			}
