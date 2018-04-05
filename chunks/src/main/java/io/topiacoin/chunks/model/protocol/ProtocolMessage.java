@@ -1,80 +1,69 @@
 package io.topiacoin.chunks.model.protocol;
 
-import io.topiacoin.chunks.exceptions.InvalidSignatureException;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SignatureException;
-import java.util.ArrayList;
 
-public abstract class ProtocolMessage {
-	private static final int FRAME_META_LENGTH = (Integer.BYTES * 2) + 1;
-	private int _messageID = -1;
+/** A ProtocolMessage is a message designed to be sent using a ProtocolCommsService
+ * Before a ProtocolMessage can be sent, it must first be signed by calling the sign() function.
+ * The ProtocolComms will call isValid() to verify the validity of the Message
+ *
+ * When a ProtocolMessage is received, the ProtocolComms will call isValid() to verify the validity of the Message.
+ * Then, its signature should be verified using the verify() function.
+ * Should verify() fail, the ProtocolMessage received should be considered invalid, and should not be processed further for security reasons.
+ *
+ */
+public interface ProtocolMessage {
 
-	public ByteBuffer encodeMessage(PrivateKey privateKey, int messageID) throws SignatureException, InvalidKeyException {
-		byte type;
-		byte[] data;
-		if (this instanceof ProtocolJsonRequest) {
-			type = 0x01;
-			data = ((ProtocolJsonMessage) this).toBytes(privateKey);
-		} else if (this instanceof ProtocolJsonResponse) {
-			type = 0x02;
-			data = ((ProtocolJsonMessage) this).toBytes(privateKey);
-		} else if (this instanceof ProtocolDataMessage) {
-			type = 0x03;
-			data = ((ProtocolDataMessage) this).toBytes(privateKey);
-		} else {
-			return null;
-		}
-		int length = data.length;
+	/**
+	 * Signs the ProtocolMessage using the provided signingKey via the SHA1withECDSA algorithm, if necessary.
+	 * Some ProtocolMessages may choose not to require signing for whatever reason - in this case, they can choose to NOP this function
+	 *
+	 * @param signingKey the key used to sign the ProtocolMessage
+	 * @throws InvalidKeyException if the signingKey is not in the correct format for signing a message
+	 */
+	public void sign(PrivateKey signingKey) throws InvalidKeyException;
 
-		ByteBuffer buffer = ByteBuffer.allocate(FRAME_META_LENGTH + length);
-		buffer.put(type);
-		buffer.putInt(messageID);
-		buffer.putInt(length);
-		buffer.put(data);
-		buffer.flip();
-		return buffer;
-	}
+	/**
+	 * Verifies this ProtocolMessage's signature using the provided senderPublicKey via the SHA1withECDSA algorithm, if necessary.
+	 * Some ProtocolMessages may choose not to require signing for whatever reason - in this case, they can choose to NOP this function.
+	 * That said, if a particular type of message generally expects to find a signature and doesn't, this function will return false
+	 * @param senderPublicKey the PublicKey of the sender of this message, used to verify the signature
+	 * @return true if the signature is valid, false otherwise
+	 * @throws InvalidKeyException if the senderPublicKey is not in the correct format for verifying a message
+	 */
+	public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException;
 
-	public static ProtocolMessage decodeMessage(ByteBuffer message, PublicKey publicKey) throws IOException, InvalidSignatureException {
-		byte type = message.get();
-		int messageID = message.getInt();
-		int length = message.getInt();
-		System.out.println("Decoding Message. Type: " + Byte.toString(type) + ", id: " + messageID + ", length: " + length);
-		byte[] data = new byte[message.remaining()];
-		message.get(data);
-		ProtocolMessage pm = null;
-		if (type == 0x01 || type == 0x02) {
-			pm = ProtocolJsonMessage.fromBytes(data, publicKey);
-		} else if (type == 0x03) {
-			pm = new ProtocolDataMessage(data);
-		}
-		pm.setMessageID(messageID);
-		return pm;
-	}
+	/**
+	 * Converts this ProtocolMessage to bytes, stored in a ByteBuffer
+	 * @return a ByteBuffer representing this ProtocolMessage in binary
+	 */
+	public ByteBuffer toBytes();
 
-	public static int getMessageLength(ByteBuffer buffer) {
-		if (!buffer.hasRemaining() || buffer.remaining() <= FRAME_META_LENGTH) {
-			return -1;
-		} else {
-			buffer.mark();
-			byte ignored = buffer.get();
-			int ignoredInt = buffer.getInt();
-			int length = buffer.getInt();
-			buffer.reset();
-			return length + FRAME_META_LENGTH;
-		}
-	}
+	/**
+	 * Converts a ByteBuffer of data to a ProtocolMessage
+	 * @param bytes the ByteBuffer representing a ProtocolMessage
+	 */
+	public void fromBytes(ByteBuffer bytes);
 
-	private void setMessageID(int id) {
-		_messageID = id;
-	}
+	/**
+	 * Returns true if this ProtocolMessage is internally consistent, false otherwise.
+	 * @return true if this ProtocolMessage is internally consistent, false otherwise.
+	 */
+	public boolean isValid();
 
-	public int getMessageID() {
-		return _messageID;
-	}
+	/**
+	 * Returns true if this ProtocolMessage represents a request - if false, it is a response. The Protocol uses this to determine certain communications behaviors.
+	 * @return true if this ProtocolMessage represents a request - if false, it is a response.
+	 */
+	public boolean isRequest();
+
+	/**
+	 * Returns the Unique Message ID for this type of message
+	 * @return the Unique Message ID for this type of message
+	 */
+	public String getType();
+
+	void setAuthToken(String authToken);
 }

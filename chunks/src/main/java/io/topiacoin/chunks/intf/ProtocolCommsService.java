@@ -1,16 +1,18 @@
 package io.topiacoin.chunks.intf;
 
+import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidSignatureException;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.PublicKey;
 import java.security.SignatureException;
 
 public interface ProtocolCommsService {
 
-	public int sendMessage(String location, int port, ProtocolMessage message)
-			throws InvalidSignatureException, SignatureException, InvalidKeyException, IOException;
+	public int sendMessage(String location, int port, byte[] transferPublicKey, String authToken, ProtocolMessage message)
+			throws InvalidSignatureException, SignatureException, InvalidKeyException, IOException, InvalidMessageException;
 
 	public void reply(ProtocolMessage message, int messageID) throws SignatureException, InvalidKeyException;
 
