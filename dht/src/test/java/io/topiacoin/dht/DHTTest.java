@@ -6,6 +6,7 @@ import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
 import io.topiacoin.dht.routing.RoutingTable;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -494,6 +495,7 @@ public class DHTTest {
     }
 
 
+    @Ignore
     @Test
     public void testSaveAndRestoreStateWithFullRoutingTable() throws Exception {
         Configuration configuration1 = new DefaultConfiguration();
