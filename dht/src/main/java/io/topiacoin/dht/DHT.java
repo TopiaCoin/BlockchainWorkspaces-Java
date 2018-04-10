@@ -39,6 +39,9 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.concurrent.Semaphore;
 
+/**
+ * A Kademlia Distributed Hash Table.  The hash table will connect to other DHT nodes to store and retrieve content.
+ */
 public class DHT {
 
     private final Log _log = LogFactory.getLog(this.getClass());
@@ -228,7 +231,7 @@ public class DHT {
     }
 
     private void stopRefreshTimer() {
-        if ( refreshTimer != null ) {
+        if (refreshTimer != null) {
             refreshTimer.cancel();
             refreshTimer = null;
         }
