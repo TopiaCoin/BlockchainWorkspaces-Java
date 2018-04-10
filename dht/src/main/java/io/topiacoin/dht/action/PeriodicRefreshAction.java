@@ -1,8 +1,6 @@
 package io.topiacoin.dht.action;
 
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.intf.Message;
-import io.topiacoin.dht.intf.ResponseHandler;
 import io.topiacoin.dht.network.Node;
 
 public class PeriodicRefreshAction implements Action{

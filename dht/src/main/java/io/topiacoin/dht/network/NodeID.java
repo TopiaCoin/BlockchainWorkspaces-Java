@@ -1,15 +1,12 @@
 package io.topiacoin.dht.network;
 
-import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.util.Utilities;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;

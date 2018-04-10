@@ -1,9 +1,9 @@
 package io.topiacoin.dht.handlers;
 
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
+import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.messages.FetchValueRequest;
 import io.topiacoin.dht.messages.FetchValueResponse;
 import io.topiacoin.dht.messages.NodeLookupResponse;
@@ -15,7 +15,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;

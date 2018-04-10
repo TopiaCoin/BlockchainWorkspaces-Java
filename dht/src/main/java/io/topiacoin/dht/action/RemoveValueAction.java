@@ -5,8 +5,6 @@ import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
 import io.topiacoin.dht.messages.RemoveValueRequest;
 import io.topiacoin.dht.messages.RemoveValueResponse;
-import io.topiacoin.dht.messages.StoreValueRequest;
-import io.topiacoin.dht.messages.StoreValueResponse;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;

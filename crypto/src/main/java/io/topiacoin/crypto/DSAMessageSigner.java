@@ -1,4 +1,4 @@
-package io.topiacoin.dht;
+package io.topiacoin.crypto;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;

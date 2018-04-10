@@ -1,9 +1,9 @@
 package io.topiacoin.dht.action;
 
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
+import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.messages.StoreValueRequest;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.network.Node;

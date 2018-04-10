@@ -1,7 +1,7 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.MessageSigner;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
 import io.topiacoin.dht.messages.MessageFactory;

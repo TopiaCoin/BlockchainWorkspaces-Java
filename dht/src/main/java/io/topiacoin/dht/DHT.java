@@ -1,5 +1,7 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.crypto.DSAMessageSigner;
+import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.action.ConnectionAction;
 import io.topiacoin.dht.action.FetchValueAction;
 import io.topiacoin.dht.action.PeriodicRefreshAction;
@@ -7,9 +9,8 @@ import io.topiacoin.dht.action.RemoveValueAction;
 import io.topiacoin.dht.action.StoreValueAction;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.content.InMemoryExpiringValueStorage;
-import io.topiacoin.dht.content.InMemoryValueStorage;
-import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.intf.FetchContentCallback;
+import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.messages.MessageFactory;
 import io.topiacoin.dht.network.CommunicationServer;
 import io.topiacoin.dht.network.Node;

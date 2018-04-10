@@ -1,5 +1,6 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.messages.MessageFactory;

@@ -4,9 +4,7 @@ import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.SortedSet;
 
 public class NodeIDComparator implements Comparator<Node> {
     private final BigInteger _target;

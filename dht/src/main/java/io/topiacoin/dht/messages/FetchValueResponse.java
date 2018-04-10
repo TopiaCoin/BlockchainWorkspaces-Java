@@ -6,7 +6,6 @@ import io.topiacoin.dht.intf.Message;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class FetchValueResponse implements Message {
 
