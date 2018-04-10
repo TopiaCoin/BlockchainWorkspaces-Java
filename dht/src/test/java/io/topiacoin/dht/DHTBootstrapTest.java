@@ -20,7 +20,7 @@ public class DHTBootstrapTest {
 
     public static int port = 37000;
 
-    public static int getPortNumber() {
+    public static synchronized int getPortNumber() {
         return port++ ;
     }
 

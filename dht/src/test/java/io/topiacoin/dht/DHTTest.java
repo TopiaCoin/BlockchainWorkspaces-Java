@@ -23,7 +23,7 @@ public class DHTTest {
 
     public static int port = 33000;
 
-    public static int getPortNumber() {
+    public static synchronized int getPortNumber() {
         return port++ ;
     }
 
