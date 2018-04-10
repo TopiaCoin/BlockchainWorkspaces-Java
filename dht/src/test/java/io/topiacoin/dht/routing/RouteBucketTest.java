@@ -5,7 +5,6 @@ import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

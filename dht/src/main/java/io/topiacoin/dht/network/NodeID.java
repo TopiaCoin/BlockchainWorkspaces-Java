@@ -1,13 +1,12 @@
 package io.topiacoin.dht.network;
 
-import io.topiacoin.dht.util.Utilities;
+import io.topiacoin.crypto.CryptoUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Random;
@@ -56,8 +55,7 @@ public class NodeID implements Comparable<NodeID>{
 
     public NodeID(String key) throws IllegalArgumentException {
         try {
-            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            this.nodeID = sha1.digest(key.getBytes());
+            this.nodeID = CryptoUtils.sha1(key.getBytes());
             this.validation = null;
         } catch ( NoSuchAlgorithmException e ) {
             throw new RuntimeException("Java no longer supports SHA-1!", e);
@@ -80,8 +78,7 @@ public class NodeID implements Comparable<NodeID>{
         this.validation = validation;
 
         try {
-            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            this.nodeID = sha1.digest(_keyPair.getPublic().getEncoded());
+            this.nodeID = CryptoUtils.sha1(_keyPair.getPublic().getEncoded());
         } catch (NoSuchAlgorithmException e) {
             _log.fatal("Unable to find required cryptographic Algorithms", e);
             throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
@@ -291,21 +288,5 @@ public class NodeID implements Comparable<NodeID>{
 
 
     // -------- Private Methods --------
-
-    /**
-     * Tests whether the proposed value meets the requirements of having a hash with the required number of leading
-     * zeros.
-     *
-     * @param c1     The number of leading zeros the cryptographic hash must have.
-     * @param digest The message digest used to validate the value.
-     * @param value  The value to be validated.
-     *
-     * @return True if the value's hash has the required number of leading zeros.  False if the value's hash does not
-     * have the required number of leading zeros.
-     */
-    private boolean isValidSolution(int c1, MessageDigest digest, byte[] value) {
-        byte[] hash1 = digest.digest(value);
-        return Utilities.hasSufficientZeros(hash1, c1);
-    }
 
 }

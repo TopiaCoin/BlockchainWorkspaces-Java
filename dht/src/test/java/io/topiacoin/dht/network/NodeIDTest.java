@@ -2,10 +2,8 @@ package io.topiacoin.dht.network;
 
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
-import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.KeyPair;

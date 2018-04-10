@@ -31,7 +31,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Set;
@@ -49,10 +48,8 @@ public class DHT {
 
     protected DHTComponents _dhtComponents;
 
-    private KeyPair keyPair;
     private NodeID nodeID;
     private final Node _node;
-    private final MessageDigest _sha1Hash;
     private boolean isRunning;
 
     private Timer refreshTimer;
@@ -62,7 +59,6 @@ public class DHT {
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
         this.nodeID = nodeIDGenerator.generateNodeID();
-        this.keyPair = keyPair;
         _node = new Node(this.nodeID, InetAddress.getLocalHost(), udpPort);
 
         MessageSigner messageSigner = new ECDSAMessageSigner();
@@ -99,8 +95,6 @@ public class DHT {
         routingTable.initialize();
         messageFactory.initialize();
         communicationServer.start();
-
-        _sha1Hash = MessageDigest.getInstance("SHA-1");
 
         // Insert this node into the routing table.
         routingTable.insert(_node);
