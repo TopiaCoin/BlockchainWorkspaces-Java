@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 
-public class DSAMessageSigner implements MessageSigner {
+public class ECDSAMessageSigner implements MessageSigner {
 
     public byte[] sign(ByteBuffer bufferToSign, KeyPair keyPair) {
         byte[] signature = null;

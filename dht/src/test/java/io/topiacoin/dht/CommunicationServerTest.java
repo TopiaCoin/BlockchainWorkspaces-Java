@@ -1,6 +1,6 @@
 package io.topiacoin.dht;
 
-import io.topiacoin.crypto.DSAMessageSigner;
+import io.topiacoin.crypto.ECDSAMessageSigner;
 import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
@@ -35,7 +35,7 @@ public class CommunicationServerTest {
         messageFactory.initialize();
 
         KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
-        MessageSigner messageSigner = new DSAMessageSigner();
+        MessageSigner messageSigner = new ECDSAMessageSigner();
 
         Configuration configuration = new DefaultConfiguration();
 
