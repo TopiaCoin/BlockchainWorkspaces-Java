@@ -73,6 +73,8 @@ public class DHT {
 
         CommunicationServer communicationServer = new CommunicationServer(udpPort, keyPair, this._node);
 
+        this._node.setPort( communicationServer.getPort() );
+
         int entryExpirationTime = configuration.getEntryExpirationTime();
 
         ValueStorage valueStorage = new InMemoryExpiringValueStorage(entryExpirationTime);

@@ -67,6 +67,10 @@ public class CommunicationServer {
         this.timer.cancel();
     }
 
+    public int getPort() {
+        return this.socket.getLocalPort();
+    }
+
     private void listen() {
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(_dhtComponents.getConfiguration());
         while (this.isRunning) {
