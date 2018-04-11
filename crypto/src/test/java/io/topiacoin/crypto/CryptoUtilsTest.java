@@ -61,18 +61,14 @@ public class CryptoUtilsTest {
         String expectedString = Base64.toBase64String(expectedData) ;
 
         byte[] encryptedDataBytes = CryptoUtils.encryptWithSecretKey(inputData, keySpec) ;
-        String encryptedDataString = CryptoUtils.encryptWithSecretKeyToString(inputData, keySpec) ;
 
         System.out.println (Hex.toHexString(encryptedDataBytes) ) ;
 
         assertArrayEquals ( expectedData, encryptedDataBytes ) ;
-        assertEquals(expectedString, encryptedDataString);
 
         byte[] decryptedDataFromBytes = CryptoUtils.decryptWithSecretKey(encryptedDataBytes, keySpec) ;
-        byte[] decryptedDataFromString = CryptoUtils.decryptWithSecretKey(encryptedDataString, keySpec) ;
 
         assertArrayEquals(inputData, decryptedDataFromBytes) ;
-        assertArrayEquals(inputData, decryptedDataFromString) ;
     }
 
     @Test
@@ -93,18 +89,14 @@ public class CryptoUtilsTest {
         String expectedString = Base64.toBase64String(expectedData) ;
 
         byte[] encryptedDataBytes = CryptoUtils.encryptWithSecretKey(inputData, keySpec, ivParameterSpec) ;
-        String encryptedDataString = CryptoUtils.encryptWithSecretKeyToString(inputData, keySpec, ivParameterSpec) ;
 
         System.out.println (Hex.toHexString(encryptedDataBytes) ) ;
 
         assertArrayEquals ( expectedData, encryptedDataBytes ) ;
-        assertEquals(expectedString, encryptedDataString);
 
         byte[] decryptedDataFromBytes = CryptoUtils.decryptWithSecretKey(encryptedDataBytes, keySpec, ivParameterSpec) ;
-        byte[] decryptedDataFromString = CryptoUtils.decryptWithSecretKey(encryptedDataString, keySpec, ivParameterSpec) ;
 
         assertArrayEquals(inputData, decryptedDataFromBytes) ;
-        assertArrayEquals(inputData, decryptedDataFromString) ;
     }
 
     @Test

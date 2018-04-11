@@ -252,42 +252,6 @@ public class CryptoUtils {
         return encryptWithSecretKey(inputData, secretKey, null);
     }
 
-    /**
-     * Encrypts the input data using the specified secret key and initialization vector specification.  If no
-     * initialization vector information is provided, the data will be encrypted using standard ECB mode instead of CBC
-     * mode.
-     * <p>
-     * This method is equivalent to: <code>Base64.toBase64String(encryptWithSecretKey(inputData, secretKey,
-     * ivParameterSpec))</code>
-     *
-     * @param inputData       The data to be decrypted
-     * @param secretKey       The encryption key to use when decrypting the data.
-     * @param ivParameterSpec The initialization vector to use when decrypting the data.
-     *
-     * @return a Base64 encoded string containing the encrypted data.
-     *
-     * @throws CryptographicException If there is an error while attempting to encrypt the data.
-     */
-    public static String encryptWithSecretKeyToString(byte[] inputData, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
-        return Base64.toBase64String(encryptWithSecretKey(inputData, secretKey, ivParameterSpec));
-    }
-
-    /**
-     * Encrypts the input data using the specified secret key and initialization vector specification.
-     * <p>
-     * This method is equivalent to: <code>Base64.toBase64String(encryptWithSecretKey(inputData, secretKey,
-     * null))</code>
-     *
-     * @param inputData The data to be decrypted
-     * @param secretKey The encryption key to use when decrypting the data.
-     *
-     * @return a Base64 encoded string containing the encrypted data.
-     *
-     * @throws CryptographicException If there is an error while attempting to encrypt the data.
-     */
-    public static String encryptWithSecretKeyToString(byte[] inputData, SecretKey secretKey) throws CryptographicException {
-        return Base64.toBase64String(encryptWithSecretKey(inputData, secretKey, null));
-    }
 
 
     // -------- Secret Key Data Decryption Methods --------
@@ -350,41 +314,6 @@ public class CryptoUtils {
         return decryptWithSecretKey(encryptedData, secretKey, null);
     }
 
-    /**
-     * Decrypts the encrypted data using the specified secret key and initialization vector specification. If no
-     * initialization vector is specified, the data is decrypted in ECB mode instead of CBC mode.
-     * <p>
-     * This method is equivalent to: <code>decryptWithSecretKey(Base64.decode(encryptedString), secretKey,
-     * ivParameterSpec)</code>
-     *
-     * @param encryptedString The Base64 encoded string containing the data to be decrypted
-     * @param secretKey       The encryption key to use when decrypting the data
-     * @param ivParameterSpec The initialization vector to use when decrypting the data.
-     *
-     * @return A byte array containing the decrypted data.
-     *
-     * @throws CryptographicException If there is an error while attempting to decrypt the data.
-     */
-    public static byte[] decryptWithSecretKey(String encryptedString, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
-        return decryptWithSecretKey(Base64.decode(encryptedString), secretKey, ivParameterSpec);
-    }
-
-    /**
-     * Decrypts the encrypted data using the specified secret key and initialization vector specification.
-     * <p>
-     * This method is equivalent to:  <code>decryptWithSecretKey(Base64.decode(encryptedString), secretKey,
-     * null)</code>
-     *
-     * @param encryptedString The Base64 encoded string containing the data to be decrypted
-     * @param secretKey       The encryption key to use when decrypting the data
-     *
-     * @return A byte array containing the decrypted data.
-     *
-     * @throws CryptographicException If there is an error while attempting to decrypt the data.
-     */
-    public static byte[] decryptWithSecretKey(String encryptedString, SecretKey secretKey) throws CryptographicException {
-        return decryptWithSecretKey(Base64.decode(encryptedString), secretKey, null);
-    }
 
 
     // -------- Secret Key String Encryption/Decryption Methods --------
