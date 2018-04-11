@@ -5,7 +5,12 @@ import java.security.KeyPair;
 
 public interface MessageSigner {
 
-    byte[] sign(ByteBuffer bufferToSign, KeyPair keyPair) ;
-    boolean verify (ByteBuffer bufferToVerify, KeyPair keyPair, byte[] signature);
+    byte[] sign(byte[] bufferToSign, KeyPair keyPair);
+
+    byte[] sign(ByteBuffer bufferToSign, KeyPair keyPair);
+
+    boolean verify(byte[] bufferToVerify, KeyPair keyPair, byte[] signature);
+
+    boolean verify(ByteBuffer bufferToVerify, KeyPair keyPair, byte[] signature);
 
 }

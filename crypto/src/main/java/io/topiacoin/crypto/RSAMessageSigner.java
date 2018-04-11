@@ -7,10 +7,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 
-public class ECDSAMessageSigner extends AbstractMessageSigner {
+
+public class RSAMessageSigner  extends AbstractMessageSigner {
 
     @Override
     protected String getSignatureAlgorithm() {
-        return "SHA1WithECDSA";
+        return "SHA1WithRSA";
     }
 }
