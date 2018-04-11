@@ -1,6 +1,5 @@
 package io.topiacoin.dht;
 
-import io.topiacoin.crypto.ECDSAMessageSigner;
 import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.action.ConnectionAction;
 import io.topiacoin.dht.action.FetchValueAction;
@@ -61,7 +60,7 @@ public class DHT {
         this.nodeID = nodeIDGenerator.generateNodeID();
         _node = new Node(this.nodeID, InetAddress.getLocalHost(), udpPort);
 
-        MessageSigner messageSigner = new ECDSAMessageSigner();
+        MessageSigner messageSigner = new MessageSigner();
 
         RoutingTable routingTable = new RoutingTable();
         routingTable.setNodeID(nodeID);

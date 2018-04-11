@@ -1,4 +1,6 @@
-package io.topiacoin.crypto;
+package io.topiacoin.crypto.impl;
+
+import io.topiacoin.crypto.MessageSigningProvider;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
@@ -7,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 
-public abstract class AbstractMessageSigner implements MessageSigner {
+public abstract class AbstractMessageSigningProvider implements MessageSigningProvider {
 
     protected abstract String getSignatureAlgorithm() ;
 

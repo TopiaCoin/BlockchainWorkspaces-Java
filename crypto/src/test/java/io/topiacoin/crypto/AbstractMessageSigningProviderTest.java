@@ -8,9 +8,9 @@ import java.security.SecureRandom;
 
 import static org.junit.Assert.*;
 
-public abstract class AbstractMessageSignerTest {
+public abstract class AbstractMessageSigningProviderTest {
 
-    protected abstract MessageSigner getMessageSigner();
+    protected abstract MessageSigningProvider getMessageSigner();
     protected abstract KeyPair getKeyPair() throws Exception;
 
     @Test
@@ -21,7 +21,7 @@ public abstract class AbstractMessageSignerTest {
 
         KeyPair keyPair = getKeyPair() ;
 
-        MessageSigner messageSigner = getMessageSigner();
+        MessageSigningProvider messageSigner = getMessageSigner();
 
         byte[] signature = messageSigner.sign(dataToSign, keyPair) ;
 
@@ -42,7 +42,7 @@ public abstract class AbstractMessageSignerTest {
 
         KeyPair keyPair = getKeyPair() ;
 
-        MessageSigner messageSigner = getMessageSigner();
+        MessageSigningProvider messageSigner = getMessageSigner();
 
         byte[] signature = messageSigner.sign(bufferToSign, keyPair) ;
 
