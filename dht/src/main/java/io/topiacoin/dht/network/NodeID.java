@@ -1,6 +1,6 @@
 package io.topiacoin.dht.network;
 
-import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.HashUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,7 +55,7 @@ public class NodeID implements Comparable<NodeID>{
 
     public NodeID(String key) throws IllegalArgumentException {
         try {
-            this.nodeID = CryptoUtils.sha1(key.getBytes());
+            this.nodeID = HashUtils.sha1(key.getBytes());
             this.validation = null;
         } catch ( NoSuchAlgorithmException e ) {
             throw new RuntimeException("Java no longer supports SHA-1!", e);
@@ -78,7 +78,7 @@ public class NodeID implements Comparable<NodeID>{
         this.validation = validation;
 
         try {
-            this.nodeID = CryptoUtils.sha1(_keyPair.getPublic().getEncoded());
+            this.nodeID = HashUtils.sha1(_keyPair.getPublic().getEncoded());
         } catch (NoSuchAlgorithmException e) {
             _log.fatal("Unable to find required cryptographic Algorithms", e);
             throw new RuntimeException("Unable to find the required cryptographic algorithms", e);

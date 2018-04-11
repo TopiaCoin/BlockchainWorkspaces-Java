@@ -1,6 +1,6 @@
 package io.topiacoin.dht.handlers;
 
-import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.HashUtils;
 import io.topiacoin.dht.DHTComponents;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
@@ -54,7 +54,7 @@ public class FetchValueRequestHandler implements ResponseHandler{
             } else {
                 // Respond with a NodeLookUpResponse Message containing the closet nodes to the requested Key
                 try {
-                    byte[] keyIDBytes = CryptoUtils.sha1(key.getBytes());
+                    byte[] keyIDBytes = HashUtils.sha1(key.getBytes());
 
                     NodeID keyID = new NodeID(keyIDBytes, null);
                     int numNodes = _dhtComponents.getConfiguration().getK();

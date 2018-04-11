@@ -6,7 +6,7 @@ import org.bouncycastle.util.encoders.Hex;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class CryptoUtils {
+public class HashUtils {
 
     /**
      * Returns the SHA-1 hash of the input bytes.  The hash is returned as a byte array.

@@ -1,6 +1,6 @@
 package io.topiacoin.dht.network;
 
-import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.HashUtils;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.util.Utilities;
 import org.apache.commons.logging.Log;
@@ -39,7 +39,7 @@ public class NodeIDGenerator {
                 keyPair = kpg.generateKeyPair();
 
                 byte[] encodedPublicKey = keyPair.getPublic().getEncoded();
-                nodeID = CryptoUtils.sha1(encodedPublicKey);
+                nodeID = HashUtils.sha1(encodedPublicKey);
                 part1Done = isValidSolution(configuration.getC1(), nodeID);
             }
 
@@ -91,7 +91,7 @@ public class NodeIDGenerator {
      * have the required number of leading zeros.
      */
     private boolean isValidSolution(int c1, byte[] value) throws NoSuchAlgorithmException {
-        byte[] hash1 = CryptoUtils.sha1(value);
+        byte[] hash1 = HashUtils.sha1(value);
         return Utilities.hasSufficientZeros(hash1, c1);
     }
 
