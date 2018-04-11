@@ -134,7 +134,7 @@ public class HashUtils {
         if (input.length != 0) {
             digest.update(input, 0, input.length);
         }
-        digest.doFinal(hash, hash.length);
+        digest.doFinal(hash, 0);
         return hash;
     }
 
