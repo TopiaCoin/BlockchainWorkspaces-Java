@@ -9,11 +9,17 @@ import org.bouncycastle.util.encoders.Base64;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -198,9 +204,9 @@ public class CryptoUtils {
      * initialization vector information is provided, the data will be encrypted using standard ECB mode instead of CBC
      * mode.
      *
-     * @param inputData       The data to be decrypted
-     * @param secretKey       The encryption key to use when decrypting the data.
-     * @param ivParameterSpec The initialization vector to use when decrypting the data.
+     * @param inputData       The data to be encrypted
+     * @param secretKey       The encryption key to use when encrypting the data.
+     * @param ivParameterSpec The initialization vector to use when encrypting the data.
      *
      * @return a byte array containing the encrypted data.
      *
@@ -241,8 +247,8 @@ public class CryptoUtils {
      * <p>
      * This method is equivalent to: <code>encryptWithSecretKey(inputData, secretKey, null)</code>
      *
-     * @param inputData The data to be decrypted
-     * @param secretKey The encryption key to use when decrypting the data.
+     * @param inputData The data to be encrypted
+     * @param secretKey The encryption key to use when encrypting the data.
      *
      * @return a byte array containing the encrypted data.
      *
@@ -252,6 +258,74 @@ public class CryptoUtils {
         return encryptWithSecretKey(inputData, secretKey, null);
     }
 
+    /**
+     * Encrypts the data in the specified InputStream using the specified secret key and initialization vector
+     * specification and writes it to the provided OutputStream.  The InputStream and OutputStream will remain open
+     * after this operation completes.
+     *
+     * @param inStream        The data stream to be encrypted
+     * @param outStream       The data stream to which the encrypted data is to be written
+     * @param secretKey       The encryption key to use when encrypting the data.
+     * @param ivParameterSpec The initialization vector to use when encrypting the data.
+     *
+     * @throws CryptographicException If there is an error while attempting to encrypt the data stream.
+     */
+    public static void encryptWithSecretKey(InputStream inStream, OutputStream outStream, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
+        try {
+            String algorithm = secretKey.getAlgorithm();
+            Cipher cipher;
+            if (ivParameterSpec != null) {
+                algorithm = secretKey.getAlgorithm() + "/CBC/PKCS5Padding";
+                cipher = Cipher.getInstance(algorithm);
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
+            } else {
+                cipher = Cipher.getInstance(algorithm);
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            }
+
+            // Put a custom Filter Output Stream between the Cipher Stream below and the
+            // actual Output Stream. This is done so that the required close() of the
+            // Cipher Output Stream, which is needed to write the final block, doesn't
+            // also close the underlying stream, which may still need to have data written
+            // to it.
+            FilterOutputStream fos = new FilterOutputStream(outStream) {
+                @Override
+                public void close() throws IOException {
+                    // Do not pass the close operation to the underlying stream.
+                }
+            };
+
+            CipherOutputStream cipherOutStream = new CipherOutputStream(fos, cipher);
+            copyStreamToStream(inStream, cipherOutStream);
+            cipherOutStream.close();
+        } catch (NoSuchPaddingException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (InvalidKeyException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (IOException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        }
+    }
+
+    /**
+     * Encrypts the data in the specified InputStream using the specified secret key and initialization vector
+     * specification and writes it to the provided OutputStream.
+     * <p>
+     * This call is equivalent to: <code>encryptWithSecretKey(inStream, outStream, secretKey, null)</code>
+     *
+     * @param inStream  The data stream to be encrypted
+     * @param outStream The data stream to which the encrypted data is to be written
+     * @param secretKey The encryption key to use when encrypting the data.
+     *
+     * @throws CryptographicException If there is an error while attempting to encrypt the data stream.
+     */
+    public static void encryptWithSecretKey(InputStream inStream, OutputStream outStream, SecretKey secretKey) throws CryptographicException {
+        encryptWithSecretKey(inStream, outStream, secretKey, null);
+    }
 
 
     // -------- Secret Key Data Decryption Methods --------
@@ -314,6 +388,61 @@ public class CryptoUtils {
         return decryptWithSecretKey(encryptedData, secretKey, null);
     }
 
+    /**
+     * Decrypts the data in the specified InputStream using the specified secret key and initialization vector
+     * specification and writes it to the provided OutputStream.  The InputStream and OutputStream will remain open
+     * after this operation completes.
+     *
+     * @param inStream        The data stream to be decrypted
+     * @param outStream       The data stream to which the decrypted data is to be written
+     * @param secretKey       The encryption key to use when decrypting the data.
+     * @param ivParameterSpec The initialization vector to use when decrypting the data.
+     *
+     * @throws CryptographicException If there is an error while attempting to decrypt the data stream.
+     */
+    public static void decryptWithSecretKey(InputStream inStream, OutputStream outStream, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
+        try {
+            String algorithm = secretKey.getAlgorithm();
+            Cipher cipher;
+            if (ivParameterSpec != null) {
+                algorithm = secretKey.getAlgorithm() + "/CBC/PKCS5Padding";
+                cipher = Cipher.getInstance(algorithm);
+                cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
+            } else {
+                cipher = Cipher.getInstance(algorithm);
+                cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            }
+
+            CipherInputStream cipherInStream = new CipherInputStream(inStream, cipher);
+            copyStreamToStream(cipherInStream, outStream);
+        } catch (NoSuchPaddingException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (InvalidKeyException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        } catch (IOException e) {
+            throw new CryptographicException("Failed to encrypt with secret key", e);
+        }
+    }
+
+    /**
+     * Decrypts the data in the specified InputStream using the specified secret key and initialization vector
+     * specification and writes it to the provided OutputStream.
+     * <p>
+     * This method is equivalent to: <code>decryptWithSecretKey(inStream, outStream, secretKey, null)</code>
+     *
+     * @param inStream  The data stream to be decrypted
+     * @param outStream The data stream to which the decrypted data is to be written
+     * @param secretKey The encryption key to use when decrypting the data.
+     *
+     * @throws CryptographicException If there is an error while attempting to decrypt the data stream.
+     */
+    public static void decryptWithSecretKey(InputStream inStream, OutputStream outStream, SecretKey secretKey) throws CryptographicException {
+        decryptWithSecretKey(inStream, outStream, secretKey, null);
+    }
 
 
     // -------- Secret Key String Encryption/Decryption Methods --------
@@ -408,6 +537,18 @@ public class CryptoUtils {
             throw new CryptographicException("Failed to decrypt String with secret key", ex);
         } catch (UnsupportedEncodingException ex) {
             throw new CryptographicException("Failed to decrypt String with secret key", ex);
+        }
+    }
+
+
+    // -------- Private Methods --------
+
+    private static void copyStreamToStream(InputStream inStream, OutputStream cos) throws IOException {
+        // Copy the bytes from the input stream to the output stream.
+        byte[] buffer = new byte[8192];
+        int bytesRead = 0;
+        while ((bytesRead = inStream.read(buffer)) >= 0) {
+            cos.write(buffer, 0, bytesRead);
         }
     }
 

@@ -8,8 +8,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Random;
 
 import static org.junit.Assert.*;
 
@@ -206,5 +211,87 @@ public class CryptoUtilsTest {
         assertArrayEquals(inputData, decryptStringBytes);
         assertArrayEquals(inputData, decryptDataString);
         assertArrayEquals(inputData, decryptStringString);
+    }
+
+    @Test
+    public void testEncryptDecryptStreams() throws Exception {
+        byte[] keyBytes = new byte[16] ; // Key is all 0's.
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES") ;
+
+        byte[] inData = new byte[16384] ;
+        Random random = new Random();
+        random.nextBytes(inData);
+
+        System.out.println ( "inData.length: " + inData.length) ;
+        System.out.println ( "inData: " + Arrays.toString(inData)) ;
+
+        ByteArrayInputStream encBais = new ByteArrayInputStream(inData) ;
+        ByteArrayOutputStream encBaos = new ByteArrayOutputStream() ;
+
+        CryptoUtils.encryptWithSecretKey(encBais, encBaos, keySpec);
+
+        byte[] encData = encBaos.toByteArray() ;
+
+        System.out.println ( "encData.length: " + encData.length) ;
+        System.out.println ( "encData: " + Arrays.toString(encData)) ;
+
+        assertNotNull ( encData) ;
+        assertTrue ( encData.length >= inData.length ) ;
+
+        ByteArrayInputStream decBais = new ByteArrayInputStream(encData) ;
+        ByteArrayOutputStream decBaos = new ByteArrayOutputStream() ;
+
+        CryptoUtils.decryptWithSecretKey(decBais, decBaos, keySpec);
+
+        byte[] decData = decBaos.toByteArray() ;
+
+        System.out.println ( "decData.length: " + decData.length) ;
+        System.out.println ( "decData: " + Arrays.toString(decData)) ;
+
+        assertNotNull ( decData) ;
+        assertTrue ( decData.length <= encData.length ) ;
+        assertArrayEquals(inData, decData);
+    }
+
+    @Test
+    public void testEncryptDecryptStreamsWithIV() throws Exception {
+        byte[] keyBytes = new byte[16] ; // Key is all 0's.
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES") ;
+        byte[] ivBytes = new byte[16] ; // IV is all 0's.
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes) ;
+
+        byte[] inData = new byte[16] ;
+        Random random = new Random();
+        random.nextBytes(inData);
+
+        System.out.println ( "inData.length: " + inData.length) ;
+        System.out.println ( "inData: " + Arrays.toString(inData)) ;
+
+        ByteArrayInputStream encBais = new ByteArrayInputStream(inData) ;
+        ByteArrayOutputStream encBaos = new ByteArrayOutputStream() ;
+
+        CryptoUtils.encryptWithSecretKey(encBais, encBaos, keySpec, ivParameterSpec);
+
+        byte[] encData = encBaos.toByteArray() ;
+
+        System.out.println ( "encData.length: " + encData.length) ;
+        System.out.println ( "encData: " + Arrays.toString(encData)) ;
+
+        assertNotNull ( encData) ;
+        assertTrue ( encData.length >= inData.length ) ;
+
+        ByteArrayInputStream decBais = new ByteArrayInputStream(encData) ;
+        ByteArrayOutputStream decBaos = new ByteArrayOutputStream() ;
+
+        CryptoUtils.decryptWithSecretKey(decBais, decBaos, keySpec, ivParameterSpec);
+
+        byte[] decData = decBaos.toByteArray() ;
+
+        System.out.println ( "decData.length: " + decData.length) ;
+        System.out.println ( "decData: " + Arrays.toString(decData)) ;
+
+        assertNotNull ( decData) ;
+        assertTrue ( decData.length <= encData.length ) ;
+        assertArrayEquals(inData, decData);
     }
 }
