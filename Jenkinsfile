@@ -10,7 +10,7 @@ node () {
     checkout scm
 
     stage 'Building'
-    mvn( '-U clean package -fn')
+    mvn( '-U clean package -fae')
 
     if ( buildBranch.endsWith('-develop')) {
             stage 'Deploying Artifacts'
