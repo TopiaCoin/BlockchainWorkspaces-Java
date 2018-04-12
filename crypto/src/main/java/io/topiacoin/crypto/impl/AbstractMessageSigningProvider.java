@@ -1,7 +1,5 @@
 package io.topiacoin.crypto.impl;
 
-import io.topiacoin.crypto.MessageSigningProvider;
-
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;

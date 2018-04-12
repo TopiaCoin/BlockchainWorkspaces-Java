@@ -1,5 +1,6 @@
-package io.topiacoin.crypto;
+package io.topiacoin.crypto.impl;
 
+import io.topiacoin.crypto.impl.MessageSigningProvider;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;

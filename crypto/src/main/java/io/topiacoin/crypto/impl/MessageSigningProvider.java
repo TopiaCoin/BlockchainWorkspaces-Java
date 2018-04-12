@@ -1,4 +1,4 @@
-package io.topiacoin.crypto;
+package io.topiacoin.crypto.impl;
 
 import java.nio.ByteBuffer;
 import java.security.KeyPair;

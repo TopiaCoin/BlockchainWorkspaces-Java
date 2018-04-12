@@ -1,21 +1,20 @@
-package io.topiacoin.crypto;
+package io.topiacoin.crypto.impl;
 
-import io.topiacoin.crypto.impl.ECDSAMessageSigningProvider;
+import io.topiacoin.crypto.ECKey;
+import io.topiacoin.crypto.HashUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPublicKeySpec;
 
-public class ECDSAMessageSignerTest extends AbstractMessageSigningProviderTest {
+public class ECDSAMessageSigningProviderTest extends AbstractMessageSigningProviderTest {
     @Override
     protected MessageSigningProvider getMessageSigner() {
         return new ECDSAMessageSigningProvider();
@@ -32,6 +31,7 @@ public class ECDSAMessageSignerTest extends AbstractMessageSigningProviderTest {
     }
 
 
+    @Ignore
     @Test
     public void testPublicKeyRecovery() throws Exception {
         byte[] dataToSign = new byte[1024];

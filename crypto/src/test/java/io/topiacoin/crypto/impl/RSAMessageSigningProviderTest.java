@@ -1,11 +1,9 @@
-package io.topiacoin.crypto;
-
-import io.topiacoin.crypto.impl.RSAMessageSigningProvider;
+package io.topiacoin.crypto.impl;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 
-public class RSAMessageSignerTest extends AbstractMessageSigningProviderTest {
+public class RSAMessageSigningProviderTest extends AbstractMessageSigningProviderTest {
     @Override
     protected MessageSigningProvider getMessageSigner() {
         return new RSAMessageSigningProvider();
