@@ -24,6 +24,8 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -36,6 +38,7 @@ public class CryptoUtils {
     private static final Log _log = LogFactory.getLog(CryptoUtils.class);
 
     private static final Map<String, Integer> blockSizes = new HashMap<String, Integer>();
+    private static final Map<String, KeyPairGenerator> keyPairGenerators = new HashMap<String, KeyPairGenerator>();
 
     private static final SecureRandom secureRandom = new SecureRandom();
 
@@ -91,6 +94,34 @@ public class CryptoUtils {
         byte[] ivBytes = new byte[size];
         secureRandom.nextBytes(ivBytes);
         return new IvParameterSpec(ivBytes);
+    }
+
+    public static KeyPair generateKeyPair(String algorithm) throws CryptographicException {
+        KeyPair keyPair = null ;
+        try {
+            KeyPairGenerator keyPairGenerator = getKeyPairGenerator(algorithm);
+            keyPair = keyPairGenerator.generateKeyPair() ;
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException("Unrecognized Algorithm: " + algorithm) ;
+        }
+
+        return keyPair ;
+    }
+
+    public static KeyPair generateECKeyPair() throws CryptographicException {
+        return generateKeyPair("EC") ;
+    }
+
+    public static KeyPair generateRSAKeyPair() throws CryptographicException {
+        return generateKeyPair("RSA") ;
+    }
+
+    public static KeyPair generateDSAKeyPair() throws CryptographicException {
+        return generateKeyPair("DSA") ;
+    }
+
+    public static KeyPair generateDHKeyPair() throws CryptographicException {
+        return generateKeyPair("DH") ;
     }
 
 
@@ -542,6 +573,17 @@ public class CryptoUtils {
 
 
     // -------- Private Methods --------
+
+    private static KeyPairGenerator getKeyPairGenerator(String algorithm) throws NoSuchAlgorithmException {
+        KeyPairGenerator kpg = keyPairGenerators.get(algorithm) ;
+        if ( kpg == null ){
+            kpg = KeyPairGenerator.getInstance(algorithm) ;
+            keyPairGenerators.put(algorithm, kpg);
+        }
+
+        return kpg ;
+    }
+
 
     private static void copyStreamToStream(InputStream inStream, OutputStream cos) throws IOException {
         // Copy the bytes from the input stream to the output stream.

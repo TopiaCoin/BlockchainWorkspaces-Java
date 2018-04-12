@@ -43,12 +43,89 @@ public class CryptoUtilsTest {
     @Test
     public void testGenerateInitializationVector() throws Exception {
 
+        IvParameterSpec iv = CryptoUtils.generateIV("AES");;
+
+        assertNotNull(iv);
     }
 
     @Test
-    public void testEncryptWithPublicKey() throws Exception {
+    public void testGenerateKeyPair() throws Exception {
 
+        KeyPair keyPair = null ;
+
+        keyPair = CryptoUtils.generateKeyPair("EC") ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("EC", keyPair.getPublic().getAlgorithm());
+        assertEquals("EC", keyPair.getPrivate().getAlgorithm());
+
+        keyPair = CryptoUtils.generateKeyPair("RSA") ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("RSA", keyPair.getPublic().getAlgorithm());
+        assertEquals("RSA", keyPair.getPrivate().getAlgorithm());
+
+        keyPair = CryptoUtils.generateKeyPair("DSA") ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("DSA", keyPair.getPublic().getAlgorithm());
+        assertEquals("DSA", keyPair.getPrivate().getAlgorithm());
+
+        keyPair = CryptoUtils.generateKeyPair("DH") ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("DH", keyPair.getPublic().getAlgorithm());
+        assertEquals("DH", keyPair.getPrivate().getAlgorithm());
     }
+
+    @Test
+    public void testGenerateRSAKeyPair() throws Exception {
+
+        KeyPair keyPair = null ;
+
+        keyPair = CryptoUtils.generateRSAKeyPair() ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("RSA", keyPair.getPublic().getAlgorithm());
+        assertEquals("RSA", keyPair.getPrivate().getAlgorithm());
+    }
+
+    @Test
+    public void testGenerateDSAKeyPair() throws Exception {
+
+        KeyPair keyPair = null ;
+
+        keyPair = CryptoUtils.generateDSAKeyPair() ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("DSA", keyPair.getPublic().getAlgorithm());
+        assertEquals("DSA", keyPair.getPrivate().getAlgorithm());
+    }
+
+    @Test
+    public void testGenerateECKeyPair() throws Exception {
+
+        KeyPair keyPair = null ;
+
+        keyPair = CryptoUtils.generateECKeyPair() ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("EC", keyPair.getPublic().getAlgorithm());
+        assertEquals("EC", keyPair.getPrivate().getAlgorithm());
+    }
+
+    @Test
+    public void testGenerateDHKeyPair() throws Exception {
+
+        KeyPair keyPair = null ;
+
+        keyPair = CryptoUtils.generateDHKeyPair() ;
+
+        assertNotNull ( keyPair) ;
+        assertEquals("DH", keyPair.getPublic().getAlgorithm());
+        assertEquals("DH", keyPair.getPrivate().getAlgorithm());
+    }
+
 
     @Test
     public void testEncryptAndDecryptDataWithSecretKey() throws Exception {
