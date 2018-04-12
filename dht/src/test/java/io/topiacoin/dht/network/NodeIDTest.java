@@ -1,5 +1,6 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import org.junit.Test;
@@ -7,7 +8,6 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -139,8 +139,7 @@ public class NodeIDTest {
         // constructor to throw.  If it does happen to match, then the validation bytes will almost
         // certainly cause it to throw as the likelihood of the key validating and then the validation
         // string validating the generated node ID are astronomical.
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair = kpg.generateKeyPair();
+        KeyPair keyPair = CryptoUtils.generateECKeyPair();
 
         byte[] validationBytes = new byte[]{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, -10, -20, -128, -30, -40, -50, -60};
 

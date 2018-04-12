@@ -1,5 +1,6 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.DHTComponents;
 import io.topiacoin.dht.intf.Message;
@@ -144,6 +145,8 @@ public class CommunicationServer {
 
             } catch (IOException e) {
                 // Failed to read the data.  Move along
+            } catch (CryptographicException e) {
+                // Failed to verify the data.  Move along
             }
         }
     }
@@ -205,8 +208,13 @@ public class CommunicationServer {
 //        System.out.println ("message buffer: " + Arrays.toString(messageBuffer.array())) ;
 
         // Sign the Message and append the signature
-        byte[]signature = messageSigner.sign(messageBuffer, this.keyPair) ;
-        messageBuffer.flip();
+        byte[] signature = new byte[0];
+        try {
+            signature = messageSigner.sign(messageBuffer, this.keyPair);
+            messageBuffer.flip();
+        } catch ( CryptographicException e ) {
+            _log.warn ( "Unable to generate signature for Message", e) ;
+        }
 
         ByteBuffer packetBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         packetBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order

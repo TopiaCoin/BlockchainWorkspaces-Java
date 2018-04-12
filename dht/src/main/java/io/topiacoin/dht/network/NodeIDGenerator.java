@@ -1,5 +1,7 @@
 package io.topiacoin.dht.network;
 
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.crypto.HashUtils;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.util.Utilities;
@@ -7,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
@@ -28,7 +29,6 @@ public class NodeIDGenerator {
             byte[] nodeID = null;
             byte[] validation = null;
 
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
             Random random = new Random();
 
             boolean part1Done = false;
@@ -36,7 +36,7 @@ public class NodeIDGenerator {
 
             // Find a key that conforms to the First check: H(H(pubKey)) < 2^(160-c1)
             while (!part1Done) {
-                keyPair = kpg.generateKeyPair();
+                keyPair = CryptoUtils.generateECKeyPair();
 
                 byte[] encodedPublicKey = keyPair.getPublic().getEncoded();
                 nodeID = HashUtils.sha1(encodedPublicKey);
@@ -53,6 +53,9 @@ public class NodeIDGenerator {
 
             return new NodeID(keyPair, validation);
         } catch (NoSuchAlgorithmException e) {
+            _log.fatal("Unable to find required cryptographic Algorithms", e);
+            throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
+        } catch (CryptographicException e) {
             _log.fatal("Unable to find required cryptographic Algorithms", e);
             throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
         }

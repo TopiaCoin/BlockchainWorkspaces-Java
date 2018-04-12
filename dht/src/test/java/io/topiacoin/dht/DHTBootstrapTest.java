@@ -1,5 +1,6 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.network.Node;
@@ -10,7 +11,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.util.List;
 import java.util.Random;
 
@@ -37,9 +37,8 @@ public class DHTBootstrapTest {
         int port2 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -116,12 +115,11 @@ public class DHTBootstrapTest {
         int port5 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
-        KeyPair keyPair3 = ecGenerator.generateKeyPair();
-        KeyPair keyPair4 = ecGenerator.generateKeyPair();
-        KeyPair keyPair5 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair3 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair4 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair5 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -342,12 +340,11 @@ public class DHTBootstrapTest {
         int port5 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
-        KeyPair keyPair3 = ecGenerator.generateKeyPair();
-        KeyPair keyPair4 = ecGenerator.generateKeyPair();
-        KeyPair keyPair5 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair3 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair4 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair5 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -565,9 +562,8 @@ public class DHTBootstrapTest {
         int port2 = getPortNumber();
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -597,8 +593,7 @@ public class DHTBootstrapTest {
         configuration.setC2(8);
 
         int port1 = getPortNumber();
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -624,8 +619,7 @@ public class DHTBootstrapTest {
         configuration.setC2(8);
 
         int port1 = getPortNumber();
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 

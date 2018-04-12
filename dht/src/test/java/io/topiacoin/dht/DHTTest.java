@@ -1,5 +1,6 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
 import io.topiacoin.dht.network.Node;
@@ -9,7 +10,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,8 +37,7 @@ public class DHTTest {
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -96,8 +95,7 @@ public class DHTTest {
         values.add( "HarryPotterAndSecretCave");
         values.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
         dht1.start(false);
@@ -139,9 +137,8 @@ public class DHTTest {
         values2.add( "HarryPotterAndStuffThatWillKillYou");
         values2.add( "HarryPotterAndPrinceWhoIsn'tAPrince");
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
         DHT dht2 = new DHT(port2, keyPair2, configuration);
@@ -191,9 +188,8 @@ public class DHTTest {
         values1.add( "HarryPotterAndSecretCave");
         values1.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
         DHT dht2 = new DHT(port2, keyPair2, configuration);
@@ -233,9 +229,8 @@ public class DHTTest {
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -298,9 +293,8 @@ public class DHTTest {
         String key = "Key";
         String value = "HarryPotterAndTheGuyWhoLooksLikeASnake";
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
         DHT dht2 = new DHT(port2, keyPair2, configuration);
@@ -373,9 +367,8 @@ public class DHTTest {
         values1.add( "HarryPotterAndSecretCave");
         values1.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration);
         DHT dht2 = new DHT(port2, keyPair2, configuration);
@@ -421,12 +414,11 @@ public class DHTTest {
         String key = "Key";
         String value = "HarryPotterAndOlympicCauldron";
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
-        KeyPair keyPair3 = ecGenerator.generateKeyPair();
-        KeyPair keyPair4 = ecGenerator.generateKeyPair();
-        KeyPair keyPair5 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair3 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair4 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair5 = CryptoUtils.generateECKeyPair();
 
         Random random = new Random();
 
@@ -504,8 +496,7 @@ public class DHTTest {
         int port1 = getPortNumber();
         int port2 = getPortNumber();
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration1);
         DHT dht2 = new DHT(port2, keyPair1, configuration1);
@@ -555,8 +546,7 @@ public class DHTTest {
 
         int port1 = getPortNumber();
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration1);
 
@@ -581,9 +571,8 @@ public class DHTTest {
         int port1 = getPortNumber();
         int port2 = getPortNumber();
 
-        KeyPairGenerator ecGenerator = KeyPairGenerator.getInstance("EC");
-        KeyPair keyPair1 = ecGenerator.generateKeyPair();
-        KeyPair keyPair2 = ecGenerator.generateKeyPair();
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
 
         DHT dht1 = new DHT(port1, keyPair1, configuration1);
         DHT dht2 = new DHT(port2, keyPair2, configuration1);

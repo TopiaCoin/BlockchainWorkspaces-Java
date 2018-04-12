@@ -1,5 +1,6 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.MessageSigner;
 import io.topiacoin.dht.config.Configuration;
 import io.topiacoin.dht.config.DefaultConfiguration;
@@ -15,7 +16,6 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 
 import static junit.framework.TestCase.*;
 
@@ -33,7 +33,7 @@ public class CommunicationServerTest {
         MessageFactory messageFactory = new MessageFactory();
         messageFactory.initialize();
 
-        KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
+        KeyPair keyPair = CryptoUtils.generateECKeyPair();
         MessageSigner messageSigner = new MessageSigner();
 
         Configuration configuration = new DefaultConfiguration();
