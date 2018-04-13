@@ -12,6 +12,7 @@ public class DefaultConfiguration implements Configuration {
 	private final Properties DEFAULT_PROPERTIES = new Properties();
 	protected Properties _overrides = new Properties(DEFAULT_PROPERTIES);
 	private final NotificationCenter _notificationCenter = NotificationCenter.defaultCenter();
+
 	/**
 	 * Posted when a configuration value is changed. The classifier is the name of the notification that was changed.
 	 * The notification info contains the old value under the key 'oldValue' and the new value under the key

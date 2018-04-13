@@ -1,11 +1,10 @@
 package io.topiacoin.dht;
 
+import io.topiacoin.crypto.CryptoUtils;
 import org.apache.commons.codec.binary.Hex;
-import org.junit.Test;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.util.Random;
 
@@ -20,11 +19,10 @@ public class TestyTestTest {
         int c1 = 11;
         int c2 = 20;
 
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
         MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
         Random random = new Random();
 
-        KeyPair keyPair = kpg.generateKeyPair(); // Prime the key generation code
+        KeyPair keyPair = CryptoUtils.generateECKeyPair(); // Prime the key generation code
 
         byte[] nodeID = null;
         byte[] x = null;
@@ -44,7 +42,7 @@ public class TestyTestTest {
             int part1Count = 0;
             byte[] encodedPublicKey = keyPair.getPublic().getEncoded();
             while (!part1Done) {
-                keyPair = kpg.generateKeyPair();
+                keyPair = CryptoUtils.generateECKeyPair();
 
                 byte[] hash1 = sha1.digest(sha1.digest(encodedPublicKey));
                 part1Done = hasSufficientZeros(hash1, c1);

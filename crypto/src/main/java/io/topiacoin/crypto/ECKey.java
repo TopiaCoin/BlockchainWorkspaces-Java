@@ -18,6 +18,7 @@ import static java.util.Arrays.copyOfRange;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
@@ -666,7 +667,12 @@ public class ECKey implements Serializable {
     }
 
     public static byte[] sha3(byte[] input) {
-        byte[] result = SHA3Helper.sha3(input);
+        byte[] result = new byte[0];
+        try {
+            result = HashUtils.sha3(input);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         return result;
     }
 

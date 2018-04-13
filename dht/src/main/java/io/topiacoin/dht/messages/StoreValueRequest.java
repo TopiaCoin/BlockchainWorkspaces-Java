@@ -1,27 +1,19 @@
 package io.topiacoin.dht.messages;
 
+import io.topiacoin.core.util.StringUtilities;
 import io.topiacoin.dht.intf.Message;
-import io.topiacoin.dht.network.Node;
 
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.SignatureException;
 
 public class StoreValueRequest implements Message {
 
+    public static final byte TYPE = (byte)0x05;
+
     private String key;
     private String value;
-    private byte[] signature;
 
-    public StoreValueRequest(String key, String value) {
-        this.key = key;
-        this.value = value;
+    public StoreValueRequest() {
     }
 
     public StoreValueRequest(ByteBuffer buffer) {
@@ -29,7 +21,7 @@ public class StoreValueRequest implements Message {
     }
 
     public byte getType() {
-        return 0;
+        return TYPE;
     }
 
     public String getKey() {
@@ -49,9 +41,9 @@ public class StoreValueRequest implements Message {
     }
 
     public void encodeMessage(ByteBuffer buffer) {
-        byte[] keyBytes = (this.key != null ? this.key.getBytes() : new byte[0]);
-        byte[] valueBytes = (this.value != null ? this.value.getBytes() : new byte[0]);
+        byte[] keyBytes = StringUtilities.getStringBytesOrEmptyArray(this.key);
         int keyLength = keyBytes.length;
+        byte[] valueBytes = StringUtilities.getStringBytesOrEmptyArray(this.value);
         int valueLength = valueBytes.length;
 
         buffer.putInt(keyLength);
@@ -100,5 +92,13 @@ public class StoreValueRequest implements Message {
         int result = key != null ? key.hashCode() : 0;
         result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "StoreValueRequest{" +
+                "key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                '}';
     }
 }
