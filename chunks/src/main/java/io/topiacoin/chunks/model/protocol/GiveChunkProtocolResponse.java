@@ -9,19 +9,23 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 
-public class ChunksProtocolMessage implements ProtocolMessage {
+public class GiveChunkProtocolResponse implements ProtocolMessage {
 	private String _userID;
-	private String[] _chunks;
+	private String _chunkId;
+	private byte[] _chunkdata;
 	private byte[] _signature = null;
 	private String _authToken;
-	private boolean _isRequest;
-	private String _messageType;
+	private boolean _isRequest = false;
+	private String _messageType = "GIVE_CHUNK";
 
-	ChunksProtocolMessage(String[] chunksRequired, String userID, boolean isRequest, String messageType) {
-		_chunks = chunksRequired;
+	public GiveChunkProtocolResponse(String chunkId, byte[] data, String userID) {
+		_chunkId = chunkId;
+		_chunkdata = data;
 		_userID = userID;
-		_isRequest = isRequest;
-		_messageType = messageType;
+	}
+
+	public GiveChunkProtocolResponse() {
+		this(null, null, null);
 	}
 
 	@Override public void sign(PrivateKey signingKey) throws InvalidKeyException {
@@ -68,14 +72,10 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 		//The message is the
 		// userID length, an int
 		// userID, a UTF-8 String whose bytelength is userID length
-		// chunk count, an int
-		// chunk0 ID length, an int
-		// chunk0 ID, a UTF-8 String whose bytelength is chunk0 length
-		// chunk1 ID length, an int
-		// chunk1 ID, a UTF-8 String whose bytelength is chunk1 length
-		// ...
-		// chunkn (where n is chunk count -1) ID length, an int
-		// chunkn (where n is chunk count -1) ID, a UTF-8 String whose bytelength is chunkn length
+		// chunk ID length, an int
+		// chunk ID, a UTF-8 String whose bytelength is chunk0 length
+		// chunk data length, an int
+		// chunk data, an array of bytes
 		// signature length, an int
 		// signature bytes, an array of bytes whose length is signature length
 		// authToken length, an int
@@ -85,11 +85,10 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 		int toAlloc = 0;
 		toAlloc += Integer.BYTES; //UserID length
 		toAlloc += _userID.getBytes(Charset.forName("UTF-8")).length; //userID
-		toAlloc += Integer.BYTES; //chunk count
-		for(String chunk : _chunks) {
-			toAlloc += Integer.BYTES; //every chunkx length
-			toAlloc += chunk.getBytes(Charset.forName("UTF-8")).length; //Every chunkx ID length
-		}
+		toAlloc += Integer.BYTES; //chunk ID length
+		toAlloc += _chunkId.getBytes(Charset.forName("UTF-8")).length; //chunkID string length
+		toAlloc += Integer.BYTES; //chunk data length
+		toAlloc += _chunkdata.length; //chunk data bytes
 		toAlloc += Integer.BYTES; //signature length
 		if(includeSig) {
 			toAlloc += _signature == null ? 0 : _signature.length; //signature bytes
@@ -104,12 +103,11 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 		byte[] userIDBytes = _userID.getBytes(Charset.forName("UTF-8"));
 		toReturn.putInt(userIDBytes.length); //UserID length
 		toReturn.put(userIDBytes); //UserID
-		toReturn.putInt(_chunks.length); //Chunk count
-		for(String chunk : _chunks) {
-			byte[] chunkBytes = chunk.getBytes(Charset.forName("UTF-8"));
-			toReturn.putInt(chunkBytes.length); //chunkX ID length
-			toReturn.put(chunkBytes); //chunkX ID
-		}
+		byte[] chunkIDBytes = _chunkId.getBytes(Charset.forName("UTF-8"));
+		toReturn.putInt(chunkIDBytes.length); //chunk ID length
+		toReturn.put(chunkIDBytes); //chunk ID
+		toReturn.putInt(_chunkdata.length); //chunk data length
+		toReturn.put(_chunkdata); //chunk data
 		toReturn.putInt(_signature == null ? 0 : _signature.length); //signature length
 		if(includeSig && _signature != null) {
 			toReturn.put(_signature); //signature bytes
@@ -132,14 +130,13 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 			bytes.get(userIDBytes);
 			_userID = new String(userIDBytes, Charset.forName("UTF-8"));
 		}
-		int chunkCount = bytes.getInt();
-		_chunks = new String[chunkCount];
-		for(int i = 0; i < _chunks.length; i++) {
-			int chunkxLength = bytes.getInt();
-			byte[] chunkxBytes = new byte[chunkxLength];
-			bytes.get(chunkxBytes);
-			_chunks[i] = new String(chunkxBytes, Charset.forName("UTF-8"));
-		}
+		int chunkIDLength = bytes.getInt();
+		byte[] chunkIDBytes = new byte[chunkIDLength];
+		bytes.get(chunkIDBytes);
+		_chunkId = new String(chunkIDBytes, Charset.forName("UTF-8"));
+		int chunkDataLength = bytes.getInt();
+		_chunkdata = new byte[chunkDataLength];
+		bytes.get(_chunkdata);
 		int signatureLength = bytes.getInt();
 		if(signatureLength > 0) {
 			_signature = new byte[signatureLength];
@@ -154,7 +151,7 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 	}
 
 	@Override public boolean isValid() {
-		return _userID != null && _chunks != null && _chunks.length > 0;
+		return _userID != null && _chunkId != null && _chunkId.length() > 0 && _chunkdata != null && _chunkdata.length > 0;
 	}
 
 	@Override public boolean isRequest() {
@@ -165,19 +162,19 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 		return _messageType;
 	}
 
-	public void setAuthToken(String authToken) {
-		_authToken = authToken;
-	}
-
 	public String getMessageType() {
 		return _messageType;
 	}
 
-	String[] getChunks() {
-		return _chunks;
+	public String getChunkID() {
+		return _chunkId;
 	}
 
 	public String getUserID() {
 		return _userID;
+	}
+
+	public byte[] getChunkData() {
+		return _chunkdata;
 	}
 }

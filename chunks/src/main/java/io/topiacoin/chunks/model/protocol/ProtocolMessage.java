@@ -64,6 +64,4 @@ public interface ProtocolMessage {
 	 * @return the Unique Message ID for this type of message
 	 */
 	public String getType();
-
-	void setAuthToken(String authToken);
 }

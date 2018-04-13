@@ -316,7 +316,7 @@ public class UTPSocket extends Socket {
 										//If the packet was received out of sequence, we'll add it to our Receive Window
 										} else if (next.getSequenceNumber() > currentacknumber) {
 											boolean wasadded = false;
-											//If the receive window is empty, add the packet to the start of the receive-window
+											//If the receive window is empty, add the packet to the startListener of the receive-window
 											if (receivewindow.size() == 0) {
 												if (next.getSize() + (next.getSequenceNumber() - currentacknumber)*packetsize <= maxReceiveWindowSize) {
 													//This approximates the receive window size. Since the packets between acknumber and this packet 
