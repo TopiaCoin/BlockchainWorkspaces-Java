@@ -5,3 +5,4 @@ crypto/target/
 dht/target/
 model/target/
 chunks/target/
+workspace-blockchain/target/
