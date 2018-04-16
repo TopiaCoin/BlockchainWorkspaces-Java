@@ -63,8 +63,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	private Map<MessageID, byte[]> _requestorPublicKeys = new HashMap<>();
 	private Map<MessageID, byte[]> _messageAuthKeys = new HashMap<>();
 	private Map<MessageID, KeyPair> _messageRequestKeypairs = new HashMap<>();
-	private Map<MessageID, SocketAddress> _replyAddresses = new HashMap<>();
-	private Map<SocketAddress, Integer> _requestResponseSplits = new HashMap<>();
+	private Map<MessageID, SocketChannel> _replyConnections = new HashMap<>();
+	private Map<MessageID, Integer> _requestResponseSplits = new HashMap<>();
 	private Map<String, Byte> _messageTypes = new HashMap<>();
 	private int _messageIdTracker = 0;
 	private ProtocolCommsHandler _handler = null;
@@ -110,33 +110,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			sc.configureBlocking(false);
 			_connections.put(addr, sc);
 		}
-		_replyAddresses.put(messageID, addr);
-
-		/*Integer messageID = _messageIDs.get(addr);
-		if (messageID != null) {
-			sc = _connections.get(addr);
-			if (sc == null || !sc.isConnected()) {
-				SocketChannel channel = _connections.remove(addr);
-				if (channel != null && channel.isConnected()) {
-					try {
-						channel.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				_requestResponseSplits.remove(addr);
-				_replyAddresses.remove(messageID);
-				messageID = null;
-			}
-		}
-		if (messageID == null) {
-			messageID = _messageIdTracker++;
-			sc = SocketChannel.open(addr);
-			sc.configureBlocking(false);
-			_messageIDs.put(addr, messageID);
-			_replyAddresses.put(messageID, addr);
-			_connections.put(messageID, sc);
-		}*/
+		_replyConnections.put(messageID, sc);
 
 		boolean sendPubKey = false;
 		KeyPair requestKeyPair = _messageRequestKeypairs.get(messageID);
@@ -159,7 +133,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		ArrayList<ByteBuffer> dataList = _writeBuffers.get(sc);
 		dataList = dataList == null ? new ArrayList<ByteBuffer>() : dataList;
 		dataList.add(data);
-		incrementRequestResponseSplit(addr);
+		incrementRequestResponseSplit(messageID);
 		_writeBuffers.put(sc, dataList);
 		_listenerRunnable.wakeupSelector();
 		return messageID;
@@ -225,7 +199,6 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			hash.update(keys.get(1));
 			//We must now reduce the size of this keyData to 128 bits (16 bytes) due to U.S. Govt regulations regarding maximum Keylength.
 			byte[] derivedKeyData = Arrays.copyOf(hash.digest(), 16);
-			//String authString = new BASE64Encoder().encodeBuffer(derivedKeyData);
 			return new SecretKeySpec(derivedKeyData, "AES");
 		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
 			throw new RuntimeException("", e);
@@ -248,7 +221,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		ByteBuffer data = message.toBytes();
 		if (!(message instanceof ErrorProtocolResponse)) {
 			try {
-				System.out.println("Encrypting: " + DatatypeConverter.printHexBinary(message.toBytes().array()));
+				System.out.println("Encrypting: " + (data.remaining() > 5000 ? "<a lot of data> " : DatatypeConverter.printHexBinary(message.toBytes().array())));
 				System.out.println("With Key: " + DatatypeConverter.printHexBinary(requestKey.getEncoded()));
 				Cipher cipher = Cipher.getInstance("AES");
 				cipher.init(Cipher.ENCRYPT_MODE, requestKey);
@@ -259,7 +232,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					toReturn.put(transferPubKey);
 				}
 				toReturn.putInt(encrypted.length).put(encrypted);
-				System.out.println("Encrypted: " + DatatypeConverter.printHexBinary(encrypted));
+				System.out.println("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" :DatatypeConverter.printHexBinary(encrypted)));
 				return toReturn;
 			} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
 				throw new RuntimeException("Crypto failure", e);
@@ -284,12 +257,12 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				if (messageArray.length % 16 != 0) {
 					throw new InvalidMessageException("Encrypted Message Data length is not a multiple of 16, and is therefore invalid");
 				}
-				System.out.println("Decrypting: " + DatatypeConverter.printHexBinary(messageArray));
+				System.out.println("Decrypting: " + (messageArray.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(messageArray)));
 				System.out.println("With Key: " + DatatypeConverter.printHexBinary(responseKey.getEncoded()));
 				Cipher cipher = Cipher.getInstance("AES");
 				cipher.init(Cipher.DECRYPT_MODE, responseKey);
 				byte[] decrypted = cipher.doFinal(messageArray);
-				System.out.println("Decrypted: " + DatatypeConverter.printHexBinary(decrypted));
+				System.out.println("Decrypted: " + (decrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(decrypted)));
 				decryptedBuffer = ByteBuffer.wrap(decrypted);
 			} else {
 				System.out.println("NOT Decrypting Error");
@@ -316,17 +289,17 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 	}
 
-	private int incrementRequestResponseSplit(SocketAddress addr) {
-		Integer rrSplit = _requestResponseSplits.get(addr);
+	private int incrementRequestResponseSplit(MessageID messageID) {
+		Integer rrSplit = _requestResponseSplits.get(messageID);
 		rrSplit = (rrSplit == null) ? 0 : rrSplit;
-		_requestResponseSplits.put(addr, ++rrSplit);
+		_requestResponseSplits.put(messageID, ++rrSplit);
 		return rrSplit;
 	}
 
-	private int decrementRequestResponseSplit(SocketAddress addr) {
-		Integer rrSplit = _requestResponseSplits.get(addr);
+	private int decrementRequestResponseSplit(MessageID messageID) {
+		Integer rrSplit = _requestResponseSplits.get(messageID);
 		rrSplit = (rrSplit == null) ? 1 : rrSplit;
-		_requestResponseSplits.put(addr, --rrSplit);
+		_requestResponseSplits.put(messageID, --rrSplit);
 		return rrSplit;
 	}
 
@@ -340,26 +313,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		if (!_listenerThread.isAlive()) {
 			throw new FailedToStartCommsListenerException("Listener must be started before sending messages");
 		}
-		SocketAddress addr = _replyAddresses.get(messageID);
-		if (addr != null) {
-			SocketChannel sc = _connections.get(addr);
-			if (sc != null && !sc.isConnected()) {
-				try {
-					sc.close();
-				} catch (IOException e) {
-					//nop
-				}
-				sc = null;
-			}
-			if(sc == null) {
-				try {
-					sc = SocketChannel.open(addr);
-					sc.configureBlocking(false);
-					_connections.put(addr, sc);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+		SocketChannel sc = _replyConnections.get(messageID);
+		if (sc != null && sc.isConnected()) {
 			byte[] transferPublicKey = _requestorPublicKeys.get(messageID);
 			SecretKey requestKey = null;
 			if (!(message instanceof ErrorProtocolResponse)) {
@@ -381,9 +336,9 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			dataList.add(data);
 			_writeBuffers.put(sc, dataList);
 			_listenerRunnable.wakeupSelector();
-			decrementRequestResponseSplit(addr);
+			decrementRequestResponseSplit(messageID);
 		} else {
-			throw new InvalidMessageIDException("Cannot reply for message " + messageID + " because I could not find a reply address");
+			throw new InvalidMessageIDException("Cannot reply for message " + messageID + " because I could not find a reply channel");
 		}
 	}
 
@@ -519,14 +474,14 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 												try {
 													if (transferPubKey == null) {
 														//I'm receiving a response
-														decrementRequestResponseSplit(sc.getRemoteAddress());
+														decrementRequestResponseSplit(messageID);
 														transferPubKey = _transferPublicKeys.get(messageID);
 														//Build a request-type MessageKey
 														messageKey = buildRequestKey(transferPubKey, messageID);
 													} else {
 														//I'm receiving a request, build a response-type MessageKey
-														incrementRequestResponseSplit(sc.getRemoteAddress());
-														_replyAddresses.put(messageID, sc.getRemoteAddress());
+														incrementRequestResponseSplit(messageID);
+														_replyConnections.put(messageID, sc);
 														if (_chunkTransferKeyPair != null) {
 															messageKey = buildResponseKey(transferPubKey);
 														} else {

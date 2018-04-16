@@ -1,6 +1,7 @@
 package io.topiacoin.chunks.model;
 
 import java.net.SocketAddress;
+import java.util.Objects;
 
 public class MessageID {
 	private int _id;
@@ -22,5 +23,14 @@ public class MessageID {
 			return other._address.equals(this._address) && other._id == this._id;
 		}
 		return false;
+	}
+
+	@Override public int hashCode() {
+		return Objects.hash(_id, _address);
+	}
+
+	@Override
+	public String toString() {
+		return _address + " - " + _id;
 	}
 }

@@ -51,8 +51,8 @@ public abstract class AbstractProtocolTest {
 		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 
-		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
-		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		final ProtocolCommsService userAservice = getProtocolCommsService(12077, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(12078, userBChunkTransferKeyPair);
 
 		ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 			@Override public void requestReceived(ProtocolMessage request, MessageID i) {
@@ -121,7 +121,7 @@ public abstract class AbstractProtocolTest {
 		userBservice.startListener();
 
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
-		userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+		userAservice.sendMessage("127.0.0.1", 12078, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
 		assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		fail("Check if connection is closed not implemented");
 	}
@@ -268,6 +268,110 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testRetrieveChunkRequestResponse() throws Exception {
+		final String[] testChunkIDs = new String[] { "foo" };
+		final Map<String, byte[]> testChunks = new HashMap<String, byte[]>();
+		Random r = new Random();
+		for(String chunk : testChunkIDs) {
+			byte[] data = new byte[524288];
+			r.nextBytes(data);
+			testChunks.put(chunk, data);
+		}
+
+		final CountDownLatch lock = new CountDownLatch(testChunks.size() * 2);
+
+		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
+		userKeyGen.initialize(571);
+		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+
+		final ProtocolCommsService userAservice = getProtocolCommsService(13077, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(13078, userBChunkTransferKeyPair);
+
+		final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<String>();
+		final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<String>();
+		chunksIShouldReceiveRequestsFor.addAll(testChunks.keySet());
+		chunksIShouldReceiveResponseFor.addAll(testChunks.keySet());
+
+		ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+			@Override public void requestReceived(ProtocolMessage request, MessageID i) {
+			}
+
+			@Override public void responseReceived(ProtocolMessage response) {
+				assertTrue("Message wrong type", response instanceof GiveChunkProtocolResponse);
+				GiveChunkProtocolResponse message = (GiveChunkProtocolResponse) response;
+				assertEquals("request_type wrong", "GIVE_CHUNK", message.getMessageType());
+				assertEquals("userID wrong", "userB", message.getUserID());
+				assertTrue("I'm not expecting to receive a response for " + message.getChunkID(), chunksIShouldReceiveResponseFor.contains(message.getChunkID()));
+				chunksIShouldReceiveResponseFor.remove(message.getChunkID());
+				byte[] expectedChunkData = testChunks.get(message.getChunkID());
+				assertTrue("chunkdata wrong", Arrays.equals(expectedChunkData, message.getChunkData()));
+				lock.countDown();
+			}
+
+			@Override
+			public void error(Throwable t) {
+			}
+
+			@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+				ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+				try {
+					userAservice.reply(error, messageId);
+				} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		userAservice.setHandler(handlerA);
+		ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+			@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+				assertTrue("Message wrong type", request instanceof FetchChunkProtocolRequest);
+				FetchChunkProtocolRequest message = (FetchChunkProtocolRequest) request;
+				assertEquals("request_type wrong", "REQUEST_CHUNK", message.getMessageType());
+				assertTrue("I'm not expecting to receive a request for " + message.getChunkID(), chunksIShouldReceiveRequestsFor.contains(message.getChunkID()));
+				assertEquals("userID wrong", "userA", message.getUserID());
+				chunksIShouldReceiveRequestsFor.remove(message.getChunkID());
+				byte[] chunkData = testChunks.get(message.getChunkID());
+				lock.countDown();
+				ProtocolMessage resp = new GiveChunkProtocolResponse(message.getChunkID(), chunkData, "userB");
+				try {
+					userBservice.reply(resp, messageID);
+				} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					e.printStackTrace();
+					fail("Couldn't reply");
+				}
+			}
+
+			@Override public void responseReceived(ProtocolMessage response) {
+				//nop
+			}
+
+			@Override
+			public void error(Throwable t) {
+
+			}
+
+			@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+				ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+				try {
+					userBservice.reply(error, messageId);
+				} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		userBservice.setHandler(handlerB);
+		userAservice.startListener();
+		userBservice.startListener();
+
+		for(String testChunk : testChunks.keySet()) {
+			ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
+			userAservice.sendMessage("127.0.0.1", 13078, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+		}
+		assertTrue("Message never received", lock.await(1000, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void testRetrieveMultipleChunksRequestResponse() throws Exception {
 		final String[] testChunkIDs = new String[] { "foo", "bar", "baz" };
 		final Map<String, byte[]> testChunks = new HashMap<String, byte[]>();
 		Random r = new Random();
@@ -367,7 +471,7 @@ public abstract class AbstractProtocolTest {
 			ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
 			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
 		}
-		assertTrue("Message never received", lock.await(1000, TimeUnit.SECONDS));
+		assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 	}
 
 	//Here are the negative tests - I'm just gonna run through and do as many as I can think of. This'll be fun
