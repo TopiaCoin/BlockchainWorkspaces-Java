@@ -56,10 +56,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	private Map<SocketAddress, SocketChannel> _connections = new HashMap<>();
 	private Map<SocketChannel, ByteBuffer> _packetReadBuffers = new HashMap<>();
 	private Map<SocketChannel, ArrayList<ByteBuffer>> _writeBuffers = new HashMap<>();
-
-
 	private Map<SocketAddress, Integer> _messageIDs = new HashMap<>();
-	private Map<MessageID, byte[]> _transferPublicKeys = new HashMap<>();
+	private Map<SocketAddress, byte[]> _transferPublicKeys = new HashMap<>();
 	private Map<MessageID, byte[]> _requestorPublicKeys = new HashMap<>();
 	private Map<MessageID, byte[]> _messageAuthKeys = new HashMap<>();
 	private Map<MessageID, KeyPair> _messageRequestKeypairs = new HashMap<>();
@@ -120,14 +118,14 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 		SecretKey requestKey;
 		if (transferPublicKey == null) {
-			transferPublicKey = _transferPublicKeys.get(messageID);
+			transferPublicKey = _transferPublicKeys.get(addr);
 		}
 		try {
 			requestKey = buildRequestKey(transferPublicKey, messageID);
 		} catch (InvalidKeySpecException e) {
 			throw new InvalidKeyException("Public Key Data was invalid", e);
 		}
-		_transferPublicKeys.put(messageID, transferPublicKey);
+		_transferPublicKeys.put(addr, transferPublicKey);
 		ByteBuffer data = encryptAndFrameMessage(message, requestKey, messageID, sendPubKey ? requestKeyPair.getPublic().getEncoded() : null);
 		data.flip();
 		ArrayList<ByteBuffer> dataList = _writeBuffers.get(sc);
@@ -455,7 +453,12 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 										}
 										if (readBufferIsUsable) {
 											_packetReadBuffers.remove(sc);
-											packetBuffer.put(readBuffer);
+											//This is basically the way ByteBuffer.put(ByteBuffer) works, but without the ability to throw BufferOverflowExceptions
+											//I don't need a BufferOverflow - if there's more data to be read, the readBuffer will be compacted and the loop will go on
+											int n = Math.min(packetBuffer.remaining(), readBuffer.remaining());
+											for (int i = 0; i < n; i++) {
+												packetBuffer.put(readBuffer.get());
+											}
 											if (!packetBuffer.hasRemaining()) {
 												packetBuffer.flip();
 												//Read the full message
@@ -475,7 +478,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 													if (transferPubKey == null) {
 														//I'm receiving a response
 														decrementRequestResponseSplit(messageID);
-														transferPubKey = _transferPublicKeys.get(messageID);
+														transferPubKey = _transferPublicKeys.get(sc.getRemoteAddress());
 														//Build a request-type MessageKey
 														messageKey = buildRequestKey(transferPubKey, messageID);
 													} else {

@@ -5,20 +5,18 @@ import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
+import io.topiacoin.chunks.model.protocol.FetchChunkProtocolRequest;
 import io.topiacoin.chunks.model.protocol.GiveChunkProtocolResponse;
 import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
-import io.topiacoin.chunks.model.protocol.FetchChunkProtocolRequest;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ConnectException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -271,7 +269,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunkIDs = new String[] { "foo" };
 		final Map<String, byte[]> testChunks = new HashMap<String, byte[]>();
 		Random r = new Random();
-		for(String chunk : testChunkIDs) {
+		for (String chunk : testChunkIDs) {
 			byte[] data = new byte[524288];
 			r.nextBytes(data);
 			testChunks.put(chunk, data);
@@ -301,7 +299,8 @@ public abstract class AbstractProtocolTest {
 				GiveChunkProtocolResponse message = (GiveChunkProtocolResponse) response;
 				assertEquals("request_type wrong", "GIVE_CHUNK", message.getMessageType());
 				assertEquals("userID wrong", "userB", message.getUserID());
-				assertTrue("I'm not expecting to receive a response for " + message.getChunkID(), chunksIShouldReceiveResponseFor.contains(message.getChunkID()));
+				assertTrue(
+						"I'm not expecting to receive a response for " + message.getChunkID(), chunksIShouldReceiveResponseFor.contains(message.getChunkID()));
 				chunksIShouldReceiveResponseFor.remove(message.getChunkID());
 				byte[] expectedChunkData = testChunks.get(message.getChunkID());
 				assertTrue("chunkdata wrong", Arrays.equals(expectedChunkData, message.getChunkData()));
@@ -327,7 +326,8 @@ public abstract class AbstractProtocolTest {
 				assertTrue("Message wrong type", request instanceof FetchChunkProtocolRequest);
 				FetchChunkProtocolRequest message = (FetchChunkProtocolRequest) request;
 				assertEquals("request_type wrong", "REQUEST_CHUNK", message.getMessageType());
-				assertTrue("I'm not expecting to receive a request for " + message.getChunkID(), chunksIShouldReceiveRequestsFor.contains(message.getChunkID()));
+				assertTrue(
+						"I'm not expecting to receive a request for " + message.getChunkID(), chunksIShouldReceiveRequestsFor.contains(message.getChunkID()));
 				assertEquals("userID wrong", "userA", message.getUserID());
 				chunksIShouldReceiveRequestsFor.remove(message.getChunkID());
 				byte[] chunkData = testChunks.get(message.getChunkID());
@@ -363,7 +363,7 @@ public abstract class AbstractProtocolTest {
 		userAservice.startListener();
 		userBservice.startListener();
 
-		for(String testChunk : testChunks.keySet()) {
+		for (String testChunk : testChunks.keySet()) {
 			ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
 			userAservice.sendMessage("127.0.0.1", 13078, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
 		}
@@ -375,7 +375,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunkIDs = new String[] { "foo", "bar", "baz" };
 		final Map<String, byte[]> testChunks = new HashMap<String, byte[]>();
 		Random r = new Random();
-		for(String chunk : testChunkIDs) {
+		for (String chunk : testChunkIDs) {
 			byte[] data = new byte[r.nextInt(524288)];
 			r.nextBytes(data);
 			testChunks.put(chunk, data);
@@ -405,10 +405,11 @@ public abstract class AbstractProtocolTest {
 				GiveChunkProtocolResponse message = (GiveChunkProtocolResponse) response;
 				assertEquals("request_type wrong", "GIVE_CHUNK", message.getMessageType());
 				assertEquals("userID wrong", "userB", message.getUserID());
-				assertTrue("I'm not expecting to receive a response for " + message.getChunkID(), chunksIShouldReceiveResponseFor.contains(message.getChunkID()));
+				assertTrue(
+						"I'm not expecting to receive a response for " + message.getChunkID(), chunksIShouldReceiveResponseFor.contains(message.getChunkID()));
 				chunksIShouldReceiveResponseFor.remove(message.getChunkID());
 				byte[] expectedChunkData = testChunks.get(message.getChunkID());
-				assertEquals("chunkdata wrong", expectedChunkData, message.getChunkData());
+				assertTrue("chunkdata wrong", Arrays.equals(expectedChunkData, message.getChunkData()));
 				lock.countDown();
 			}
 
@@ -431,12 +432,13 @@ public abstract class AbstractProtocolTest {
 				assertTrue("Message wrong type", request instanceof FetchChunkProtocolRequest);
 				FetchChunkProtocolRequest message = (FetchChunkProtocolRequest) request;
 				assertEquals("request_type wrong", "REQUEST_CHUNK", message.getMessageType());
-				assertTrue("I'm not expecting to receive a request for " + message.getChunkID(), chunksIShouldReceiveRequestsFor.contains(message.getChunkID()));
+				assertTrue(
+						"I'm not expecting to receive a request for " + message.getChunkID(), chunksIShouldReceiveRequestsFor.contains(message.getChunkID()));
 				assertEquals("userID wrong", "userA", message.getUserID());
 				chunksIShouldReceiveRequestsFor.remove(message.getChunkID());
 				byte[] chunkData = testChunks.get(message.getChunkID());
 				lock.countDown();
-				ProtocolMessage resp = new GiveChunkProtocolResponse(message.getUserID(), chunkData, "userB");
+				ProtocolMessage resp = new GiveChunkProtocolResponse(message.getChunkID(), chunkData, "userB");
 				try {
 					userBservice.reply(resp, messageID);
 				} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
@@ -467,7 +469,7 @@ public abstract class AbstractProtocolTest {
 		userAservice.startListener();
 		userBservice.startListener();
 
-		for(String testChunk : testChunks.keySet()) {
+		for (String testChunk : testChunks.keySet()) {
 			ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
 			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
 		}
