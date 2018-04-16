@@ -18,6 +18,13 @@ public class Member {
         this.inviterID = inviterID;
     }
 
+    public Member(Member member) {
+        this.userID = member.userID;
+        this.status = member.status;
+        this.inviteDate = member.inviteDate;
+        this.inviterID = member.inviterID;
+    }
+
     public String getUserID() {
         return userID;
     }

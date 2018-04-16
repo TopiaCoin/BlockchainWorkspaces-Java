@@ -28,9 +28,9 @@ public class DataModel {
 
     private DataModelProvider _provider;
 
-    private DataModel() {
+    DataModel() {
         // TODO - Replace this with code that loads the provider based on some configuration
-        _provider = new MemoryDataModelProvider() ;
+        _provider = new MemoryDataModelProvider();
     }
 
     public static synchronized DataModel getInstance() {
@@ -44,31 +44,31 @@ public class DataModel {
     // -------- Workspace Accessor Methods --------
 
     public List<Workspace> getWorkspaces() {
-        return null;
+        return _provider.getWorkspaces();
     }
 
     public List<Workspace> getWorkspacesWithStatus(int workspaceStatus) {
-        return null;
+        return _provider.getWorkspacesWithStatus(workspaceStatus);
     }
 
     public Workspace getWorkspace(String workspaceID)
             throws NoSuchWorkspaceException {
-        return null;
+        return _provider.getWorkspace(workspaceID);
     }
 
     public void addWorkspace(Workspace workspace)
             throws WorkspaceAlreadyExistsException {
-
+        _provider.addWorkspace(workspace);
     }
 
     public void updateWorkspace(Workspace workspace)
             throws NoSuchWorkspaceException {
-
+        _provider.updateWorkspace(workspace);
     }
 
     public void removeWorkspace(String workspaceID)
             throws NoSuchWorkspaceException {
-
+        _provider.removeWorkspace(workspaceID);
     }
 
 
@@ -76,27 +76,27 @@ public class DataModel {
 
     public List<Member> getMembersInWorkspace(String workspaceID)
             throws NoSuchWorkspaceException {
-        return null;
+        return _provider.getMembersInWorkspace(workspaceID);
     }
 
     public Member getMemberInWorkspace(String workspaceID, String userID)
             throws NoSuchWorkspaceException, NoSuchMemberException {
-        return null;
+        return _provider.getMemberInWorkspace(workspaceID, userID);
     }
 
     public void addMemberToWorkspace(String workspaceID, Member member)
             throws NoSuchWorkspaceException, MemberAlreadyExistsException {
-
+        _provider.addMemberToWorkspace(workspaceID, member);
     }
 
     public void updateMemberInWorkspace(String workspaceID, Member member)
             throws NoSuchWorkspaceException, NoSuchMemberException {
-
+        _provider.updateMemberInWorkspace(workspaceID, member);
     }
 
     public void removeMemberFromWorkspace(String workspaceID, Member member)
             throws NoSuchWorkspaceException, NoSuchMemberException {
-
+        _provider.removeMemberFromWorkspace(workspaceID, member);
     }
 
 
@@ -104,27 +104,27 @@ public class DataModel {
 
     public List<Message> getMessagesInWorkspace(String workspaceID)
             throws NoSuchWorkspaceException {
-        return null;
+        return _provider.getMessagesInWorkspace(workspaceID);
     }
 
     public Message getMessage(String messageID)
             throws NoSuchMessageException {
-        return null;
+        return _provider.getMessage(messageID);
     }
 
     public void addMessageToWorkspace(String workspaceID, Message message)
             throws NoSuchWorkspaceException, MessageAlreadyExistsException {
-
+        _provider.addMessageToWorkspace(workspaceID, message);
     }
 
     public void updateMessageInWorkspace(String workspaceID, Message message)
             throws NoSuchWorkspaceException, NoSuchMessageException {
-
+        _provider.updateMessageInWorkspace(workspaceID, message);
     }
 
     public void removeMessageFromWorkspace(String workspaceID, Message message)
             throws NoSuchWorkspaceException, NoSuchMessageException {
-
+        _provider.removeMessageFromWorkspace(workspaceID, message);
     }
 
 
@@ -132,37 +132,37 @@ public class DataModel {
 
     public List<File> getFilesInWorkspace(String workspaceID)
             throws NoSuchWorkspaceException {
-        return null;
+        return _provider.getFilesInWorkspace(workspaceID);
     }
 
     public List<File> getFilesInWorkspace(String workspaceID, String parentID)
             throws NoSuchWorkspaceException {
-        return null;
+        return _provider.getFilesInWorkspace(workspaceID, parentID);
     }
 
     public File getFile(String fileID)
             throws NoSuchFileException {
-        return null;
+        return _provider.getFile(fileID);
     }
 
     public void addFileToWorkspace(String workspaceID, File file)
             throws NoSuchWorkspaceException, FileAlreadyExistsException {
-
+        _provider.addFileToWorkspace(workspaceID, file);
     }
 
     public void updateFileInWorkspace(String workspaceID, File file)
             throws NoSuchWorkspaceException, NoSuchFileException {
-
+        _provider.updateFileInWorkspace(workspaceID, file);
     }
 
     public void removeFileFromWorkspace(String workspaceID, String fileID)
             throws NoSuchWorkspaceException, NoSuchFileException {
-
+        _provider.removeFileFromWorkspace(workspaceID, fileID);
     }
 
     public void removeFileFromWorkspace(String workspaceID, File file)
             throws NoSuchWorkspaceException, NoSuchFileException {
-
+        _provider.removeFileFromWorkspace(workspaceID, file);
     }
 
 
@@ -170,37 +170,37 @@ public class DataModel {
 
     public List<String> getAvailableVersionsOfFile(String fileID)
             throws NoSuchFileException {
-        return null;
+        return _provider.getAvailableVersionsOfFile(fileID);
     }
 
     public List<FileVersion> getFileVersionsForFile(String fileID)
             throws NoSuchFileException {
-        return null;
+        return _provider.getFileVersionsForFile(fileID);
     }
 
     public FileVersion getFileVersion(String fileID, String versionID)
             throws NoSuchFileException, NoSuchFileVersionException {
-        return null;
+        return _provider.getFileVersion(fileID, versionID);
     }
 
     public void addFileVersion(String fileID, FileVersion fileVersion)
             throws NoSuchFileException, FileVersionAlreadyExistsException {
-
+        _provider.addFileVersion(fileID, fileVersion);
     }
 
     public void updateFileVersion(String fileID, FileVersion fileVersion)
             throws NoSuchFileException, NoSuchFileVersionException {
-
+        _provider.updateFileVersion(fileID, fileVersion);
     }
 
     public void removeFileVersion(String fileID, String versionID)
             throws NoSuchFileException, NoSuchFileVersionException {
-
+        _provider.removeFileVersion(fileID, versionID);
     }
 
     public void removeFileVersion(String fileID, FileVersion fileVersion)
             throws NoSuchFileException, NoSuchFileVersionException {
-
+        _provider.removeFileVersion(fileID, fileVersion);
     }
 
 
@@ -208,22 +208,22 @@ public class DataModel {
 
     public List<FileVersionReceipt> getFileVersionReceipts(String fileID, String versionID)
             throws NoSuchFileException, NoSuchFileVersionException {
-        return null;
+        return _provider.getFileVersionReceipts(fileID, versionID);
     }
 
     public void addFileVersionReceipt(String fileID, String versionID, FileVersionReceipt receipt)
             throws NoSuchFileException, NoSuchFileVersionException {
-
+        _provider.addFileVersionReceipt(fileID, versionID, receipt);
     }
 
     public void updateFileVersionReceipt(String fileID, String versionID, FileVersionReceipt receipt)
             throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileVersionReceiptException {
-
+        _provider.updateFileVersionReceipt(fileID, versionID, receipt);
     }
 
     public void removeFileVersionReceipt(String fileID, String versionID, FileVersionReceipt receipt)
             throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileVersionReceiptException {
-
+        _provider.removeFileVersionReceipt(fileID, versionID, receipt);
     }
 
 
@@ -231,22 +231,22 @@ public class DataModel {
 
     public List<FileChunk> getChunksForFileVersion(String fileID, String versionID)
             throws NoSuchFileException, NoSuchFileVersionException {
-        return null;
+        return _provider.getChunksForFileVersion(fileID, versionID);
     }
 
     public void addChunkForFile(String fileID, String versionID, FileChunk chunk)
             throws NoSuchFileException, NoSuchFileVersionException, FileChunkAlreadyExistsException {
-
+        _provider.addChunkForFile(fileID, versionID, chunk);
     }
 
     public void updateChunkForFile(String fileID, String versionID, FileChunk chunk)
             throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileChunkException {
-
+        _provider.updateChunkForFile(fileID, versionID, chunk);
     }
 
     public void removeChunkForFile(String fileID, String versionID, FileChunk chunk)
             throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileChunkException {
-
+        _provider.removeChunkForFile(fileID, versionID, chunk);
     }
 
 
@@ -254,58 +254,53 @@ public class DataModel {
 
     public List<FileTag> getTagsForFileVersion(String fileID, String versionID)
             throws NoSuchFileException, NoSuchFileVersionException {
-        return null;
+        return _provider.getTagsForFileVersion(fileID, versionID);
     }
 
     public void addTagForFile(String fileID, String versionID, FileTag tag)
             throws NoSuchFileException, NoSuchFileVersionException, FileTagAlreadyExistsException {
-
-    }
-
-    public void updateTagForFile(String fileID, String versionID, FileTag tag)
-            throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileTagException {
-
+        _provider.addTagForFile(fileID, versionID, tag);
     }
 
     public void removeTagForFile(String fileID, String versionID, FileTag tag)
             throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileTagException {
-
+        _provider.removeTagForFile(fileID, versionID, tag);
     }
 
 
     // -------- User Accessor Methods --------
 
     public List<User> getUsers() {
-        return null;
+        return _provider.getUsers();
     }
 
     public User getUserByID(String userID)
             throws NoSuchUserException {
-        return null;
+        return _provider.getUserByID(userID);
     }
 
     public User getUserByEmail(String email)
             throws NoSuchUserException {
-        return null;
+        return _provider.getUserByEmail(email);
     }
 
-    public void addUser(User User)
+    public void addUser(User user)
             throws UserAlreadyExistsException {
-
+        _provider.addUser(user);
     }
 
     public void updateUser(User user)
             throws NoSuchUserException {
-
+        _provider.updateUser(user);
     }
 
     public void removeUser(User user)
             throws NoSuchUserException {
-
+        _provider.removeUser(user);
     }
 
     public void removeUser(String userID)
             throws NoSuchUserException {
-
+        _provider.removeUser(userID);
     }
 }

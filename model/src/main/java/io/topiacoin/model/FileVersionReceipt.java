@@ -17,6 +17,13 @@ public class FileVersionReceipt {
         this.date = date;
     }
 
+    public FileVersionReceipt(FileVersionReceipt other) {
+        this.entryID = other.entryID;
+        this.versionID = other.versionID;
+        this.recipientID = other.recipientID;
+        this.date = other.date;
+    }
+
     public String getEntryID() {
         return entryID;
     }

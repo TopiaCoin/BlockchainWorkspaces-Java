@@ -37,6 +37,18 @@ public class Workspace {
         this.messages = (messages != null ? new ArrayList<Message>(messages) : new ArrayList<Message>());
     }
 
+    public Workspace(Workspace workspace) {
+        this.name = workspace.name;
+        this.description = workspace.description;
+        this.status = workspace.status;
+        this.workspaceKey = workspace.workspaceKey;
+        this.guid = workspace.guid;
+        this.lastModified = workspace.lastModified;
+        this.members = (workspace.members != null ? new ArrayList<Member>(workspace.members) : new ArrayList<Member>());
+        this.files = (workspace.files != null ? new ArrayList<File>(workspace.files) : new ArrayList<File>());
+        this.messages = (workspace.messages != null ? new ArrayList<Message>(workspace.messages) : new ArrayList<Message>());
+    }
+
     public String getName() {
         return name;
     }

@@ -8,7 +8,7 @@ public class MessageTest {
 
     @Test
     public void testDefaultConstructor() throws Exception {
-        Message message = new Message() ;
+        Message message = new Message();
 
         assertNull(message.getAuthorID());
         assertNull(message.getDigitalSignature());
@@ -17,7 +17,7 @@ public class MessageTest {
         assertNull(message.getMimeType());
         assertNull(message.getText());
 
-        assertEquals (0, message.getSeq());
+        assertEquals(0, message.getSeq());
         assertEquals(0, message.getTimestamp());
     }
 
@@ -25,15 +25,15 @@ public class MessageTest {
     public void testConstructor() throws Exception {
 
         String authorID = "JannerWingfeather";
-                String entityID = "Entity Identifier";
-                String guid = "Globally Unique Identifier";
-                        long seq = 12345;
+        String entityID = "Entity Identifier";
+        String guid = "Globally Unique Identifier";
+        long seq = 12345;
         long timestamp = 1564783953;
         String text = "A great place to live";
         String mimeType = "text/plain";
         byte[] digSig = new byte[128];
 
-        Message message = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig) ;
+        Message message = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig);
 
         assertEquals(authorID, message.getAuthorID());
         assertEquals(entityID, message.getEntityID());
@@ -58,7 +58,7 @@ public class MessageTest {
         String mimeType = "text/plain";
         byte[] digSig = new byte[128];
 
-        Message message = new Message() ;
+        Message message = new Message();
 
         assertNull(message.getAuthorID());
         message.setAuthorID(authorID);
@@ -78,11 +78,11 @@ public class MessageTest {
         message.setGuid(null);
         assertNull(message.getGuid());
 
-        assertEquals (0, message.getSeq());
+        assertEquals(0, message.getSeq());
         message.setSeq(seq);
         assertEquals(seq, message.getSeq());
         message.setSeq(0);
-        assertEquals (0, message.getSeq());
+        assertEquals(0, message.getSeq());
 
         assertEquals(0, message.getTimestamp());
         message.setTimestamp(timestamp);
@@ -122,8 +122,8 @@ public class MessageTest {
         String mimeType = "text/plain";
         byte[] digSig = new byte[128];
 
-        Message message1 = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig) ;
-        Message message2 = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig) ;
+        Message message1 = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig);
+        Message message2 = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig);
 
         assertEquals(message1, message1);
         assertEquals(message2, message2);
@@ -136,8 +136,8 @@ public class MessageTest {
     @Test
     public void testEqualsAndHashCodeOfBareObjects() throws Exception {
 
-        Message message1 = new Message() ;
-        Message message2 = new Message() ;
+        Message message1 = new Message();
+        Message message2 = new Message();
 
         assertEquals(message1, message1);
         assertEquals(message2, message2);
