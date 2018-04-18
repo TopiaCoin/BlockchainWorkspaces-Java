@@ -101,6 +101,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			} catch (InvalidKeySpecException e) {
 				throw new InvalidKeyException("Public Key Data was invalid", e);
 			}
+		} else {
+			state.addMessageID(messageID);
 		}
 		state.reconnectIfNecessary(addr);
 		_connections.put(addr, state);
@@ -346,12 +348,12 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 		if (_listenerRunnableThrowable != null) {
 			Throwable t = _listenerRunnableThrowable;
-			stopListener();
+			stop();
 			throw new FailedToStartCommsListenerException("Comms listener failed to startListener", t);
 		}
 	}
 
-	public void stopListener() {
+	public void stop() {
 		if (_listenerRunnable != null) {
 			_listenerRunnable.stop();
 		}
@@ -359,6 +361,16 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			_listenerThread.interrupt();
 		}
 		_listenerRunnableThrowable = null;
+		_messageAddresses = new HashMap<>();
+		for(SocketAddress address : _connections.keySet()) {
+			ProtocolConnectionState state = _connections.get(address);
+			try {
+				state.getSocketChannel().close();
+			} catch (IOException e) {
+				//NOP
+			}
+		}
+		_connections = new HashMap<>();
 	}
 
 	SocketChannel getConnectionForMessageID(MessageID messageID) {

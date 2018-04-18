@@ -71,5 +71,5 @@ public interface ProtocolCommsService {
 	/**
 	 * Stops the Listener. This should be called on shutdown.
 	 */
-	public void stopListener();
+	public void stop();
 }

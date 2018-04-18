@@ -227,7 +227,7 @@ public class ProtocolConnectionState {
 	}
 
 	public void requestReceived(MessageID messageID) {
-		_messageIDs.add(messageID);
+		addMessageID(messageID);
 	}
 
 	public void responseReceived(MessageID messageID) {
@@ -252,5 +252,9 @@ public class ProtocolConnectionState {
 
 	public void removeMessageID(MessageID messageID) {
 		_messageIDs.remove(messageID);
+	}
+
+	public void addMessageID(MessageID messageID) {
+		_messageIDs.add(messageID);
 	}
 }
