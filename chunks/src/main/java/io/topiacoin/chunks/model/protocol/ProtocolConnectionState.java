@@ -141,60 +141,6 @@ public class ProtocolConnectionState {
 		return _packetBuffer != null;
 	}
 
-	/*private SecretKey buildRequestKey(byte[] theirPubKeyData, MessageID messageID) throws InvalidKeySpecException {
-		KeyPair requestKeyPair = _messageRequestKeypairs.get(messageID);
-		if (theirPubKeyData == null) {
-			throw new InvalidKeySpecException("Keydata is null");
-		}
-		try {
-			KeyFactory kf = KeyFactory.getInstance("EC");
-			X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(theirPubKeyData);
-			PublicKey theirPubKey = kf.generatePublic(pkSpec);
-			return buildMessageKey(theirPubKey, requestKeyPair);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("", e);
-		}
-	}
-
-	private SecretKey buildResponseKey(byte[] requestersPublicKeyData) throws InvalidKeySpecException {
-		if (requestersPublicKeyData == null) {
-			throw new InvalidKeySpecException("Keydata is null");
-		}
-		try {
-			KeyFactory kf = KeyFactory.getInstance("EC");
-			X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(requestersPublicKeyData);
-			PublicKey requestersPublicKey = kf.generatePublic(pkSpec);
-			return buildMessageKey(requestersPublicKey, _chunkTransferKeyPair);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("", e);
-		}
-	}
-
-	private SecretKey buildMessageKey(PublicKey pubKey, KeyPair myKeyPair) {
-		try {
-			KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-			System.out.println("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
-			System.out.println("Their PubKey: " + DatatypeConverter.printHexBinary(pubKey.getEncoded()));
-			ka.init(myKeyPair.getPrivate());
-			ka.doPhase(pubKey, true);
-
-			byte[] sharedSecret = ka.generateSecret();
-			System.out.println("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));
-			MessageDigest hash = MessageDigest.getInstance("SHA-256");
-			hash.update(sharedSecret);
-			// Simple deterministic ordering
-			List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(myKeyPair.getPublic().getEncoded()), ByteBuffer.wrap(pubKey.getEncoded()));
-			Collections.sort(keys);
-			hash.update(keys.get(0));
-			hash.update(keys.get(1));
-			//We must now reduce the size of this keyData to 128 bits (16 bytes) due to U.S. Govt regulations regarding maximum Keylength.
-			byte[] derivedKeyData = Arrays.copyOf(hash.digest(), 16);
-			return new SecretKeySpec(derivedKeyData, "AES");
-		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
-			throw new RuntimeException("", e);
-		}
-	}*/
-
 	public void buildMessageKey(KeyPair myKeyPair) throws InvalidKeySpecException, InvalidKeyException {
 		try {
 			if(_theirPublicKey == null) {

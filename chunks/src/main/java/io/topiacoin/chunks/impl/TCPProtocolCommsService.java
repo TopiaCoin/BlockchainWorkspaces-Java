@@ -45,20 +45,9 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	private TCPListenerRunnable _listenerRunnable;
 	private Throwable _listenerRunnableThrowable = null;
 
-	//private Map<SocketAddress, ProtocolConnectionState> _requestConnections = new HashMap<>();
-	//private Map<MessageID, ProtocolConnectionState> _replyConnections = new HashMap<>();
 	private Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
 	private Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
 
-	//private Map<SocketAddress, SocketChannel> _requestConnections = new HashMap<>();
-	//private Map<MessageID, SocketChannel> _replyConnections = new HashMap<>();
-	//private Map<SocketChannel, ByteBuffer> _packetReadBuffers = new HashMap<>();
-	//private Map<SocketChannel, ArrayList<ByteBuffer>> _writeBuffers = new HashMap<>();
-	//private Map<MessageID, Integer> _requestResponseSplits = new HashMap<>();
-	//private Map<SocketChannel, Long> _connectionTimers = new HashMap<>();
-	//private Map<SocketAddress, byte[]> _requestTransferPublicKeys = new HashMap<>();
-	//private Map<MessageID, byte[]> _replyTransferPublicKeys = new HashMap<>();
-	//private Map<MessageID, KeyPair> _messageRequestKeypairs = new HashMap<>();
 	private Map<String, Byte> _messageTypes = new HashMap<>();
 	private int _messageIdTracker = 0;
 	private ProtocolCommsHandler _handler = null;
@@ -106,81 +95,13 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 		state.reconnectIfNecessary(addr);
 		_connections.put(addr, state);
-		//_replyConnections.put(messageID, state);
 
-		//ByteBuffer data = encryptAndFrameMessage(message, requestKey, messageID, requestKeyPair.getPublic().getEncoded());
 		ByteBuffer data = encryptAndFrameMessage(message, messageID, state);
 		data.flip();
 		state.addWriteBuffer(data, false);
 		_listenerRunnable.wakeupSelector();
 		return messageID;
 	}
-
-	/*private KeyPair generateRequestKeyPair(MessageID messageID) {
-		try {
-			KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-			userKeyGen.initialize(571);
-			KeyPair keyPair = userKeyGen.genKeyPair();
-			_messageRequestKeypairs.put(messageID, keyPair);
-			return keyPair;
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Failure", e);
-		}
-	}*/
-
-	/*private SecretKey buildRequestKey(byte[] theirPubKeyData, MessageID messageID) throws InvalidKeySpecException {
-		KeyPair requestKeyPair = _messageRequestKeypairs.get(messageID);
-		if (theirPubKeyData == null) {
-			throw new InvalidKeySpecException("Keydata is null");
-		}
-		try {
-			KeyFactory kf = KeyFactory.getInstance("EC");
-			X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(theirPubKeyData);
-			PublicKey theirPubKey = kf.generatePublic(pkSpec);
-			return buildMessageKey(theirPubKey, requestKeyPair);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("", e);
-		}
-	}*/
-
-	/*private SecretKey buildResponseKey(byte[] requestersPublicKeyData) throws InvalidKeySpecException {
-		if (requestersPublicKeyData == null) {
-			throw new InvalidKeySpecException("Keydata is null");
-		}
-		try {
-			KeyFactory kf = KeyFactory.getInstance("EC");
-			X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(requestersPublicKeyData);
-			PublicKey requestersPublicKey = kf.generatePublic(pkSpec);
-			return buildMessageKey(requestersPublicKey, _chunkTransferKeyPair);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("", e);
-		}
-	}
-
-	private SecretKey buildMessageKey(PublicKey pubKey, KeyPair myKeyPair) {
-		try {
-			KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-			System.out.println("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
-			System.out.println("Their PubKey: " + DatatypeConverter.printHexBinary(pubKey.getEncoded()));
-			ka.init(myKeyPair.getPrivate());
-			ka.doPhase(pubKey, true);
-
-			byte[] sharedSecret = ka.generateSecret();
-			System.out.println("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));
-			MessageDigest hash = MessageDigest.getInstance("SHA-256");
-			hash.update(sharedSecret);
-			// Simple deterministic ordering
-			List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(myKeyPair.getPublic().getEncoded()), ByteBuffer.wrap(pubKey.getEncoded()));
-			Collections.sort(keys);
-			hash.update(keys.get(0));
-			hash.update(keys.get(1));
-			//We must now reduce the size of this keyData to 128 bits (16 bytes) due to U.S. Govt regulations regarding maximum Keylength.
-			byte[] derivedKeyData = Arrays.copyOf(hash.digest(), 16);
-			return new SecretKeySpec(derivedKeyData, "AES");
-		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
-			throw new RuntimeException("", e);
-		}
-	}*/
 
 	private ByteBuffer encryptAndFrameMessage(ProtocolMessage message, MessageID messageID, ProtocolConnectionState state)
 			throws InvalidKeyException {
@@ -266,23 +187,6 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			throw new RuntimeException("Crypto failure", e);
 		}
 	}
-
-	/*private void incrementRequestResponseSplit(MessageID messageID, SocketChannel channel) {
-		Integer rrSplit = _requestResponseSplits.get(messageID);
-		rrSplit = (rrSplit == null) ? 0 : rrSplit;
-		_requestResponseSplits.put(messageID, ++rrSplit);
-		_unusedConnectionCloserRunnable.removeUnusedConnection(channel);
-		//return rrSplit;
-	}
-
-	private void decrementRequestResponseSplit(MessageID messageID, SocketChannel channel) {
-		Integer rrSplit = _requestResponseSplits.get(messageID);
-		rrSplit = (rrSplit == null) ? 1 : rrSplit;
-		_requestResponseSplits.put(messageID, --rrSplit);
-		if(rrSplit <= 0) {
-			_unusedConnectionCloserRunnable.addUnusedConnection(channel);
-		}
-	}*/
 
 	@Override public void reply(ProtocolMessage message, MessageID messageID) throws InvalidMessageException, FailedToStartCommsListenerException, InvalidMessageIDException {
 		if (message.isRequest()) {
