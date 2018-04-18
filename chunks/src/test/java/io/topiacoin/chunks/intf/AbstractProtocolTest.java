@@ -387,7 +387,7 @@ public abstract class AbstractProtocolTest {
 				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
 				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
 			}
-			assertTrue("Message never received", lock.await(1000, TimeUnit.SECONDS));
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			userAservice.stop();
 			userBservice.stop();
@@ -848,6 +848,124 @@ public abstract class AbstractProtocolTest {
 			} catch (InvalidKeyException ex) {
 				//Good
 			}
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
+	@Test
+	public void testBothUsersRequestAtTheSameTime() throws Exception {
+		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
+		userKeyGen.initialize(571);
+		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userAChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, userAChunkTransferKeyPair);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(4);
+
+			String userAAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+			String userBAuthToken = "<('.'<) (>'.')>";
+
+			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
+					try {
+						userAservice.reply(resp, messageID);
+					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+					try {
+						userAservice.reply(error, messageId);
+					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userAservice.setHandler(handlerA);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
+					try {
+						userBservice.reply(resp, messageID);
+					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
+			ProtocolMessage testMessage2 = new QueryChunksProtocolRequest(testChunks, "userB");
+			MessageID messageID1 = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+			MessageID messageID2 = userBservice.sendMessage("127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken, testMessage2);
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
+			boolean connectionOpen = true;
+			for (int i = 0; i < 20 && connectionOpen; i++) {
+				Thread.sleep(100 * i);
+				SocketChannel sc = getConnectionForMessageID(userAservice, messageID1);
+				SocketChannel sc2 = getConnectionForMessageID(userBservice, messageID2);
+				connectionOpen = sc != null && sc.isConnected() && sc2 != null && sc2.isConnected();
+			}
+			assertTrue("Connection never closed", !connectionOpen);
 		} finally {
 			userAservice.stop();
 			userBservice.stop();

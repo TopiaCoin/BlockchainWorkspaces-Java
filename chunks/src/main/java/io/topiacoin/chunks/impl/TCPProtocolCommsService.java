@@ -265,7 +265,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			_listenerThread.interrupt();
 		}
 		_listenerRunnableThrowable = null;
-		_messageAddresses = new HashMap<>();
+		_messageAddresses.clear();
 		for(SocketAddress address : _connections.keySet()) {
 			ProtocolConnectionState state = _connections.get(address);
 			try {
@@ -274,7 +274,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				//NOP
 			}
 		}
-		_connections = new HashMap<>();
+		_connections.clear();
 	}
 
 	SocketChannel getConnectionForMessageID(MessageID messageID) {
@@ -410,8 +410,9 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 						}
 					}
 					//Register All socket channels for write that have things that need to be written
-					Set<SocketAddress> addresses = _connections.keySet();
-					for (SocketAddress address : addresses) {
+					Iterator<SocketAddress> addresses = _connections.keySet().iterator();
+					while(addresses.hasNext()) {
+						SocketAddress address = addresses.next();
 						ProtocolConnectionState state = _connections.get(address);
 						state.registerForPendingWrites(_selector);
 						if (!state.hasMessageIDs() && !state.hasWriteBuffers()
@@ -419,7 +420,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 							if (state.getSocketChannel() != null) {
 								state.getSocketChannel().close();
 							}
-							_connections.remove(address);
+							addresses.remove();
 						}
 					}
 				}
