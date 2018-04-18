@@ -16,6 +16,8 @@ public class MessageID {
 		return _id;
 	}
 
+	public SocketAddress getAddress() { return _address; }
+
 	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof MessageID) {

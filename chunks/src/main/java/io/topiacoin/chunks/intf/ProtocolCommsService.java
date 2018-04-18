@@ -72,12 +72,4 @@ public interface ProtocolCommsService {
 	 * Stops the Listener. This should be called on shutdown.
 	 */
 	public void stopListener();
-
-	/**
-	 * Largely for testing purposes, this returns the SocketChannel for the given messageID. Do not use this function unless you are absolutely sure of what you are doing.
-	 * ...The protocol isn't designed to handle internal inconsistency issues particularly well, and the improper use of this function could throw it into an illegal state.
-	 * @param messageID The message ID
-	 * @return a SocketChannel that you should probably leave alone.
-	 */
-	public SocketChannel getConnectionForMessageID(int messageID);
 }

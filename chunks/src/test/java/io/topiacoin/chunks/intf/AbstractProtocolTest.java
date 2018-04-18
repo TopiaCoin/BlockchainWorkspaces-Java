@@ -18,6 +18,7 @@ import java.net.BindException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -38,6 +39,8 @@ import static org.junit.Assert.fail;
 public abstract class AbstractProtocolTest {
 
 	protected abstract ProtocolCommsService getProtocolCommsService(int port, KeyPair transferKeyPair) throws IOException;
+
+	protected abstract SocketChannel getConnectionForMessageID(ProtocolCommsService service, MessageID id);
 
 	@Test
 	public void testQueryChunksRequestAndResponse() throws Exception {
@@ -119,9 +122,15 @@ public abstract class AbstractProtocolTest {
 		userBservice.startListener();
 
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
-		userAservice.sendMessage("127.0.0.1", 12078, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+		MessageID messageID = userAservice.sendMessage("127.0.0.1", 12078, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
 		assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
-		fail("Check if connection is closed not implemented");
+		boolean connectionOpen = true;
+		for(int i = 0; i < 20 && connectionOpen; i++) {
+			Thread.sleep(100 * i);
+			SocketChannel sc = getConnectionForMessageID(userAservice, messageID);
+			connectionOpen = sc != null && sc.isConnected();
+		}
+		assertTrue("Connection never closed", !connectionOpen);
 	}
 
 	@Test
@@ -391,10 +400,8 @@ public abstract class AbstractProtocolTest {
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 
-		final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<String>();
-		final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<String>();
-		chunksIShouldReceiveRequestsFor.addAll(testChunks.keySet());
-		chunksIShouldReceiveResponseFor.addAll(testChunks.keySet());
+		final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<String>(testChunks.keySet());
+		final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<String>(testChunks.keySet());
 
 		ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 			@Override public void requestReceived(ProtocolMessage request, MessageID i) {
@@ -805,5 +812,14 @@ public abstract class AbstractProtocolTest {
 		} catch (InvalidKeyException ex) {
 			//Good
 		}
+	}
+
+	@Test
+	public void quickTest() {
+		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES + Integer.BYTES);
+		buf.putInt(1);
+		assertTrue(buf.hasRemaining());
+		buf.putInt(2);
+		assertFalse(buf.hasRemaining());
 	}
 }
