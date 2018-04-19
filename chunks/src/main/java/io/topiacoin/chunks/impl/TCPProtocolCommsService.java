@@ -36,23 +36,22 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public class TCPProtocolCommsService implements ProtocolCommsService {
 	private static final long _unusedConnectionCloseThresholdMillis = 15000;
 	private KeyPair _chunkTransferKeyPair;
-	private Thread _listenerThread;
-	private TCPListenerRunnable _listenerRunnable;
+	Thread _listenerThread;
+	TCPListenerRunnable _listenerRunnable;
 	private Throwable _listenerRunnableThrowable = null;
 
-	private Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
-	private Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
+	Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
+	Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
 
 	private Map<String, Byte> _messageTypes = new HashMap<>();
-	private int _messageIdTracker = 0;
+	int _messageIdTracker = 0;
 	private ProtocolCommsHandler _handler = null;
 
-	public TCPProtocolCommsService(int port, KeyPair chunkTransferKeyPair) throws IOException {
+	TCPProtocolCommsService(int port, KeyPair chunkTransferKeyPair) throws IOException {
 		_chunkTransferKeyPair = chunkTransferKeyPair;
 		_listenerRunnable = new TCPListenerRunnable(port);
 		_listenerThread = new Thread(_listenerRunnable, "ProtocolComms:" + port);
@@ -103,7 +102,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		return messageID;
 	}
 
-	private ByteBuffer encryptAndFrameMessage(ProtocolMessage message, MessageID messageID, ProtocolConnectionState state)
+	ByteBuffer encryptAndFrameMessage(ProtocolMessage message, MessageID messageID, ProtocolConnectionState state)
 			throws InvalidKeyException {
 		//a fully framed Message consists of the following
 		//messageType, a byte
@@ -248,7 +247,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
-
+			//NOP
 		}
 		if (_listenerRunnableThrowable != null) {
 			Throwable t = _listenerRunnableThrowable;
@@ -266,7 +265,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 		_listenerRunnableThrowable = null;
 		_messageAddresses.clear();
-		for(SocketAddress address : _connections.keySet()) {
+		for (SocketAddress address : _connections.keySet()) {
 			ProtocolConnectionState state = _connections.get(address);
 			try {
 				state.getSocketChannel().close();
@@ -282,7 +281,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		return state == null ? null : state.getSocketChannel();
 	}
 
-	private class TCPListenerRunnable implements Runnable {
+	protected class TCPListenerRunnable implements Runnable {
 		final InetSocketAddress _hostAddress;
 		final Selector _selector;
 		ServerSocketChannel _serverSocket;
@@ -303,6 +302,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				_serverSocket.bind(_hostAddress);
 				_serverSocket.configureBlocking(false);
 				_serverSocket.register(_selector, _serverSocket.validOps(), null);
+				ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
 				while (run) {
 					if (_selector.select(1000) > 0) {
@@ -320,7 +320,6 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 								} else if (key.isReadable()) {
 									SocketAddress address = ((SocketChannel) key.channel()).getRemoteAddress();
 									ProtocolConnectionState connection = _connections.get(address);
-									ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 									SocketChannel sc = (SocketChannel) key.channel();
 									int bytesRead = -1;
 									if (sc.isConnected()) {
@@ -332,7 +331,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 										_connections.remove(address);
 									} else if (bytesRead > 0) {
 										readBuffer.flip();
-										while (readBuffer.hasRemaining()) {
+										boolean readBufferIsUsable = true;
+										while (readBuffer.hasRemaining() && readBufferIsUsable) {
 											if (!connection.hasPacketBuffer()) {
 												//Determine the size of the message.
 												readBuffer.mark(); //First, we mark the buffer so we can reset it at the end
@@ -346,6 +346,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 															1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + dataLength);
 												} catch (BufferUnderflowException ex) {
 													//Ok, we couldn't read off enough data to determine how big to make the packetBuffer, so we'll try again next time.
+													readBufferIsUsable = false;
 												} finally {
 													readBuffer.reset(); //We always reset the buffer.
 												}
@@ -401,7 +402,6 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 								} else if (key.isWritable()) {
 									ProtocolConnectionState connection = _connections.get(((SocketChannel) key.channel()).getRemoteAddress());
 									connection.write();
-
 								} else {
 									System.out.println("Invalid selection key");
 								}
@@ -411,7 +411,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					}
 					//Register All socket channels for write that have things that need to be written
 					Iterator<SocketAddress> addresses = _connections.keySet().iterator();
-					while(addresses.hasNext()) {
+					while (addresses.hasNext()) {
 						SocketAddress address = addresses.next();
 						ProtocolConnectionState state = _connections.get(address);
 						state.registerForPendingWrites(_selector);

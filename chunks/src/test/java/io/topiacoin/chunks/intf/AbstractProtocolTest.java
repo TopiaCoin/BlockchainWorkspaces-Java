@@ -971,4 +971,220 @@ public abstract class AbstractProtocolTest {
 			userBservice.stop();
 		}
 	}
+
+	@Test
+	public void testSendPartialMessage() throws Exception {
+		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
+		userKeyGen.initialize(571);
+		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(2);
+
+			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+
+			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
+				}
+
+				@Override public void responseReceived(ProtocolMessage response) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+					try {
+						userAservice.reply(error, messageId);
+					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userAservice.setHandler(handlerA);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
+					try {
+						userBservice.reply(resp, messageID);
+					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response) {
+					//nop
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+
+			ProtocolMessage[] testMessages = new ProtocolMessage[] { new QueryChunksProtocolRequest(testChunks, "userA") };
+			MessageID messageID = sendMessagenBytesAtATime(userAservice, 100, "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessages)[0];
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
+			boolean connectionOpen = true;
+			for (int i = 0; i < 20 && connectionOpen; i++) {
+				Thread.sleep(100 * i);
+				SocketChannel sc = getConnectionForMessageID(userAservice, messageID);
+				connectionOpen = sc != null && sc.isConnected();
+			}
+			assertTrue("Connection never closed", !connectionOpen);
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
+	@Test
+	public void testSendPartialMessagesBackToBackLikeSomeSortOfNightmareScenario() throws Exception {
+		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
+		userKeyGen.initialize(571);
+		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(4);
+
+			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+
+			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
+				}
+
+				@Override public void responseReceived(ProtocolMessage response) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+					try {
+						userAservice.reply(error, messageId);
+					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userAservice.setHandler(handlerA);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
+					try {
+						userBservice.reply(resp, messageID);
+					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response) {
+					//nop
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+
+			ProtocolMessage[] testMessages = new ProtocolMessage[] { new QueryChunksProtocolRequest(testChunks, "userA"),
+					new QueryChunksProtocolRequest(testChunks, "userA") };
+			MessageID[] messageIDs = sendMessagenBytesAtATime(userAservice, 100, "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessages);
+			assertTrue("Message never received", lock.await(1000, TimeUnit.SECONDS));
+			boolean connectionOpen = true;
+			for (int i = 0; i < 20 && connectionOpen; i++) {
+				Thread.sleep(100 * i);
+				SocketChannel sc = getConnectionForMessageID(userAservice, messageIDs[0]);
+				SocketChannel sc2 = getConnectionForMessageID(userAservice, messageIDs[1]);
+				connectionOpen = sc != null && sc.isConnected() && sc2 != null && sc2.isConnected();
+			}
+			assertTrue("Connection never closed", !connectionOpen);
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
+	protected ByteBuffer putAsMuchAsPossible(ByteBuffer srcBuffer, ByteBuffer readBuffer) {
+		//This is basically the way ByteBuffer.put(ByteBuffer) works, but without the ability to throw BufferOverflowExceptions
+		//I don't need a BufferOverflow - if there's more data to be read, the readBuffer will be compacted and the loop will go on
+		int n = Math.min(srcBuffer.remaining(), readBuffer.remaining());
+		for (int i = 0; i < n; i++) {
+			srcBuffer.put(readBuffer.get());
+		}
+		if (srcBuffer.hasRemaining()) {
+			return null;
+		} else {
+			ByteBuffer toReturn = srcBuffer;
+			return toReturn;
+		}
+	}
+
+	/**
+	 * The easiest way to implement this is to
+	 * 1) Have it throw NotImplementedException
+	 * 2) Get all of your other tests to pass - at the very least, the mainline tests
+	 * 3) Copy your code out of sendMessage, modify variable names as appropriate
+	 * 4) Modify the code as slightly as possible to make it send the bytes slowly
+	 */
+	protected abstract MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsService, int bytesAtATime, String location, int port, byte[] transferPublicKey, String otherUsersAuthToken, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException;
 }

@@ -72,10 +72,6 @@ public class ProtocolConnectionState {
 		_channel.configureBlocking(false);
 	}
 
-	public byte[] getTheirPublicKey() {
-		return _theirPublicKey;
-	}
-
 	public void setTheirPublicKey(byte[] key) {
 		_theirPublicKey = key;
 	}
