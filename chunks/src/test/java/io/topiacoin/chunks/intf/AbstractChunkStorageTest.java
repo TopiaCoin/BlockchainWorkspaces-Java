@@ -71,6 +71,8 @@ public abstract class AbstractChunkStorageTest {
         assertEquals(chunkData.length, bytesRead);
         assertTrue(Arrays.equals(chunkData, fetchedData));
 
+        fetchStream.close();
+
         // Remove the chunk from chunk storage and verify result
         boolean removed = chunkStorage.removeChunk(chunkID);
         assertTrue(removed);
@@ -142,7 +144,7 @@ public abstract class AbstractChunkStorageTest {
         int bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData1.length, bytesRead);
         assertTrue(Arrays.equals(chunkData1, fetchedData));
-
+        fetchStream.close();
         // Attempt to fetch Chunk 2 and verify it fails
         try {
             chunkStorage.getChunkData(chunkID2);
@@ -166,6 +168,7 @@ public abstract class AbstractChunkStorageTest {
         bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData1.length, bytesRead);
         assertTrue(Arrays.equals(chunkData1, fetchedData));
+        fetchStream.close();
 
         // Fetch the stored chunk 2 and verify that the right data is returned
         fetchStream = chunkStorage.getChunkData(chunkID2);
@@ -173,7 +176,7 @@ public abstract class AbstractChunkStorageTest {
         bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData2.length, bytesRead);
         assertTrue(Arrays.equals(chunkData2, fetchedData));
-
+        fetchStream.close();
         // Remove the chunk from chunk storage and verify result
         boolean removed = chunkStorage.removeChunk(chunkID1);
         assertTrue(removed);

@@ -174,23 +174,24 @@ public class FileSystemChunkStorage implements ChunkStorage {
         long bytesRemoved = storageFile.length();
 
         boolean deleted = storageFile.delete();
+        if(deleted) {
+            this.storageUsed -= bytesRemoved;
 
-        this.storageUsed -= bytesRemoved;
-
-        // Walk up the tree removing empty directories
-        File parentDir = storageFile.getParentFile();
-        boolean done = parentDir.equals(chunkStorageDirectory);
-        while (!done) {
-            String[] filesInDir = parentDir.list();
-            if (filesInDir != null && filesInDir.length == 0) {
-                if (parentDir.delete()) {
-                    parentDir = parentDir.getParentFile();
-                    done = parentDir.equals(chunkStorageDirectory);
+            // Walk up the tree removing empty directories
+            File parentDir = storageFile.getParentFile();
+            boolean done = parentDir.equals(chunkStorageDirectory);
+            while (!done) {
+                String[] filesInDir = parentDir.list();
+                if (filesInDir != null && filesInDir.length == 0) {
+                    if (parentDir.delete()) {
+                        parentDir = parentDir.getParentFile();
+                        done = parentDir.equals(chunkStorageDirectory);
+                    } else {
+                        done = true;
+                    }
                 } else {
                     done = true;
                 }
-            } else {
-                done = true;
             }
         }
         return deleted;
