@@ -10,7 +10,6 @@
     </parent>
 
     <!-- Project Information -->
-    <groupId>topiacoin</groupId>
     <artifactId>chunks</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>TopiaCoin Chunk Storage And Transfer</name>

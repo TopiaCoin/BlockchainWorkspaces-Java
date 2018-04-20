@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SignatureException;
 
 /** A ProtocolMessage is a message designed to be sent using a ProtocolCommsService
  * Before a ProtocolMessage can be sent, it must first be signed by calling the sign() function.
@@ -33,7 +34,7 @@ public interface ProtocolMessage {
 	 * @return true if the signature is valid, false otherwise
 	 * @throws InvalidKeyException if the senderPublicKey is not in the correct format for verifying a message
 	 */
-	public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException;
+	public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException, SignatureException;
 
 	/**
 	 * Converts this ProtocolMessage to bytes, stored in a ByteBuffer

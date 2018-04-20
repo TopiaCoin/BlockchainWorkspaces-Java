@@ -31,7 +31,7 @@ public class TCPTest extends AbstractProtocolTest {
 		return ((TCPProtocolCommsService) service).getConnectionForMessageID(id);
 	}
 
-	@Override protected MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsInterface, int bytesAtATime, String location, int port, byte[] transferPublicKey, String otherUsersAuthToken, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException {
+	@Override protected MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsInterface, int bytesAtATime, String location, int port, byte[] transferPublicKey, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException {
 		TCPProtocolCommsService commsService = null;
 		if(commsInterface instanceof TCPProtocolCommsService) {
 			commsService = (TCPProtocolCommsService) commsInterface;
@@ -84,7 +84,7 @@ public class TCPTest extends AbstractProtocolTest {
 			ByteBuffer partialData = ByteBuffer.allocate(Math.min(bytesAtATime, totalData.remaining()));
 			putAsMuchAsPossible(partialData, totalData);
 			partialData.flip();
-			state.addWriteBuffer(partialData, false);
+			state.addWriteBuffer(partialData);
 			commsService._listenerRunnable.wakeupSelector();
 			try {
 				Thread.sleep(500);

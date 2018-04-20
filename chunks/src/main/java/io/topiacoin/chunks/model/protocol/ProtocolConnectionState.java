@@ -37,8 +37,6 @@ public class ProtocolConnectionState {
 	private byte[] _theirPublicKey;
 	private byte[] _myPublicKey = new byte[0];
 	private SecretKey _messageKey;
-	private boolean _isResponse = false;
-	private KeyPair _requestKeyPair = null;
 
 	public ProtocolConnectionState(SocketChannel channel, Selector selector) throws IOException {
 		_channel = channel;
@@ -53,7 +51,7 @@ public class ProtocolConnectionState {
 		try {
 			KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
 			userKeyGen.initialize(571);
-			_requestKeyPair = userKeyGen.genKeyPair();
+			KeyPair _requestKeyPair = userKeyGen.genKeyPair();
 			_myPublicKey = _requestKeyPair.getPublic().getEncoded();
 			buildMessageKey(_requestKeyPair);
 		} catch (NoSuchAlgorithmException e) {
@@ -84,11 +82,10 @@ public class ProtocolConnectionState {
 		return _messageKey;
 	}
 
-	public void addWriteBuffer(ByteBuffer data, boolean isResponse) {
+	public void addWriteBuffer(ByteBuffer data) {
 		if (data.hasRemaining()) {
 			_writeBuffers.add(data);
 			_lastUseTime = System.currentTimeMillis();
-			_isResponse = isResponse;
 		}
 	}
 

@@ -15,7 +15,6 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 	private byte[] _chunkdata;
 	private byte[] _signature = null;
 	private String _authToken;
-	private boolean _isRequest = false;
 	private String _messageType = "GIVE_CHUNK";
 
 	public GiveChunkProtocolResponse(String chunkId, byte[] data, String userID) {
@@ -43,7 +42,7 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 		}
 	}
 
-	@Override public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException {
+	@Override public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException, SignatureException {
 		if(_signature == null) {
 			return false;
 		} else {
@@ -55,12 +54,8 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 				throw new RuntimeException("Failed to init signature", e);
 			}
 			sig.initVerify(senderPublicKey);
-			try {
-				sig.update(messageData);
-				return sig.verify(_signature);
-			} catch (SignatureException e) {
-				throw new RuntimeException("Failed to verify", e);
-			}
+			sig.update(messageData);
+			return sig.verify(_signature);
 		}
 	}
 
@@ -155,7 +150,7 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 	}
 
 	@Override public boolean isRequest() {
-		return _isRequest;
+		return false;
 	}
 
 	@Override public String getType() {

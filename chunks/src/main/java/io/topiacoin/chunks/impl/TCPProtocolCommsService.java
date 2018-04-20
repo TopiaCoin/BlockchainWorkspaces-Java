@@ -39,15 +39,15 @@ import java.util.Map;
 
 public class TCPProtocolCommsService implements ProtocolCommsService {
 	private static final long _unusedConnectionCloseThresholdMillis = 15000;
-	private KeyPair _chunkTransferKeyPair;
+	private final KeyPair _chunkTransferKeyPair;
 	Thread _listenerThread;
 	TCPListenerRunnable _listenerRunnable;
 	private Throwable _listenerRunnableThrowable = null;
 
-	Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
-	Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
+	final Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
+	final Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
 
-	private Map<String, Byte> _messageTypes = new HashMap<>();
+	private final Map<String, Byte> _messageTypes = new HashMap<>();
 	int _messageIdTracker = 0;
 	private ProtocolCommsHandler _handler = null;
 
@@ -68,7 +68,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_messageTypes.put("ERROR", b);
 	}
 
-	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, String authToken, ProtocolMessage message)
+	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message)
 			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
 		if (!message.isRequest()) {
 			throw new InvalidMessageException("Cannot send non-request type message as a request");
@@ -92,12 +92,11 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		} else {
 			state.addMessageID(messageID);
 		}
-		state.reconnectIfNecessary(addr);
 		_connections.put(addr, state);
 
 		ByteBuffer data = encryptAndFrameMessage(message, messageID, state);
 		data.flip();
-		state.addWriteBuffer(data, false);
+		state.addWriteBuffer(data);
 		_listenerRunnable.wakeupSelector();
 		return messageID;
 	}
@@ -207,7 +206,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					}
 					ByteBuffer data = encryptAndFrameMessage(message, messageID, state);
 					data.flip();
-					state.addWriteBuffer(data, true);
+					state.addWriteBuffer(data);
 					state.removeMessageID(messageID);
 					_messageAddresses.remove(messageID);
 					_listenerRunnable.wakeupSelector();
@@ -281,7 +280,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		return state == null ? null : state.getSocketChannel();
 	}
 
-	protected class TCPListenerRunnable implements Runnable {
+	class TCPListenerRunnable implements Runnable {
 		final InetSocketAddress _hostAddress;
 		final Selector _selector;
 		ServerSocketChannel _serverSocket;
@@ -337,8 +336,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 												//Determine the size of the message.
 												readBuffer.mark(); //First, we mark the buffer so we can reset it at the end
 												try {
-													int msgType = readBuffer.get(); //We read off the 'messageType' byte but ignore its value
-													int msgId = readBuffer.getInt(); //Then the messageID, it's value is also ignored for now
+													readBuffer.get(); //We read off the 'messageType' byte but ignore its value
+													readBuffer.getInt(); //Then the messageID, it's value is also ignored for now
 													int transferPubKeyLength = readBuffer.getInt(); //Then, the length of the publicKey that may or may not be attached - we need this
 													readBuffer.get(new byte[transferPubKeyLength]); //We'll read past the publicKey if it exists - we don't need its value right now.
 													int dataLength = readBuffer.getInt(); //Finally, we'll read the data length int - if we've made it this far, we can allocate the buffer.
@@ -400,7 +399,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 										readBuffer.compact();
 									}
 								} else if (key.isWritable()) {
-									ProtocolConnectionState connection = _connections.get(((SocketChannel) key.channel()).getRemoteAddress());
+									SocketAddress address = ((SocketChannel) key.channel()).getRemoteAddress();
+									ProtocolConnectionState connection = _connections.get(address);
 									connection.write();
 								} else {
 									System.out.println("Invalid selection key");

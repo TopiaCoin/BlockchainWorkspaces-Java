@@ -10,16 +10,17 @@ import java.security.Signature;
 import java.security.SignatureException;
 
 public class ChunksProtocolMessage implements ProtocolMessage {
-	private String _userID;
-	private String[] _chunks;
-	private byte[] _signature = null;
+	String _userID;
+	String[] _chunks;
+	public byte[] _signature = null;
 	private String _authToken;
 	private boolean _isRequest;
 	private String _messageType;
 
-	ChunksProtocolMessage(String[] chunksRequired, String userID, boolean isRequest, String messageType) {
+	ChunksProtocolMessage(String[] chunksRequired, String userID, String authToken, boolean isRequest, String messageType) {
 		_chunks = chunksRequired;
 		_userID = userID;
+		_authToken = authToken;
 		_isRequest = isRequest;
 		_messageType = messageType;
 	}
@@ -39,7 +40,7 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 		}
 	}
 
-	@Override public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException {
+	@Override public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException, SignatureException {
 		if(_signature == null) {
 			return false;
 		} else {
@@ -51,12 +52,8 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 				throw new RuntimeException("Failed to init signature", e);
 			}
 			sig.initVerify(senderPublicKey);
-			try {
-				sig.update(messageData);
-				return sig.verify(_signature);
-			} catch (SignatureException e) {
-				throw new RuntimeException("Failed to verify", e);
-			}
+			sig.update(messageData);
+			return sig.verify(_signature);
 		}
 	}
 
@@ -154,7 +151,7 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 	}
 
 	@Override public boolean isValid() {
-		return _userID != null && _chunks != null && _chunks.length > 0;
+		return _userID != null && _chunks != null && _chunks.length > 0 && _authToken != null && !_authToken.isEmpty();
 	}
 
 	@Override public boolean isRequest() {
@@ -165,8 +162,8 @@ public class ChunksProtocolMessage implements ProtocolMessage {
 		return _messageType;
 	}
 
-	public void setAuthToken(String authToken) {
-		_authToken = authToken;
+	public String getAuthToken() {
+		return _authToken;
 	}
 
 	public String getMessageType() {

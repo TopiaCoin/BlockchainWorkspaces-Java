@@ -28,7 +28,6 @@ public interface ProtocolCommsService {
 	 * @param location The destination location (typically an IP address or hostname)
 	 * @param port The port number on the destination to connect to
 	 * @param transferPublicKey The public transferKey of the destination, used to generate cryptographic keys for communications - from the blockchain
-	 * @param authToken The authToken of the destination - from the blockchain
 	 * @param message The message you want to send
 	 * @return the messageID of this communication
 	 * @throws InvalidKeyException If the transferPublicKey is invalid or, if this is an initial message, null.
@@ -36,7 +35,7 @@ public interface ProtocolCommsService {
 	 * @throws InvalidMessageException If the message passed in is not properly formed, or if you pass a Response-type message in
 	 * @throws FailedToStartCommsListenerException If you try to send a message without first starting the listener
 	 */
-	public MessageID sendMessage(String location, int port, byte[] transferPublicKey, String authToken, ProtocolMessage message)
+	public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message)
 			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
 
 	/**

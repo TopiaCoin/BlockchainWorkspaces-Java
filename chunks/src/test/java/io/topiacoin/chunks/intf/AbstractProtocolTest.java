@@ -23,6 +23,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,6 +48,8 @@ public abstract class AbstractProtocolTest {
 		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
 		userKeyGen.initialize(571);
 		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userASigningKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBSigningKeyPair = userKeyGen.genKeyPair();
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {
@@ -65,6 +68,14 @@ public abstract class AbstractProtocolTest {
 					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
 					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
 					assertEquals("userID wrong", "userB", message.getUserID());
+					try {
+						assertTrue("Message signature verification failed", response.verify(userBSigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
 					lock.countDown();
 				}
 
@@ -89,13 +100,26 @@ public abstract class AbstractProtocolTest {
 					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
 					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
 					assertEquals("userID wrong", "userA", message.getUserID());
+					assertEquals("AuthToken wrong", userBAuthToken, message.getAuthToken());
+					try {
+						assertTrue("Message signature verification failed", request.verify(userASigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
 					lock.countDown();
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
+						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
 					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Couldn't sign");
 					}
 				}
 
@@ -121,8 +145,9 @@ public abstract class AbstractProtocolTest {
 			userAservice.startListener();
 			userBservice.startListener();
 
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
-			MessageID messageID = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			testMessage.sign(userASigningKeyPair.getPrivate());
+			MessageID messageID = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 			boolean connectionOpen = true;
 			for (int i = 0; i < 20 && connectionOpen; i++) {
@@ -139,10 +164,23 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testSignAndVerify() throws Exception {
-		ProtocolMessage testMessage = new QueryChunksProtocolRequest(new String[] { "foo", "bar", "baz" }, "userA");
 		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
 		userKeyGen.initialize(571);
 		final KeyPair signingKeypair = userKeyGen.genKeyPair();
+
+		ProtocolMessage testMessage = new QueryChunksProtocolRequest(new String[] { "foo", "bar", "baz" }, "userA", "foo");
+		testMessage.sign(signingKeypair.getPrivate());
+		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
+		testMessage = new HaveChunksProtocolResponse(new String[] { "foo", "bar", "baz" }, "userA");
+		testMessage.sign(signingKeypair.getPrivate());
+		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
+		testMessage = new FetchChunkProtocolRequest( "foo", "userA", "foo");
+		testMessage.sign(signingKeypair.getPrivate());
+		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
+		testMessage = new GiveChunkProtocolResponse("foo", new byte[100], "userA");
+		testMessage.sign(signingKeypair.getPrivate());
+		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
+		testMessage = new ErrorProtocolResponse("whatever", "userA");
 		testMessage.sign(signingKeypair.getPrivate());
 		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
 	}
@@ -166,12 +204,11 @@ public abstract class AbstractProtocolTest {
 				}
 
 				@Override public void responseReceived(ProtocolMessage response) {
-					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
 					lock.countDown();
 					//Ok, this would be non-standard, but it's not technically invalid, so it should work...I think
-					ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
+					ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 					try {
-						userAservice.sendMessage("127.0.0.1", 7778, null, userBAuthToken, testMessage);
+						userAservice.sendMessage("127.0.0.1", 7778, null, testMessage);
 					} catch (InvalidKeyException | InvalidMessageException | IOException | FailedToStartCommsListenerException e) {
 						e.printStackTrace();
 						fail("Didn't expect an Exception");
@@ -195,7 +232,6 @@ public abstract class AbstractProtocolTest {
 			userAservice.setHandler(handlerA);
 			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
-					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
 					lock.countDown();
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
@@ -228,8 +264,8 @@ public abstract class AbstractProtocolTest {
 			userAservice.startListener();
 			userBservice.startListener();
 
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
-			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			userAservice.stop();
@@ -238,11 +274,11 @@ public abstract class AbstractProtocolTest {
 	}
 
 	@Test
-	public void testProtocolMessageSerialization() throws Exception {
+	public void testProtocolMessageSerialization() {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
-		QueryChunksProtocolRequest queryChunksTest = new QueryChunksProtocolRequest(testChunks, "userA");
+		QueryChunksProtocolRequest queryChunksTest = new QueryChunksProtocolRequest(testChunks, "userA", "foo");
 		HaveChunksProtocolResponse haveChunksTest = new HaveChunksProtocolResponse(testChunks, "userB");
-		FetchChunkProtocolRequest fetchChunkTest = new FetchChunkProtocolRequest("foo", "userA");
+		FetchChunkProtocolRequest fetchChunkTest = new FetchChunkProtocolRequest("foo", "userA", "foo");
 		byte[] data = new byte[20];
 		new Random().nextBytes(data);
 		GiveChunkProtocolResponse giveChunkTest = new GiveChunkProtocolResponse("foo", data, "userA");
@@ -274,6 +310,9 @@ public abstract class AbstractProtocolTest {
 		assertEquals(fetchChunkTest.getUserID(), fetchChunkActual.getUserID());
 		assertEquals(giveChunkTest.getUserID(), giveChunkActual.getUserID());
 
+		assertEquals(queryChunksTest.getAuthToken(), queryChunksActual.getAuthToken());
+		assertEquals(fetchChunkTest.getAuthToken(), fetchChunkActual.getAuthToken());
+
 		assertTrue(Arrays.equals(queryChunksTest.getChunksRequired(), queryChunksActual.getChunksRequired()));
 		assertTrue(Arrays.equals(haveChunksTest.getChunkIDs(), haveChunksActual.getChunkIDs()));
 		assertEquals(fetchChunkTest.getChunkID(), fetchChunkActual.getChunkID());
@@ -285,7 +324,7 @@ public abstract class AbstractProtocolTest {
 	@Test
 	public void testRetrieveChunkRequestResponse() throws Exception {
 		final String[] testChunkIDs = new String[] { "foo" };
-		final Map<String, byte[]> testChunks = new HashMap<String, byte[]>();
+		final Map<String, byte[]> testChunks = new HashMap<>();
 		Random r = new Random();
 		for (String chunk : testChunkIDs) {
 			byte[] data = new byte[524288];
@@ -298,15 +337,15 @@ public abstract class AbstractProtocolTest {
 		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
 		userKeyGen.initialize(571);
 		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userASigningKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBSigningKeyPair = userKeyGen.genKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {
-			final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<String>();
-			final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<String>();
-			chunksIShouldReceiveRequestsFor.addAll(testChunks.keySet());
-			chunksIShouldReceiveResponseFor.addAll(testChunks.keySet());
+			final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<>(testChunks.keySet());
+			final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<>(testChunks.keySet());
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
@@ -323,6 +362,14 @@ public abstract class AbstractProtocolTest {
 					chunksIShouldReceiveResponseFor.remove(message.getChunkID());
 					byte[] expectedChunkData = testChunks.get(message.getChunkID());
 					assertTrue("chunkdata wrong", Arrays.equals(expectedChunkData, message.getChunkData()));
+					try {
+						assertTrue("Message signature verification failed", response.verify(userBSigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
 					lock.countDown();
 				}
 
@@ -349,15 +396,28 @@ public abstract class AbstractProtocolTest {
 							"I'm not expecting to receive a request for "
 									+ message.getChunkID(), chunksIShouldReceiveRequestsFor.contains(message.getChunkID()));
 					assertEquals("userID wrong", "userA", message.getUserID());
+					assertEquals("authToken wrong", userBAuthToken, message.getAuthToken());
+					try {
+						assertTrue("Message signature verification failed", request.verify(userASigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
 					chunksIShouldReceiveRequestsFor.remove(message.getChunkID());
 					byte[] chunkData = testChunks.get(message.getChunkID());
 					lock.countDown();
 					ProtocolMessage resp = new GiveChunkProtocolResponse(message.getChunkID(), chunkData, "userB");
 					try {
+						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
 					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Couldn't sign");
 					}
 				}
 
@@ -384,8 +444,9 @@ public abstract class AbstractProtocolTest {
 			userBservice.startListener();
 
 			for (String testChunk : testChunks.keySet()) {
-				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
-				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA", userBAuthToken);
+				testMessage.sign(userASigningKeyPair.getPrivate());
+				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 			}
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
@@ -397,7 +458,7 @@ public abstract class AbstractProtocolTest {
 	@Test
 	public void testRetrieveMultipleChunksRequestResponse() throws Exception {
 		final String[] testChunkIDs = new String[] { "foo", "bar", "baz" };
-		final Map<String, byte[]> testChunks = new HashMap<String, byte[]>();
+		final Map<String, byte[]> testChunks = new HashMap<>();
 		Random r = new Random();
 		for (String chunk : testChunkIDs) {
 			byte[] data = new byte[r.nextInt(524288)];
@@ -415,8 +476,8 @@ public abstract class AbstractProtocolTest {
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {
-			final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<String>(testChunks.keySet());
-			final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<String>(testChunks.keySet());
+			final ArrayList<String> chunksIShouldReceiveRequestsFor = new ArrayList<>(testChunks.keySet());
+			final ArrayList<String> chunksIShouldReceiveResponseFor = new ArrayList<>(testChunks.keySet());
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
@@ -494,8 +555,8 @@ public abstract class AbstractProtocolTest {
 			userBservice.startListener();
 
 			for (String testChunk : testChunks.keySet()) {
-				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA");
-				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA", userBAuthToken);
+				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 			}
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
@@ -577,7 +638,7 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testSignAndVerifyNegative() throws NoSuchAlgorithmException {
-		ProtocolMessage testMessage = new QueryChunksProtocolRequest(new String[] { "foo", "bar", "baz" }, "userA");
+		ProtocolMessage testMessage = new QueryChunksProtocolRequest(new String[] { "foo", "bar", "baz" }, "userA", "foo");
 		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
 		userKeyGen.initialize(571);
 		final KeyPair signingKeypair = userKeyGen.genKeyPair();
@@ -599,11 +660,25 @@ public abstract class AbstractProtocolTest {
 			Assert.fail("Expected InvalidKeyException");
 		} catch (InvalidKeyException e) {
 			//Good
+		} catch (SignatureException e) {
+			fail("Didn't expect a sig exception");
 		}
 		try {
 			assertFalse("Signature should be bad, but isn't", testMessage.verify(someOtherKeypair.getPublic()));
 		} catch (InvalidKeyException e) {
 			Assert.fail("Unexpected Exception");
+		} catch (SignatureException e) {
+			fail("Didn't expect a sig exception");
+		}
+		QueryChunksProtocolRequest qcpr = (QueryChunksProtocolRequest) testMessage;
+		qcpr._signature = new byte[50];
+		try {
+			qcpr.verify(someOtherKeypair.getPublic());
+			fail("Expected verification to fail because Signature is corrupt");
+		} catch (InvalidKeyException e) {
+			fail("Unexpected Exception");
+		} catch (SignatureException e) {
+			//Good
 		}
 	}
 
@@ -674,8 +749,8 @@ public abstract class AbstractProtocolTest {
 			userAservice.startListener();
 			userBservice.startListener();
 
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
-			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			userAservice.stop();
@@ -709,9 +784,9 @@ public abstract class AbstractProtocolTest {
 				}
 			});
 			service.startListener();
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			try {
-				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 				fail("Expected a ConnectException");
 			} catch (ConnectException ex) {
 				//Good
@@ -729,9 +804,9 @@ public abstract class AbstractProtocolTest {
 		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
 		String userBAuthToken = "The password is password";
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
-		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
+		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 		try {
-			service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
+			service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
 			fail("Expected a FailedToStartCommsListenerException");
 		} catch (FailedToStartCommsListenerException ex) {
 			//Good
@@ -773,14 +848,28 @@ public abstract class AbstractProtocolTest {
 			service.startListener();
 			ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
 			try {
-				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, resp);
+				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), resp);
 				fail("Expected a InvalidMessageException");
 			} catch (InvalidMessageException ex) {
 				//Good
 			}
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			try {
 				service.reply(testMessage, new MessageID(0, new InetSocketAddress(1234)));
+				fail("Expected a InvalidMessageException");
+			} catch (InvalidMessageException ex) {
+				//Good
+			}
+			testMessage = new QueryChunksProtocolRequest(null, "userA", userBAuthToken);
+			try {
+				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+				fail("Expected a InvalidMessageException");
+			} catch (InvalidMessageException ex) {
+				//Good
+			}
+			resp = new HaveChunksProtocolResponse(null, "userA");
+			try {
+				service.reply(resp, new MessageID(0, new InetSocketAddress(1234)));
 				fail("Expected a InvalidMessageException");
 			} catch (InvalidMessageException ex) {
 				//Good
@@ -793,9 +882,6 @@ public abstract class AbstractProtocolTest {
 	@Test
 	public void testSendQueryChunksRequestWithNoPublicKey() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 		ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		ProtocolCommsService userBservice = getProtocolCommsService(7778, null);
@@ -835,15 +921,15 @@ public abstract class AbstractProtocolTest {
 				}
 			});
 			userBservice.startListener();
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			try {
-				userAservice.sendMessage("127.0.0.1", 7778, null, userBAuthToken, testMessage);
+				userAservice.sendMessage("127.0.0.1", 7778, null, testMessage);
 				fail("Expected a InvalidKeyException");
 			} catch (InvalidKeyException ex) {
 				//Good
 			}
 			try {
-				userAservice.sendMessage("127.0.0.1", 7778, null, userBAuthToken, testMessage);
+				userAservice.sendMessage("127.0.0.1", 7778, null, testMessage);
 				fail("Expected a InvalidKeyException");
 			} catch (InvalidKeyException ex) {
 				//Good
@@ -953,10 +1039,10 @@ public abstract class AbstractProtocolTest {
 			userAservice.startListener();
 			userBservice.startListener();
 
-			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA");
-			ProtocolMessage testMessage2 = new QueryChunksProtocolRequest(testChunks, "userB");
-			MessageID messageID1 = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessage);
-			MessageID messageID2 = userBservice.sendMessage("127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken, testMessage2);
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			ProtocolMessage testMessage2 = new QueryChunksProtocolRequest(testChunks, "userB", userAAuthToken);
+			MessageID messageID1 = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+			MessageID messageID2 = userBservice.sendMessage("127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded(), testMessage2);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 			boolean connectionOpen = true;
 			for (int i = 0; i < 20 && connectionOpen; i++) {
@@ -1051,8 +1137,8 @@ public abstract class AbstractProtocolTest {
 			userAservice.startListener();
 			userBservice.startListener();
 
-			ProtocolMessage[] testMessages = new ProtocolMessage[] { new QueryChunksProtocolRequest(testChunks, "userA") };
-			MessageID messageID = sendMessagenBytesAtATime(userAservice, 100, "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessages)[0];
+			ProtocolMessage[] testMessages = new ProtocolMessage[] { new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken) };
+			MessageID messageID = sendMessagenBytesAtATime(userAservice, 100, "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessages)[0];
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 			boolean connectionOpen = true;
 			for (int i = 0; i < 20 && connectionOpen; i++) {
@@ -1146,10 +1232,10 @@ public abstract class AbstractProtocolTest {
 			userAservice.startListener();
 			userBservice.startListener();
 
-			ProtocolMessage[] testMessages = new ProtocolMessage[] { new QueryChunksProtocolRequest(testChunks, "userA"),
-					new QueryChunksProtocolRequest(testChunks, "userA") };
-			MessageID[] messageIDs = sendMessagenBytesAtATime(userAservice, 100, "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken, testMessages);
-			assertTrue("Message never received", lock.await(1000, TimeUnit.SECONDS));
+			ProtocolMessage[] testMessages = new ProtocolMessage[] { new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken),
+					new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken) };
+			MessageID[] messageIDs = sendMessagenBytesAtATime(userAservice, 100, "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessages);
+			assertTrue("Message never received", lock.await(20, TimeUnit.SECONDS));
 			boolean connectionOpen = true;
 			for (int i = 0; i < 20 && connectionOpen; i++) {
 				Thread.sleep(100 * i);
@@ -1164,18 +1250,12 @@ public abstract class AbstractProtocolTest {
 		}
 	}
 
-	protected ByteBuffer putAsMuchAsPossible(ByteBuffer srcBuffer, ByteBuffer readBuffer) {
+	protected void putAsMuchAsPossible(ByteBuffer srcBuffer, ByteBuffer readBuffer) {
 		//This is basically the way ByteBuffer.put(ByteBuffer) works, but without the ability to throw BufferOverflowExceptions
 		//I don't need a BufferOverflow - if there's more data to be read, the readBuffer will be compacted and the loop will go on
 		int n = Math.min(srcBuffer.remaining(), readBuffer.remaining());
 		for (int i = 0; i < n; i++) {
 			srcBuffer.put(readBuffer.get());
-		}
-		if (srcBuffer.hasRemaining()) {
-			return null;
-		} else {
-			ByteBuffer toReturn = srcBuffer;
-			return toReturn;
 		}
 	}
 
@@ -1186,5 +1266,5 @@ public abstract class AbstractProtocolTest {
 	 * 3) Copy your code out of sendMessage, modify variable names as appropriate
 	 * 4) Modify the code as slightly as possible to make it send the bytes slowly
 	 */
-	protected abstract MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsService, int bytesAtATime, String location, int port, byte[] transferPublicKey, String otherUsersAuthToken, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException;
+	protected abstract MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsService, int bytesAtATime, String location, int port, byte[] transferPublicKey, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException;
 }
