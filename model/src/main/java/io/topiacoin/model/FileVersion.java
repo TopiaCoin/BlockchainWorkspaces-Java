@@ -43,6 +43,21 @@ public class FileVersion {
         this.receipts = (receipts != null ? new ArrayList<FileVersionReceipt>(receipts) : new ArrayList<FileVersionReceipt>());
     }
 
+    public FileVersion(FileVersion other) {
+        this.entryID = other.entryID;
+        this.versionID = other.versionID;
+        this.ownerID = other.ownerID;
+        this.size = other.size;
+        this.date = other.date;
+        this.uploadDate = other.uploadDate;
+        this.fileHash = other.fileHash;
+        this.status = other.status;
+        this.userTags = ( other.userTags != null ? new ArrayList<FileTag>(other.userTags) : new ArrayList<FileTag>());
+        this.systemTags = (other.systemTags != null ? new ArrayList<FileTag>(other.systemTags) : new ArrayList<FileTag>());
+        this.fileChunks = (other.fileChunks != null ? new ArrayList<FileChunk>(other.fileChunks) : new ArrayList<FileChunk>());
+        this.receipts = (other.receipts != null ? new ArrayList<FileVersionReceipt>(other.receipts) : new ArrayList<FileVersionReceipt>());
+    }
+
     public String getEntryID() {
         return entryID;
     }

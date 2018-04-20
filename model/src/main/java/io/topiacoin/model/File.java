@@ -36,6 +36,22 @@ public class File {
         }
     }
 
+    public File(File other) {
+        this.name = other.name;
+        this.mimeType = other.mimeType;
+        this.entryID = other.entryID;
+        this.containerID = other.containerID;
+        this.parentID = other.parentID;
+        this.isFolder = other.isFolder;
+        this.status = other.status;
+        this.lockOwner = other.lockOwner;
+        if ( other.versions != null ) {
+            this.versions = new ArrayList<FileVersion>(other.versions);
+        } else {
+            this.versions = new ArrayList<FileVersion>();
+        }
+    }
+
     public String getName() {
         return name;
     }

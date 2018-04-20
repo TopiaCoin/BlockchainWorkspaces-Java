@@ -30,6 +30,18 @@ public class FileChunk {
         this.compressionAlgorithm = compressionAlgorithm;
     }
 
+    public FileChunk(FileChunk other) {
+        this.chunkID = other.chunkID;
+        this.index = other.index;
+        this.cipherTextSize = other.cipherTextSize;
+        this.clearTextSize = other.clearTextSize;
+        this.chunkKey = other.chunkKey;
+        this.initializationVector = other.initializationVector;
+        this.cipherTextHash = other.cipherTextHash;
+        this.clearTextHash = other.clearTextHash;
+        this.compressionAlgorithm = other.compressionAlgorithm;
+    }
+
     public String getChunkID() {
         return chunkID;
     }

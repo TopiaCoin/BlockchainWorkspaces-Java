@@ -13,6 +13,11 @@ public class FileTag {
         this.value = value;
     }
 
+    public FileTag(FileTag other) {
+        this.scope = other.scope;
+        this.value = other.value;
+    }
+
     public String getScope() {
         return scope;
     }

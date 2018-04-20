@@ -179,9 +179,6 @@ public interface DataModelProvider {
     void addTagForFile(String fileID, String versionID, FileTag tag)
             throws NoSuchFileException, NoSuchFileVersionException, FileTagAlreadyExistsException;
 
-    void updateTagForFile(String fileID, String versionID, FileTag tag)
-            throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileTagException;
-
     void removeTagForFile(String fileID, String versionID, FileTag tag)
             throws NoSuchFileException, NoSuchFileVersionException, NoSuchFileTagException;
 

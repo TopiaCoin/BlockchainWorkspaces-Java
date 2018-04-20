@@ -28,6 +28,17 @@ public class Message {
         this.digitalSignature = digitalSignature;
     }
 
+    public Message(Message next) {
+        this.authorID = next.authorID;
+        this.entityID = next.entityID;
+        this.guid = next.guid;
+        this.seq = next.seq;
+        this.timestamp = next.timestamp;
+        this.text = next.text;
+        this.mimeType = next.mimeType;
+        this.digitalSignature = next.digitalSignature;
+    }
+
     public String getAuthorID() {
         return authorID;
     }
