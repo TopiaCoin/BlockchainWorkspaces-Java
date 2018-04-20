@@ -3,16 +3,16 @@ package io.topiacoin.chunks.impl;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
+import io.topiacoin.chunks.exceptions.UnknownMessageTypeException;
 import io.topiacoin.chunks.intf.ProtocolCommsHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
-import io.topiacoin.chunks.model.protocol.FetchChunkProtocolRequest;
-import io.topiacoin.chunks.model.protocol.GiveChunkProtocolResponse;
-import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolConnectionState;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
-import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
+import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class TCPProtocolCommsService implements ProtocolCommsService {
+	private static final Log _log = LogFactory.getLog(TCPProtocolCommsService.class);
 	private static final long _unusedConnectionCloseThresholdMillis = 15000;
 	private final KeyPair _chunkTransferKeyPair;
 	Thread _listenerThread;
@@ -47,7 +48,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	final Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
 	final Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
 
-	private final Map<String, Byte> _messageTypes = new HashMap<>();
+	private ProtocolMessageFactory _messageFactory;
 	int _messageIdTracker = 0;
 	private ProtocolCommsHandler _handler = null;
 
@@ -56,16 +57,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_listenerRunnable = new TCPListenerRunnable(port);
 		_listenerThread = new Thread(_listenerRunnable, "ProtocolComms:" + port);
 		_listenerThread.setDaemon(true);
-		byte b = 0x01;
-		_messageTypes.put("QUERY_CHUNKS", b);
-		b = 0x02;
-		_messageTypes.put("HAVE_CHUNKS", b);
-		b = 0x03;
-		_messageTypes.put("REQUEST_CHUNK", b);
-		b = 0x04;
-		_messageTypes.put("GIVE_CHUNK", b);
-		b = 0x09;
-		_messageTypes.put("ERROR", b);
+		_messageFactory = new ProtocolMessageFactory();
 	}
 
 	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message)
@@ -94,7 +86,12 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 		_connections.put(addr, state);
 
-		ByteBuffer data = encryptAndFrameMessage(message, messageID, state);
+		ByteBuffer data = null;
+		try {
+			data = encryptAndFrameMessage(message, messageID, state);
+		} catch (UnknownMessageTypeException e) {
+			throw new InvalidMessageException("Cannot send message", e);
+		}
 		data.flip();
 		state.addWriteBuffer(data);
 		_listenerRunnable.wakeupSelector();
@@ -102,24 +99,20 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	}
 
 	ByteBuffer encryptAndFrameMessage(ProtocolMessage message, MessageID messageID, ProtocolConnectionState state)
-			throws InvalidKeyException {
+			throws InvalidKeyException, UnknownMessageTypeException {
 		//a fully framed Message consists of the following
 		//messageType, a byte
 		//messageId, an int
 		//Transfer Public Key Length, an int (which is set to 0 if no Transfer Public Key is provided,
 		//Transfer Public Key, bytes, if provided
 		//Data Length, an int, the length of the encrypted message data.
-		Byte messageType = _messageTypes.get(message.getType());
-		if (messageType == null) {
-			throw new RuntimeException("Failed to frame message - unknown message type '" + message.getType() + "'");
-		}
+		Byte messageType = _messageFactory.getMessageByteIdentifier(message);
 		int transferPubKeyLength = state.getMyPublicKey() == null ? 0 : state.getMyPublicKey().length;
 		ByteBuffer data = message.toBytes();
 		if (!(message instanceof ErrorProtocolResponse)) {
 			try {
-				System.out.println(
-						"Encrypting: " + (data.remaining() > 5000 ? "<a lot of data> " : DatatypeConverter.printHexBinary(message.toBytes().array())));
-				System.out.println("With Key: " + DatatypeConverter.printHexBinary(state.getMessageKey().getEncoded()));
+				_log.debug("Encrypting: " + (data.remaining() > 5000 ? "<a lot of data> " : DatatypeConverter.printHexBinary(message.toBytes().array())));
+				_log.debug("With Key: " + DatatypeConverter.printHexBinary(state.getMessageKey().getEncoded()));
 				Cipher cipher = Cipher.getInstance("AES");
 				cipher.init(Cipher.ENCRYPT_MODE, state.getMessageKey());
 				byte[] encrypted = cipher.doFinal(data.array());
@@ -129,13 +122,13 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					toReturn.put(state.getMyPublicKey());
 				}
 				toReturn.putInt(encrypted.length).put(encrypted);
-				System.out.println("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(encrypted)));
+				_log.debug("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(encrypted)));
 				return toReturn;
 			} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
 				throw new RuntimeException("Crypto failure", e);
 			}
 		} else {
-			System.out.println("NOT Encrypting Error");
+			_log.debug("NOT Encrypting Error");
 			int dataLength = data.array().length;
 			ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + Integer.BYTES + dataLength);
 			data.flip();
@@ -150,39 +143,24 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			byte[] messageArray = new byte[messageData.remaining()];
 			messageData.get(messageArray);
 			ByteBuffer decryptedBuffer;
-			if (messageType != _messageTypes.get("ERROR")) {
+			if (!_messageFactory.isError(messageType)) {
 				if (messageArray.length % 16 != 0) {
 					throw new InvalidMessageException("Encrypted Message Data length is not a multiple of 16, and is therefore invalid");
 				}
-				System.out.println("Decrypting: " + (messageArray.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(messageArray)));
-				System.out.println("With Key: " + DatatypeConverter.printHexBinary(responseKey.getEncoded()));
+				_log.debug("Decrypting: " + (messageArray.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(messageArray)));
+				_log.debug("With Key: " + DatatypeConverter.printHexBinary(responseKey.getEncoded()));
 				Cipher cipher = Cipher.getInstance("AES");
 				cipher.init(Cipher.DECRYPT_MODE, responseKey);
 				byte[] decrypted = cipher.doFinal(messageArray);
-				System.out.println("Decrypted: " + (decrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(decrypted)));
+				_log.debug("Decrypted: " + (decrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(decrypted)));
 				decryptedBuffer = ByteBuffer.wrap(decrypted);
 			} else {
-				System.out.println("NOT Decrypting Error");
+				_log.debug("NOT Decrypting Error");
 				decryptedBuffer = ByteBuffer.wrap(messageArray);
 			}
-			ProtocolMessage toReturn;
-			if (messageType == 0x01) {
-				toReturn = new QueryChunksProtocolRequest();
-			} else if (messageType == 0x02) {
-				toReturn = new HaveChunksProtocolResponse();
-			} else if (messageType == 0x03) {
-				toReturn = new FetchChunkProtocolRequest();
-			} else if (messageType == 0x04) {
-				toReturn = new GiveChunkProtocolResponse();
-			} else if (messageType == 0x09) {
-				toReturn = new ErrorProtocolResponse();
-			} else {
-				throw new InvalidMessageException("Unknown message type");
-			}
-			toReturn.fromBytes(decryptedBuffer);
-			return toReturn;
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
-			throw new RuntimeException("Crypto failure", e);
+			return _messageFactory.getMessage(messageType, decryptedBuffer);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnknownMessageTypeException e) {
+			throw new InvalidMessageException("Failed to parse message", e);
 		}
 	}
 
@@ -214,6 +192,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					throw new IllegalStateException("Cannot reply to message " + messageID + " because the cached publicKey is invalid", e);
 				} catch (InvalidKeyException e) {
 					throw new IllegalStateException("Cannot reply to message " + messageID + " because of crypto errors", e);
+				} catch (UnknownMessageTypeException e) {
+					throw new InvalidMessageException("Cannot reply with this message", e);
 				}
 			} else {
 				throw new InvalidMessageIDException("Could not find connection for MessageID");
@@ -356,14 +336,13 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 													packetBuffer.flip();
 													//Read the full message
 													byte messageType = packetBuffer.get(); //We read off the 'messageType' byte
-													boolean isRequest = messageType == 0x01 || messageType == 0x03;
 													int messageIDInt = packetBuffer.getInt(); //Then the messageID
 													MessageID messageID = new MessageID(messageIDInt, sc.getRemoteAddress());
 													int transferPubKeyLength = packetBuffer.getInt(); //Then, the length of the publicKey that may or may not be attached
 													//If I'm receiving a first request, I should get it this way
 													byte[] transferPubKey = new byte[transferPubKeyLength];
 													packetBuffer.get(transferPubKey); //They've sent a public key. We need to do a Diffie.
-													if (isRequest) {
+													if (_messageFactory.isRequest(messageType)) {
 														//buildResponseKey
 														connection.setTheirPublicKey(transferPubKey);
 														connection.requestReceived(messageID);
@@ -372,7 +351,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 															connection.requestReceived(messageID);
 															connection.buildMessageKey(_chunkTransferKeyPair);
 														} else {
-															System.out.println("Got a request, but I have no chunk transfer keypair - sending error response");
+															_log.warn("Got a request, but I have no chunk transfer keypair - sending error response");
 															_handler.error("503: Cannot serve requests", true, messageID);
 															break;
 														}
@@ -403,7 +382,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 									ProtocolConnectionState connection = _connections.get(address);
 									connection.write();
 								} else {
-									System.out.println("Invalid selection key");
+									_log.error("Invalid selection key");
 								}
 							}
 							selectionKeyIterator.remove();
@@ -425,7 +404,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					}
 				}
 			} catch (Throwable e) {
-				e.printStackTrace();
+				_log.error("", e);
 				Thread t = Thread.currentThread();
 				t.getUncaughtExceptionHandler().uncaughtException(t, e);
 			} finally {

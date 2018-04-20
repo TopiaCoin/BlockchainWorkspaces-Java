@@ -2,6 +2,7 @@ package io.topiacoin.chunks.impl;
 
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
+import io.topiacoin.chunks.exceptions.UnknownMessageTypeException;
 import io.topiacoin.chunks.intf.AbstractProtocolTest;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
 import io.topiacoin.chunks.model.MessageID;
@@ -31,7 +32,7 @@ public class TCPTest extends AbstractProtocolTest {
 		return ((TCPProtocolCommsService) service).getConnectionForMessageID(id);
 	}
 
-	@Override protected MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsInterface, int bytesAtATime, String location, int port, byte[] transferPublicKey, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException {
+	@Override protected MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsInterface, int bytesAtATime, String location, int port, byte[] transferPublicKey, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException, UnknownMessageTypeException {
 		TCPProtocolCommsService commsService = null;
 		if(commsInterface instanceof TCPProtocolCommsService) {
 			commsService = (TCPProtocolCommsService) commsInterface;

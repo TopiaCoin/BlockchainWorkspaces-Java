@@ -1,6 +1,8 @@
 package io.topiacoin.chunks.model.protocol;
 
 import io.topiacoin.chunks.model.MessageID;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
@@ -28,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ProtocolConnectionState {
-
+	private static final Log _log = LogFactory.getLog(ProtocolConnectionState.class);
 	private SocketChannel _channel;
 	private List<ByteBuffer> _writeBuffers = new ArrayList<>();
 	private ByteBuffer _packetBuffer = null;
@@ -137,13 +139,13 @@ public class ProtocolConnectionState {
 			X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(_theirPublicKey);
 			PublicKey theirPubKey = kf.generatePublic(pkSpec);
 			KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-			System.out.println("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
-			System.out.println("Their PubKey: " + DatatypeConverter.printHexBinary(theirPubKey.getEncoded()));
+			_log.debug("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
+			_log.debug("Their PubKey: " + DatatypeConverter.printHexBinary(theirPubKey.getEncoded()));
 			ka.init(myKeyPair.getPrivate());
 			ka.doPhase(theirPubKey, true);
 
 			byte[] sharedSecret = ka.generateSecret();
-			System.out.println("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));
+			_log.debug("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));
 			MessageDigest hash = MessageDigest.getInstance("SHA-256");
 			hash.update(sharedSecret);
 			// Simple deterministic ordering

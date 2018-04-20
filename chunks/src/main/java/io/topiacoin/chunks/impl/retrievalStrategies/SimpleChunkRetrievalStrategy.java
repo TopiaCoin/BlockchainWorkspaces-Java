@@ -3,6 +3,8 @@ package io.topiacoin.chunks.impl.retrievalStrategies;
 import io.topiacoin.chunks.intf.ChunkRetrievalStrategy;
 import io.topiacoin.chunks.model.ChunkLocationResponse;
 import io.topiacoin.chunks.model.ChunkRetrievalPlan;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
@@ -16,6 +18,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
 
 public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
+	private static final Log _log = LogFactory.getLog(SimpleChunkRetrievalStrategy.class);
 	@Override public ChunkRetrievalPlan generateRetrievalPlan(ChunkLocationResponse[] chunkLocationResponses, KeyPair fetchPair, List<String> chunkIDs) {
 		try {
 			ChunkRetrievalPlan toReturn = new ChunkRetrievalPlan(chunkIDs);
@@ -33,7 +36,7 @@ public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 					toReturn.addKey(response.userID, sharedSecret);
 				} catch (InvalidKeyException e) {
 					//The key in the response is no good? Weird.
-					e.printStackTrace();
+					_log.error("", e);
 				}
 			}
 			if(toReturn.isCompletePlan()) {
@@ -41,10 +44,8 @@ public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 			} else {
 				//uhhh
 			}
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (InvalidKeySpecException e) {
-			e.printStackTrace();
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			_log.error("", e);
 		}
 		return null;
 	}

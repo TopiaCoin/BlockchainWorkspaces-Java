@@ -3,12 +3,14 @@ package io.topiacoin.chunks.intf;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
+import io.topiacoin.chunks.exceptions.UnknownMessageTypeException;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
 import io.topiacoin.chunks.model.protocol.FetchChunkProtocolRequest;
 import io.topiacoin.chunks.model.protocol.GiveChunkProtocolResponse;
 import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
+import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
 import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,6 +25,8 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -683,6 +687,53 @@ public abstract class AbstractProtocolTest {
 	}
 
 	@Test
+	public void testMessageFactoryNegative() {
+		ProtocolMessageFactory fac = new ProtocolMessageFactory();
+		byte b = 0x11;
+		try {
+			fac.getMessage(b, ByteBuffer.allocate(0));
+			fail();
+		} catch (UnknownMessageTypeException e) {
+			//Good
+		}
+		ProtocolMessage fauxMessage = new ProtocolMessage() {
+			@Override public void sign(PrivateKey signingKey) throws InvalidKeyException {
+
+			}
+
+			@Override public boolean verify(PublicKey senderPublicKey) throws InvalidKeyException, SignatureException {
+				return false;
+			}
+
+			@Override public ByteBuffer toBytes() {
+				return null;
+			}
+
+			@Override public void fromBytes(ByteBuffer bytes) {
+
+			}
+
+			@Override public boolean isValid() {
+				return false;
+			}
+
+			@Override public boolean isRequest() {
+				return false;
+			}
+
+			@Override public String getType() {
+				return "POTATO";
+			}
+		};
+		try {
+			fac.getMessageByteIdentifier(fauxMessage);
+			fail();
+		} catch (UnknownMessageTypeException e) {
+			//Good
+		}
+	}
+
+	@Test
 	public void testQueryChunksToRecipientWithNoPublicKey() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final CountDownLatch lock = new CountDownLatch(2);
@@ -1266,5 +1317,5 @@ public abstract class AbstractProtocolTest {
 	 * 3) Copy your code out of sendMessage, modify variable names as appropriate
 	 * 4) Modify the code as slightly as possible to make it send the bytes slowly
 	 */
-	protected abstract MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsService, int bytesAtATime, String location, int port, byte[] transferPublicKey, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException;
+	protected abstract MessageID[] sendMessagenBytesAtATime(ProtocolCommsService commsService, int bytesAtATime, String location, int port, byte[] transferPublicKey, ProtocolMessage[] messages) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidKeyException, IOException, UnknownMessageTypeException;
 }
