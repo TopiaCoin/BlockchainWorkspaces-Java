@@ -59,12 +59,6 @@ public class ProtocolConnectionState {
 		}
 	}
 
-	public void reconnectIfNecessary(SocketAddress address) throws IOException {
-		if (!_channel.isConnected()) {
-			openConnection(address);
-		}
-	}
-
 	private void openConnection(SocketAddress address) throws IOException {
 		_channel = SocketChannel.open(address);
 		_channel.configureBlocking(false);

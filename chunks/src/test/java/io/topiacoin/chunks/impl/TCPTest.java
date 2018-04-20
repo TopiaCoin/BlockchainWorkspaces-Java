@@ -67,7 +67,6 @@ public class TCPTest extends AbstractProtocolTest {
 			} else {
 				state.addMessageID(messageID);
 			}
-			state.reconnectIfNecessary(addr);
 			commsService._connections.put(addr, state);
 
 			ByteBuffer data = commsService.encryptAndFrameMessage(message, messageID, state);
