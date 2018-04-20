@@ -11,13 +11,11 @@ import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolConnectionState;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
@@ -31,7 +29,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -113,9 +110,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			try {
 				_log.debug("Encrypting: " + (data.remaining() > 5000 ? "<a lot of data> " : DatatypeConverter.printHexBinary(message.toBytes().array())));
 				_log.debug("With Key: " + DatatypeConverter.printHexBinary(state.getMessageKey().getEncoded()));
-				Cipher cipher = Cipher.getInstance("AES");
-				cipher.init(Cipher.ENCRYPT_MODE, state.getMessageKey());
-				byte[] encrypted = cipher.doFinal(data.array());
+				byte[] encrypted = CryptoUtils.encryptWithSecretKey(data.array(), state.getMessageKey(), null);
 				ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + encrypted.length);
 				toReturn.put(messageType).putInt(messageID.getId()).putInt(transferPubKeyLength);
 				if (transferPubKeyLength > 0) {
@@ -124,7 +119,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				toReturn.putInt(encrypted.length).put(encrypted);
 				_log.debug("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(encrypted)));
 				return toReturn;
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
+			} catch (CryptographicException e) {
 				throw new RuntimeException("Crypto failure", e);
 			}
 		} else {
@@ -149,9 +144,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				}
 				_log.debug("Decrypting: " + (messageArray.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(messageArray)));
 				_log.debug("With Key: " + DatatypeConverter.printHexBinary(responseKey.getEncoded()));
-				Cipher cipher = Cipher.getInstance("AES");
-				cipher.init(Cipher.DECRYPT_MODE, responseKey);
-				byte[] decrypted = cipher.doFinal(messageArray);
+				byte[] decrypted = CryptoUtils.decryptWithSecretKey(messageArray, responseKey, null);
 				_log.debug("Decrypted: " + (decrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(decrypted)));
 				decryptedBuffer = ByteBuffer.wrap(decrypted);
 			} else {
@@ -159,7 +152,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				decryptedBuffer = ByteBuffer.wrap(messageArray);
 			}
 			return _messageFactory.getMessage(messageType, decryptedBuffer);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnknownMessageTypeException e) {
+		} catch (CryptographicException | UnknownMessageTypeException e) {
 			throw new InvalidMessageException("Failed to parse message", e);
 		}
 	}
@@ -188,8 +181,6 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					state.removeMessageID(messageID);
 					_messageAddresses.remove(messageID);
 					_listenerRunnable.wakeupSelector();
-				} catch (InvalidKeySpecException e) {
-					throw new IllegalStateException("Cannot reply to message " + messageID + " because the cached publicKey is invalid", e);
 				} catch (InvalidKeyException e) {
 					throw new IllegalStateException("Cannot reply to message " + messageID + " because of crypto errors", e);
 				} catch (UnknownMessageTypeException e) {

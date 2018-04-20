@@ -12,6 +12,8 @@ import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
 import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,11 +51,9 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testQueryChunksRequestAndResponse() throws Exception {
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
-		final KeyPair userASigningKeyPair = userKeyGen.genKeyPair();
-		final KeyPair userBSigningKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {
@@ -168,9 +168,7 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testSignAndVerify() throws Exception {
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair signingKeypair = userKeyGen.genKeyPair();
+		final KeyPair signingKeypair = CryptoUtils.generateECKeyPair();
 
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(new String[] { "foo", "bar", "baz" }, "userA", "foo");
 		testMessage.sign(signingKeypair.getPrivate());
@@ -194,9 +192,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final CountDownLatch lock = new CountDownLatch(4);
 
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		final String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
@@ -338,11 +334,9 @@ public abstract class AbstractProtocolTest {
 
 		final CountDownLatch lock = new CountDownLatch(testChunks.size() * 2);
 
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
-		final KeyPair userASigningKeyPair = userKeyGen.genKeyPair();
-		final KeyPair userBSigningKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
@@ -472,9 +466,7 @@ public abstract class AbstractProtocolTest {
 
 		final CountDownLatch lock = new CountDownLatch(testChunks.size() * 2);
 
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
@@ -641,12 +633,10 @@ public abstract class AbstractProtocolTest {
 	}
 
 	@Test
-	public void testSignAndVerifyNegative() throws NoSuchAlgorithmException {
+	public void testSignAndVerifyNegative() throws NoSuchAlgorithmException, CryptographicException {
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(new String[] { "foo", "bar", "baz" }, "userA", "foo");
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair signingKeypair = userKeyGen.genKeyPair();
-		final KeyPair someOtherKeypair = userKeyGen.genKeyPair();
+		final KeyPair signingKeypair = CryptoUtils.generateECKeyPair();
+		final KeyPair someOtherKeypair = CryptoUtils.generateECKeyPair();
 		try {
 			testMessage.sign(null);
 			Assert.fail("Expected InvalidKeyException");
@@ -738,9 +728,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final CountDownLatch lock = new CountDownLatch(2);
 
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
@@ -812,9 +800,7 @@ public abstract class AbstractProtocolTest {
 	@Test
 	public void testSendMessageToWrongAddress() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		try {
@@ -850,9 +836,7 @@ public abstract class AbstractProtocolTest {
 	@Test
 	public void testSendMessageorReplyBeforeListenerStartsDoesntWork() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "The password is password";
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
@@ -874,9 +858,7 @@ public abstract class AbstractProtocolTest {
 	@Test
 	public void testSendWrongKindOfMessagesDoesntWork() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "The password is password";
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		try {
@@ -993,10 +975,8 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testBothUsersRequestAtTheSameTime() throws Exception {
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
-		final KeyPair userAChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, userAChunkTransferKeyPair);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {
@@ -1111,9 +1091,7 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testSendPartialMessage() throws Exception {
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {
@@ -1206,9 +1184,7 @@ public abstract class AbstractProtocolTest {
 
 	@Test
 	public void testSendPartialMessagesBackToBackLikeSomeSortOfNightmareScenario() throws Exception {
-		KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-		userKeyGen.initialize(571);
-		final KeyPair userBChunkTransferKeyPair = userKeyGen.genKeyPair();
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
 		try {

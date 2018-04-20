@@ -66,15 +66,18 @@ public class HashUtils {
     /**
      * Returns the SHA-256 hash of the input bytes.  The hash is returned as a byte array.
      *
-     * @param input The byte array whose content is to be hashed.
+     * @param inputs The byte arrays whose content is to be hashed.
      *
-     * @return A byte array containing the SHA-256 hash of the input byte array.
+     * @return A byte array containing the SHA-256 hash of the input byte arrays.
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-256 hashing.
      */
-    public static  byte[] sha256(byte[] input) throws NoSuchAlgorithmException {
+    public static byte[] sha256(byte[]... inputs) throws NoSuchAlgorithmException {
         MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-        return sha256.digest(input);
+        for(byte[] input : inputs) {
+            sha256.update(input);
+        }
+        return sha256.digest();
     }
 
     /**
@@ -87,7 +90,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-256 hashing.
      */
-    public static  byte[] sha256(String input) throws NoSuchAlgorithmException {
+    public static byte[] sha256(String input) throws NoSuchAlgorithmException {
         return sha256(input.getBytes());
     }
 

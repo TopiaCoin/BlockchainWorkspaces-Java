@@ -1,6 +1,9 @@
 package io.topiacoin.chunks.model.protocol;
 
 import io.topiacoin.chunks.model.MessageID;
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
+import io.topiacoin.crypto.HashUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -18,7 +21,6 @@ import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -51,12 +53,10 @@ public class ProtocolConnectionState {
 		_messageIDs.add(messageID);
 		_theirPublicKey = theirPublicKey;
 		try {
-			KeyPairGenerator userKeyGen = KeyPairGenerator.getInstance("EC");
-			userKeyGen.initialize(571);
-			KeyPair _requestKeyPair = userKeyGen.genKeyPair();
-			_myPublicKey = _requestKeyPair.getPublic().getEncoded();
-			buildMessageKey(_requestKeyPair);
-		} catch (NoSuchAlgorithmException e) {
+			KeyPair pair = CryptoUtils.generateECKeyPair();
+			_myPublicKey = pair.getPublic().getEncoded();
+			buildMessageKey(pair);
+		} catch (CryptographicException e) {
 			throw new RuntimeException("Failure", e);
 		}
 	}
@@ -113,7 +113,7 @@ public class ProtocolConnectionState {
 		for (int i = 0; i < n; i++) {
 			_packetBuffer.put(readBuffer.get());
 		}
-		if(_packetBuffer.hasRemaining()) {
+		if (_packetBuffer.hasRemaining()) {
 			return null;
 		} else {
 			ByteBuffer toReturn = _packetBuffer;
@@ -130,22 +130,18 @@ public class ProtocolConnectionState {
 		return _packetBuffer != null;
 	}
 
-	public void buildMessageKey(KeyPair myKeyPair) throws InvalidKeySpecException, InvalidKeyException {
+	public void buildMessageKey(KeyPair myKeyPair) throws InvalidKeyException {
 		try {
-			if(_theirPublicKey == null) {
+			if (_theirPublicKey == null) {
 				throw new InvalidKeySpecException("Public Key Null");
 			}
-			KeyFactory kf = KeyFactory.getInstance("EC");
-			X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(_theirPublicKey);
-			PublicKey theirPubKey = kf.generatePublic(pkSpec);
-			KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-			_log.debug("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
-			_log.debug("Their PubKey: " + DatatypeConverter.printHexBinary(theirPubKey.getEncoded()));
-			ka.init(myKeyPair.getPrivate());
-			ka.doPhase(theirPubKey, true);
-
-			byte[] sharedSecret = ka.generateSecret();
-			_log.debug("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));
+			PublicKey theirPubKey = CryptoUtils.getECPublicKeyFromEncodedBytes(_theirPublicKey);
+			byte[] sharedSecret = CryptoUtils.generateECDHSharedSecret(myKeyPair.getPrivate(), theirPubKey);
+			if(_log.isDebugEnabled()) {
+				_log.debug("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
+				_log.debug("Their PubKey: " + DatatypeConverter.printHexBinary(theirPubKey.getEncoded()));
+				_log.debug("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));
+			}
 			MessageDigest hash = MessageDigest.getInstance("SHA-256");
 			hash.update(sharedSecret);
 			// Simple deterministic ordering
@@ -153,11 +149,14 @@ public class ProtocolConnectionState {
 			Collections.sort(keys);
 			hash.update(keys.get(0));
 			hash.update(keys.get(1));
+			HashUtils.sha256(sharedSecret, keys.get(0).array(), keys.get(1).array());
 			//We must now reduce the size of this keyData to 128 bits (16 bytes) due to U.S. Govt regulations regarding maximum Keylength.
 			byte[] derivedKeyData = Arrays.copyOf(hash.digest(), 16);
 			_messageKey = new SecretKeySpec(derivedKeyData, "AES");
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException("", e);
+		} catch (CryptographicException | InvalidKeySpecException e) {
+			throw new InvalidKeyException("Failed to build message key", e);
 		}
 	}
 

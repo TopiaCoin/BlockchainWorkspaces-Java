@@ -12,6 +12,7 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyAgreement;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
@@ -24,12 +25,16 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,7 +114,18 @@ public class CryptoUtils {
     }
 
     public static KeyPair generateECKeyPair() throws CryptographicException {
-        return generateKeyPair("EC") ;
+        KeyPair keyPair;
+        try {
+            KeyPairGenerator keyPairGenerator = getKeyPairGenerator("EC");
+            keyPairGenerator.initialize(new ECGenParameterSpec("secp256r1"));
+            keyPair = keyPairGenerator.generateKeyPair() ;
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException("Unrecognized Algorithm: EC") ;
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new CryptographicException("Unrecognized Parameter Spec: secp256r1", e) ;
+        }
+
+        return keyPair ;
     }
 
     public static KeyPair generateRSAKeyPair() throws CryptographicException {
@@ -122,6 +138,41 @@ public class CryptoUtils {
 
     public static KeyPair generateDHKeyPair() throws CryptographicException {
         return generateKeyPair("DH") ;
+    }
+
+    public static byte[] generateECDHSharedSecret(PrivateKey myPrivateKey, PublicKey theirPublicKey) throws CryptographicException {
+        try {
+            KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+            ka.init(myPrivateKey);
+            ka.doPhase(theirPublicKey, true);
+            return ka.generateSecret();
+        } catch (InvalidKeyException e) {
+            throw new CryptographicException("Could not use keys to generate secret");
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException("Unrecognized Algorithm: ECDH") ;
+        }
+    }
+
+    public static PublicKey getPublicKeyFromEncodedBytes(String algorithm, byte[] publicKeyBytes) throws CryptographicException {
+        if(algorithm == null) {
+            throw new CryptographicException("Cannot get Public Key - algorithm null");
+        }
+        if(publicKeyBytes == null) {
+            throw new CryptographicException("Cannot get Public Key - keydata null");
+        }
+        try {
+            KeyFactory kf = KeyFactory.getInstance(algorithm);
+            X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKeyBytes);
+            return kf.generatePublic(pkSpec);
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException("Unrecognized Algorithm: " + algorithm) ;
+        } catch (InvalidKeySpecException e) {
+            throw new CryptographicException("Could not parse bytes into Public Key");
+        }
+    }
+
+    public static PublicKey getECPublicKeyFromEncodedBytes(byte[] ecPublicKeyBytes) throws CryptographicException {
+        return getPublicKeyFromEncodedBytes("EC", ecPublicKeyBytes);
     }
 
 

@@ -3,6 +3,8 @@ package io.topiacoin.crypto;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 public class HashUtilsTest {
@@ -32,6 +34,8 @@ public class HashUtilsTest {
     public void testSha256() throws Exception {
         String inputString = "I am the very model of a modern major general";
         byte[] inputBytes = inputString.getBytes() ;
+        byte[] firstHalfInputBytes = Arrays.copyOfRange(inputBytes, 0, inputBytes.length / 2);
+        byte[] secondHalfInputBytes = Arrays.copyOfRange(inputBytes, inputBytes.length / 2, inputBytes.length);
         byte[] expectedHash = new byte[] {
                 (byte)0xff, (byte)0x51, (byte)0xe3, (byte)0xd4, (byte)0xcc, (byte)0xd0, (byte)0x42, (byte)0xd2,
                 (byte)0xd4, (byte)0x97, (byte)0x2a, (byte)0x07, (byte)0xe0, (byte)0x76, (byte)0xf5, (byte)0xbf,
@@ -40,11 +44,13 @@ public class HashUtilsTest {
         String expectedHashString = Hex.toHexString(expectedHash) ;
 
         byte[] bytesHashBytes = HashUtils.sha256(inputBytes) ;
+        byte[] splitBytesHashBytes = HashUtils.sha256(firstHalfInputBytes, secondHalfInputBytes);
         byte[] stringHashBytes = HashUtils.sha256(inputString) ;
         String bytesHashString = HashUtils.sha256String(inputBytes) ;
         String stringHashString = HashUtils.sha256String(inputString) ;
 
         assertArrayEquals ( expectedHash, bytesHashBytes) ;
+        assertArrayEquals ( expectedHash, splitBytesHashBytes) ;
         assertArrayEquals(expectedHash, stringHashBytes);
         assertEquals ( expectedHashString, bytesHashString) ;
         assertEquals(expectedHashString, stringHashString);

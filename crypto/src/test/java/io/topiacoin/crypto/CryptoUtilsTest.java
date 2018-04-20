@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Random;
@@ -112,6 +113,102 @@ public class CryptoUtilsTest {
         assertNotNull ( keyPair) ;
         assertEquals("EC", keyPair.getPublic().getAlgorithm());
         assertEquals("EC", keyPair.getPrivate().getAlgorithm());
+        byte[] pubKeyBytes = keyPair.getPublic().getEncoded();
+        StringBuilder sb = new StringBuilder();
+        int appendCt = 0;
+        for (byte b : pubKeyBytes) {
+            sb.append("(byte)0x").append(String.format("%02x", b)).append(", ");
+            appendCt++;
+            if(appendCt == 8) {
+                sb.append(System.getProperty("line.separator"));
+                appendCt = 0;
+            }
+        }
+        System.out.println("Generated Public Key:");
+        System.out.println(sb.toString());
+    }
+
+    @Test
+    public void getPublicKeyFromEncodedBytes() {
+        byte[] validECPublicKey = new byte[] {
+                (byte)0x30, (byte)0x59, (byte)0x30, (byte)0x13, (byte)0x06, (byte)0x07, (byte)0x2a, (byte)0x86,
+                (byte)0x48, (byte)0xce, (byte)0x3d, (byte)0x02, (byte)0x01, (byte)0x06, (byte)0x08, (byte)0x2a,
+                (byte)0x86, (byte)0x48, (byte)0xce, (byte)0x3d, (byte)0x03, (byte)0x01, (byte)0x07, (byte)0x03,
+                (byte)0x42, (byte)0x00, (byte)0x04, (byte)0x83, (byte)0xc1, (byte)0xfd, (byte)0xbe, (byte)0x05,
+                (byte)0xd5, (byte)0xa2, (byte)0xa5, (byte)0x0c, (byte)0xb7, (byte)0x54, (byte)0x38, (byte)0xbc,
+                (byte)0x17, (byte)0xc4, (byte)0x25, (byte)0x81, (byte)0xb2, (byte)0xd6, (byte)0x4d, (byte)0xf1,
+                (byte)0x2e, (byte)0x90, (byte)0xf2, (byte)0xfa, (byte)0x90, (byte)0xbe, (byte)0x55, (byte)0x2c,
+                (byte)0x6c, (byte)0x0e, (byte)0x23, (byte)0x1d, (byte)0x39, (byte)0x83, (byte)0xe0, (byte)0xf6,
+                (byte)0x93, (byte)0xf7, (byte)0x69, (byte)0x4c, (byte)0x8c, (byte)0x5d, (byte)0xe7, (byte)0x82,
+                (byte)0x27, (byte)0xc4, (byte)0x16, (byte)0xfe, (byte)0xeb, (byte)0xd5, (byte)0xd4, (byte)0xda,
+                (byte)0x93, (byte)0xc0, (byte)0x07, (byte)0x88, (byte)0x91, (byte)0xb0, (byte)0x31, (byte)0x12,
+                (byte)0xcc, (byte)0x19, (byte)0x29,
+        };
+        try {
+            PublicKey publicKey = CryptoUtils.getPublicKeyFromEncodedBytes("EC", validECPublicKey);
+            assertNotNull(publicKey);
+            assertEquals("EC", publicKey.getAlgorithm());
+            assertTrue(Arrays.equals(validECPublicKey, publicKey.getEncoded()));
+        } catch (CryptographicException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        //Negative
+        try {
+            CryptoUtils.getPublicKeyFromEncodedBytes("Potato", validECPublicKey);
+            fail("Should've thrown an Exception");
+        } catch (CryptographicException e) {
+            //Good
+        }
+        try {
+            CryptoUtils.getPublicKeyFromEncodedBytes("EC", "Potato".getBytes());
+            fail("Should've thrown an Exception");
+        } catch (CryptographicException e) {
+            //Good
+        }
+        try {
+            CryptoUtils.getPublicKeyFromEncodedBytes(null, validECPublicKey);
+            fail("Should've thrown an Exception");
+        } catch (CryptographicException e) {
+            //Good
+        }
+        try {
+            CryptoUtils.getPublicKeyFromEncodedBytes("EC", null);
+            fail("Should've thrown an Exception");
+        } catch (CryptographicException e) {
+            //Good
+        }
+    }
+
+    @Test
+    public void testGenerateECDHSharedSecret() {
+        KeyPair userAKeyPair = null;
+        KeyPair userBKeyPair = null;
+        try {
+            userAKeyPair = CryptoUtils.generateECKeyPair();
+            userBKeyPair = CryptoUtils.generateECKeyPair();
+            byte[] userASharedSecret = CryptoUtils.generateECDHSharedSecret(userAKeyPair.getPrivate(), userBKeyPair.getPublic());
+            byte[] userBSharedSecret = CryptoUtils.generateECDHSharedSecret(userBKeyPair.getPrivate(), userAKeyPair.getPublic());
+            assertNotNull(userASharedSecret);
+            assertNotNull(userBSharedSecret);
+            assertTrue(Arrays.equals(userASharedSecret, userBSharedSecret));
+        } catch (CryptographicException e) {
+            fail();
+        }
+        //Negative
+        try {
+            CryptoUtils.generateECDHSharedSecret(null, userBKeyPair.getPublic());
+            fail();
+        } catch (CryptographicException e) {
+            //Good
+        }
+        try {
+            CryptoUtils.generateECDHSharedSecret(userAKeyPair.getPrivate(), null);
+            fail();
+        } catch (CryptographicException e) {
+            //Good
+        }
     }
 
     @Test
