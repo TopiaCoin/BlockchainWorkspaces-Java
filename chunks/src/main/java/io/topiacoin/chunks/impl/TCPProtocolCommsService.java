@@ -422,7 +422,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 						if (System.currentTimeMillis() > _messageSendTimes.get(messageID) + _timeoutMs) {
 							timeouts.add(messageID);
 							ProtocolCommsResponseHandler handler = _messageSpecificHandlers.remove(messageID);
-							_messageSendTimes.remove(messageID);
+							messageIDIterator.remove();
 							if (handler != null) {
 								handler.error("Request Timed out", false, messageID);
 							} else {

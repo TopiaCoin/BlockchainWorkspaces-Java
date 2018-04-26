@@ -123,6 +123,10 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 
 	@Override public void setDataModel(DataModel model) {this._model = model;}
 
+	@Override public void stop() {
+		_comms.stop();
+	}
+
 	void executeStrategy(ChunkRetrievalStrategy strategy, ChunksTransferHandler chunksHandler, Object state) {
 		final ChunkRetrievalPlan plan = strategy.getPlan();
 		final Map<MessageID, String> chunkRequests = new HashMap<>();

@@ -25,4 +25,6 @@ public interface ChunkTransferer {
 	void setChunkStorage(ChunkStorage storage);
 
 	void setDataModel(DataModel model);
+
+	void stop();
 }
