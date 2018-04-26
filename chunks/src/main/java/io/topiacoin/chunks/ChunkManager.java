@@ -133,18 +133,12 @@ public class ChunkManager {
             }
         }
         ChunksTransferHandler chunkFetchHandler = new ChunksTransferHandler() {
-            @Override public void didFetchChunk(String chunkID, byte[] chunkdata, Object state) {
-                try {
-                    addChunk(chunkID, chunkdata);
-                    successfulChunks.add(chunkID);
-                } catch (DuplicateChunkException e) {
-                    //NOP, it really doesn't matter
-                }
+            @Override public void didFetchChunk(String chunkID, Object state) {
+                successfulChunks.add(chunkID);
             }
 
             @Override public void failedToFetchChunk(String chunkID, String message, Exception cause, Object state) {
                 failedChunks.add(chunkID);
-                //Perhaps log the Exception here?
             }
 
             @Override public void fetchedAllChunks(Object state) {

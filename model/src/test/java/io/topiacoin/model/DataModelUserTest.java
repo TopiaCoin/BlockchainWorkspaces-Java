@@ -64,6 +64,21 @@ public class DataModelUserTest {
         users = dataModel.getUsers();
         assertNotNull(users);
         assertEquals(0, users.size());
+
+        CurrentUser currentUser = new CurrentUser(userID, email);
+        dataModel.setCurrentUser(currentUser);
+
+        CurrentUser fetchedCurrentUser = dataModel.getCurrentUser();
+        assertEquals(currentUser, fetchedCurrentUser);
+
+        dataModel.removeCurrentUser();
+
+        try {
+            dataModel.getCurrentUser();
+            fail();
+        } catch (NoSuchUserException e) {
+            //Good
+        }
     }
 
     @Test

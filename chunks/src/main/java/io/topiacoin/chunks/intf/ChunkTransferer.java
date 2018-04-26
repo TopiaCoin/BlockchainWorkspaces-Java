@@ -1,5 +1,8 @@
 package io.topiacoin.chunks.intf;
 
+import io.topiacoin.core.Configuration;
+import io.topiacoin.model.DataModel;
+
 import java.util.List;
 
 public interface ChunkTransferer {
@@ -14,4 +17,12 @@ public interface ChunkTransferer {
 	 * @param state An opaque object that will be passed to the handler on fetch operation completion.  This can be used to carry state between the initiator of the fetch and the handler.
 	 */
 	public void fetchChunksRemotely(final List<String> chunkIDs, final String containerID, final ChunksTransferHandler handler, final Object state);
+
+	void setConfiguration(Configuration configuration);
+
+	void setChunkRetrievalStrategyFactory(ChunkRetrievalStrategyFactory stratFac);
+
+	void setChunkStorage(ChunkStorage storage);
+
+	void setDataModel(DataModel model);
 }

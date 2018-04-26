@@ -33,8 +33,21 @@ public interface ChunkStorage {
      *
      * @throws NoSuchChunkException If there is no chunk data with the specified chunkID.
      */
-    InputStream getChunkData(final String chunkID)
+    InputStream getChunkDataStream(final String chunkID)
             throws NoSuchChunkException;
+
+    /**
+     * Retrieves the chunk data for the chunk with the specified chunkID.  Throws an exception if no chunk data with the
+     * specified chunkID is available in the storage.
+     *
+     * @param chunkID The ID of the chunk whose data is being retrieved.
+     *
+     * @return A byte[] containing the data for the requested chunkID.
+     *
+     * @throws NoSuchChunkException If there is no chunk data with the specified chunkID.
+     */
+    byte[] getChunkData(final String chunkID)
+            throws NoSuchChunkException, IOException;
 
     /**
      * Checks whether data for a specific chunk is available in the storage.

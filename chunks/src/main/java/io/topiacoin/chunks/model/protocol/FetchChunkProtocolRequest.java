@@ -1,10 +1,16 @@
 package io.topiacoin.chunks.model.protocol;
 
+import io.topiacoin.model.MemberNode;
+
 public class FetchChunkProtocolRequest extends ChunksProtocolMessage {
 	private static final String MESSAGE_TYPE = "REQUEST_CHUNK";
 
 	public FetchChunkProtocolRequest(String chunkID, String userID, String authToken) {
 		super(new String[] { chunkID }, userID, authToken, true, MESSAGE_TYPE);
+	}
+
+	public FetchChunkProtocolRequest(String chunkID, MemberNode targetNode) {
+		super(new String[] { chunkID }, targetNode.getUserId(), targetNode.getAuthToken(), true, MESSAGE_TYPE);
 	}
 
 	public FetchChunkProtocolRequest() {

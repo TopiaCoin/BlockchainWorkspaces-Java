@@ -2,8 +2,8 @@ package io.topiacoin.model;
 
 public class User {
 
-    private String userID;
-    private String email;
+    String userID;
+    String email;
 
     public User() {
     }

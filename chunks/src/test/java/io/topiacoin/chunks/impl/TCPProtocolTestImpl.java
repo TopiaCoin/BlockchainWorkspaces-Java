@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TCPTest extends AbstractProtocolTest {
+public class TCPProtocolTestImpl extends AbstractProtocolTest {
 
 	@Override protected ProtocolCommsService getProtocolCommsService(int port, KeyPair transferKeyPair) throws IOException {
 		return new TCPProtocolCommsService(port, transferKeyPair);

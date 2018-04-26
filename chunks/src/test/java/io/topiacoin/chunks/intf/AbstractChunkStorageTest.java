@@ -51,7 +51,7 @@ public abstract class AbstractChunkStorageTest {
 
         // Try to fetch the non-existent chunk and verify it fails.
         try {
-            chunkStorage.getChunkData(chunkID);
+            chunkStorage.getChunkDataStream(chunkID);
             fail("Expected Chunk to not be found");
         } catch (NoSuchChunkException e) {
             // NOOP - Expected Exception
@@ -65,7 +65,7 @@ public abstract class AbstractChunkStorageTest {
         assertTrue(hasChunk);
 
         // Fetch the stored chunk and verify that the right data is returned
-        InputStream fetchStream = chunkStorage.getChunkData(chunkID);
+        InputStream fetchStream = chunkStorage.getChunkDataStream(chunkID);
         byte[] fetchedData = new byte[chunkData.length];
         int bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData.length, bytesRead);
@@ -83,7 +83,7 @@ public abstract class AbstractChunkStorageTest {
 
         // Try to fetch the remove chunk and verify it fails.
         try {
-            chunkStorage.getChunkData(chunkID);
+            chunkStorage.getChunkDataStream(chunkID);
             fail("Expected Chunk to not be found");
         } catch (NoSuchChunkException e) {
             // NOOP - Expected Exception
@@ -117,13 +117,13 @@ public abstract class AbstractChunkStorageTest {
 
         // Try to fetch the non-existent chunk and verify it fails.
         try {
-            chunkStorage.getChunkData(chunkID1);
+            chunkStorage.getChunkDataStream(chunkID1);
             fail("Expected Chunk 1 to not be found");
         } catch (NoSuchChunkException e) {
             // NOOP - Expected Exception
         }
         try {
-            chunkStorage.getChunkData(chunkID2);
+            chunkStorage.getChunkDataStream(chunkID2);
             fail("Expected Chunk 2 to not be found");
         } catch (NoSuchChunkException e) {
             // NOOP - Expected Exception
@@ -139,7 +139,7 @@ public abstract class AbstractChunkStorageTest {
         assertFalse(hasChunk);
 
         // Fetch the stored chunk and verify that the right data is returned
-        InputStream fetchStream = chunkStorage.getChunkData(chunkID1);
+        InputStream fetchStream = chunkStorage.getChunkDataStream(chunkID1);
         byte[] fetchedData = new byte[chunkData1.length];
         int bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData1.length, bytesRead);
@@ -147,7 +147,7 @@ public abstract class AbstractChunkStorageTest {
         fetchStream.close();
         // Attempt to fetch Chunk 2 and verify it fails
         try {
-            chunkStorage.getChunkData(chunkID2);
+            chunkStorage.getChunkDataStream(chunkID2);
             fail("Expected Chunk 2 to not be found");
         } catch (NoSuchChunkException e) {
             // NOOP - Expected Exception
@@ -163,7 +163,7 @@ public abstract class AbstractChunkStorageTest {
         assertTrue(hasChunk);
 
         // Fetch the stored chunk 1 and verify that the right data is returned
-        fetchStream = chunkStorage.getChunkData(chunkID1);
+        fetchStream = chunkStorage.getChunkDataStream(chunkID1);
         fetchedData = new byte[chunkData1.length];
         bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData1.length, bytesRead);
@@ -171,7 +171,7 @@ public abstract class AbstractChunkStorageTest {
         fetchStream.close();
 
         // Fetch the stored chunk 2 and verify that the right data is returned
-        fetchStream = chunkStorage.getChunkData(chunkID2);
+        fetchStream = chunkStorage.getChunkDataStream(chunkID2);
         fetchedData = new byte[chunkData2.length];
         bytesRead = fetchStream.read(fetchedData);
         assertEquals(chunkData2.length, bytesRead);
@@ -189,7 +189,7 @@ public abstract class AbstractChunkStorageTest {
 
         // Try to fetch the remove chunk and verify it fails.
         try {
-            chunkStorage.getChunkData(chunkID1);
+            chunkStorage.getChunkDataStream(chunkID1);
             fail("Expected Chunk to not be found");
         } catch (NoSuchChunkException e) {
             // NOOP - Expected Exception

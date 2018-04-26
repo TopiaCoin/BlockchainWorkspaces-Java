@@ -5,7 +5,9 @@ import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
 import io.topiacoin.chunks.exceptions.UnknownMessageTypeException;
 import io.topiacoin.chunks.intf.ProtocolCommsHandler;
+import io.topiacoin.chunks.intf.ProtocolCommsResponseHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
+import io.topiacoin.model.MemberNode;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolConnectionState;
@@ -32,7 +34,10 @@ import java.security.KeyPair;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class TCPProtocolCommsService implements ProtocolCommsService {
 	private static final Log _log = LogFactory.getLog(TCPProtocolCommsService.class);
@@ -44,10 +49,13 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 
 	final Map<MessageID, SocketAddress> _messageAddresses = new HashMap<>();
 	final Map<SocketAddress, ProtocolConnectionState> _connections = new HashMap<>();
+	private final Map<MessageID, ProtocolCommsResponseHandler> _messageSpecificHandlers = new HashMap<>();
+	private final Map<MessageID, Long> _messageSendTimes = new HashMap<>();
 
 	private ProtocolMessageFactory _messageFactory;
 	int _messageIdTracker = 0;
 	private ProtocolCommsHandler _handler = null;
+	private long _timeoutMs = 30000;
 
 	TCPProtocolCommsService(int port, KeyPair chunkTransferKeyPair) throws IOException {
 		_chunkTransferKeyPair = chunkTransferKeyPair;
@@ -58,6 +66,19 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	}
 
 	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message)
+			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
+		return sendMessage(location, port, transferPublicKey, message, null);
+	}
+
+	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler optionalHandler) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
+		return sendMessage(targetNode.getHostname(), targetNode.getPort(), targetNode.getPublicKey(), message, optionalHandler);
+	}
+
+	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
+		return sendMessage(targetNode.getHostname(), targetNode.getPort(), targetNode.getPublicKey(), message, null);
+	}
+
+	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message, ProtocolCommsResponseHandler handler)
 			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
 		if (!message.isRequest()) {
 			throw new InvalidMessageException("Cannot send non-request type message as a request");
@@ -71,6 +92,10 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		InetSocketAddress addr = new InetSocketAddress(location, port);
 		MessageID messageID = new MessageID(_messageIdTracker++, addr);
 		_messageAddresses.put(messageID, addr);
+		if (handler != null) {
+			_messageSpecificHandlers.put(messageID, handler);
+		}
+		_messageSendTimes.put(messageID, System.currentTimeMillis());
 		ProtocolConnectionState state = _connections.get(addr);
 		if (state == null) {
 			try {
@@ -235,6 +260,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 		_listenerRunnableThrowable = null;
 		_messageAddresses.clear();
+		_messageSpecificHandlers.clear();
+		_messageSendTimes.clear();
 		for (SocketAddress address : _connections.keySet()) {
 			ProtocolConnectionState state = _connections.get(address);
 			try {
@@ -244,6 +271,10 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			}
 		}
 		_connections.clear();
+	}
+
+	@Override public void setTimeout(int timeout, TimeUnit unit) {
+		_timeoutMs = unit.toMillis(timeout);
 	}
 
 	SocketChannel getConnectionForMessageID(MessageID messageID) {
@@ -273,7 +304,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				_serverSocket.configureBlocking(false);
 				_serverSocket.register(_selector, _serverSocket.validOps(), null);
 				ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-
+				List<MessageID> timeouts = new LinkedList<>();
 				while (run) {
 					if (_selector.select(1000) > 0) {
 						final Iterator<SelectionKey> selectionKeyIterator;
@@ -361,7 +392,13 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 													if (message.isRequest()) {
 														_handler.requestReceived(message, messageID);
 													} else {
-														_handler.responseReceived(message);
+														ProtocolCommsResponseHandler handler = _messageSpecificHandlers.remove(messageID);
+														_messageSendTimes.remove(messageID);
+														if (handler != null) {
+															handler.responseReceived(message, messageID);
+														} else {
+															_handler.responseReceived(message, messageID);
+														}
 													}
 												}
 											}
@@ -379,11 +416,28 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 							selectionKeyIterator.remove();
 						}
 					}
+					Iterator<MessageID> messageIDIterator = _messageSendTimes.keySet().iterator();
+					while (messageIDIterator.hasNext()) {
+						MessageID messageID = messageIDIterator.next();
+						if (System.currentTimeMillis() > _messageSendTimes.get(messageID) + _timeoutMs) {
+							timeouts.add(messageID);
+							ProtocolCommsResponseHandler handler = _messageSpecificHandlers.remove(messageID);
+							_messageSendTimes.remove(messageID);
+							if (handler != null) {
+								handler.error("Request Timed out", false, messageID);
+							} else {
+								_handler.error("Request Timed out", false, messageID);
+							}
+						}
+					}
 					//Register All socket channels for write that have things that need to be written
 					Iterator<SocketAddress> addresses = _connections.keySet().iterator();
 					while (addresses.hasNext()) {
 						SocketAddress address = addresses.next();
 						ProtocolConnectionState state = _connections.get(address);
+						for (MessageID tMid : timeouts) {
+							state.removeMessageID(tMid);
+						}
 						state.registerForPendingWrites(_selector);
 						if (!state.hasMessageIDs() && !state.hasWriteBuffers()
 								&& state.getLastUsedTime() + _unusedConnectionCloseThresholdMillis < System.currentTimeMillis()) {
@@ -393,6 +447,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 							addresses.remove();
 						}
 					}
+					timeouts.clear();
 				}
 			} catch (Throwable e) {
 				_log.error("", e);
