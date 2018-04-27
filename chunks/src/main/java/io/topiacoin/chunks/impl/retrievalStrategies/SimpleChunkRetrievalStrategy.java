@@ -2,6 +2,7 @@ package io.topiacoin.chunks.impl.retrievalStrategies;
 
 import io.topiacoin.chunks.intf.ChunkRetrievalStrategy;
 import io.topiacoin.chunks.model.ChunkRetrievalPlan;
+import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import org.apache.commons.logging.Log;
@@ -12,7 +13,6 @@ import java.util.List;
 public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 	private static final Log _log = LogFactory.getLog(SimpleChunkRetrievalStrategy.class);
 	private List<String> _chunkIDs = null;
-	private List<String> _chunkIDsStillNeeded = null;
 	private ChunkRetrievalPlan _plan;
 
 	public SimpleChunkRetrievalStrategy(List<String> chunkIDs) {
@@ -25,6 +25,10 @@ public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 		}
 	}
 
+	@Override public void submitLocationResponse(ErrorProtocolResponse response, MemberNode memberNode) {
+		//Not really sure what to do here.
+	}
+
 	@Override public void allResponsesSubmitted() {
 		//I don't think I need to do anything here.
 	}
@@ -35,7 +39,6 @@ public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 
 	@Override public void setChunkIDs(List<String> chunkIDs) {
 		_chunkIDs = chunkIDs;
-		_chunkIDsStillNeeded = _chunkIDs;
 	}
 
 	@Override public ChunkRetrievalPlan getPlan() {

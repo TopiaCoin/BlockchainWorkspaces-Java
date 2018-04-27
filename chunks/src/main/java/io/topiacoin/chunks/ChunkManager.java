@@ -5,6 +5,7 @@ import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 import io.topiacoin.chunks.intf.ChunksTransferHandler;
 import io.topiacoin.chunks.intf.ChunkTransferer;
 import io.topiacoin.chunks.intf.ChunksFetchHandler;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -143,6 +144,10 @@ public class ChunkManager {
 
             @Override public void fetchedAllChunks(Object state) {
                 handler.finishedFetchingChunks(successfulChunks, failedChunks, state);
+            }
+
+            @Override public void failedToBuildFetchPlan() {
+                throw new NotImplementedException();
             }
         };
         chunkTransferer.fetchChunksRemotely(unfetchedChunks, containerID, chunkFetchHandler, state);

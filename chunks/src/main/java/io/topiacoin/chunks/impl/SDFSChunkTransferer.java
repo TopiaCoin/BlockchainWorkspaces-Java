@@ -16,7 +16,6 @@ import io.topiacoin.chunks.intf.ProtocolCommsHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsResponseHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
 import io.topiacoin.chunks.model.ChunkRetrievalPlan;
-import io.topiacoin.model.MemberNode;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
 import io.topiacoin.chunks.model.protocol.FetchChunkProtocolRequest;
@@ -27,10 +26,10 @@ import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
+import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -48,9 +47,11 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	private ProtocolCommsService _comms;
 	private ChunkStorage _chunkStorage;
 	private DataModel _model;
+	private MemberNode _myMemberNode;
 
-	public SDFSChunkTransferer(int listenPort, KeyPair chunkTransferPair) throws IOException, FailedToStartCommsListenerException {
-		_comms = new TCPProtocolCommsService(listenPort, chunkTransferPair);
+	public SDFSChunkTransferer(MemberNode myMemberNode, KeyPair chunkTransferPair) throws IOException, FailedToStartCommsListenerException {
+		_myMemberNode = myMemberNode;
+		_comms = new TCPProtocolCommsService(myMemberNode.getPort(), chunkTransferPair);
 		_comms.setHandler(new StandardProtocolCommsResponder());
 		_comms.startListener();
 	}
@@ -64,7 +65,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	 */
 	@Override public void fetchChunksRemotely(List<String> chunkIDs, String containerID, final ChunksTransferHandler chunksHandler, final Object state) {
 		List<MemberNode> memberNodes = fetchMemberNodes(containerID);
-		if(memberNodes == null || memberNodes.isEmpty()) {
+		if (memberNodes == null || memberNodes.isEmpty()) {
 			throw new RuntimeException();
 		}
 		final Map<MessageID, MemberNode> memberMessages = new HashMap<>();
@@ -72,17 +73,22 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		ProtocolCommsResponseHandler handler = new ProtocolCommsResponseHandler() {
 			@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
 				MemberNode memNode = memberMessages.remove(messageID);
-				if(memberMessages.isEmpty()) {
-					strategy.allResponsesSubmitted();
-				}
-				if(!strategy.isCompletePlan()) {
+				if (!strategy.isCompletePlan()) {
 					if (response instanceof HaveChunksProtocolResponse) {
 						strategy.submitLocationResponse((HaveChunksProtocolResponse) response, memNode);
-						if(strategy.isCompletePlan()) {
+						if (strategy.isCompletePlan()) {
 							executeStrategy(strategy, chunksHandler, state);
 						}
+					} else if(response instanceof ErrorProtocolResponse) {
+						strategy.submitLocationResponse((ErrorProtocolResponse) response, memNode);
 					} else {
 						_log.warn("Received an unxepected response type: " + response.getType());
+					}
+				}
+				if (memberMessages.isEmpty()) {
+					strategy.allResponsesSubmitted();
+					if(!strategy.isCompletePlan()) {
+						chunksHandler.failedToBuildFetchPlan();
 					}
 				}
 			}
@@ -108,7 +114,19 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	}
 
 	private List<MemberNode> fetchMemberNodes(String containerID) {
-		return _model.getMemberNodesForContainer(containerID);
+		try {
+			CurrentUser me = _model.getCurrentUser();
+			List<MemberNode> toReturn = _model.getMemberNodesForContainer(containerID);
+			for (MemberNode node : toReturn) {
+				if (node.getUserId().equals(me.getUserID())) {
+					toReturn.remove(node);
+				}
+			}
+			return toReturn;
+		} catch (NoSuchUserException e) {
+			_log.error("", e);
+			return null;
+		}
 	}
 
 	@Override public void setConfiguration(Configuration configuration) {
@@ -119,9 +137,13 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		this._chunkRetrievalStrategyFactory = stratFac;
 	}
 
-	@Override public void setChunkStorage(ChunkStorage storage) { this._chunkStorage = storage; }
+	@Override public void setChunkStorage(ChunkStorage storage) {
+		this._chunkStorage = storage;
+	}
 
-	@Override public void setDataModel(DataModel model) {this._model = model;}
+	@Override public void setDataModel(DataModel model) {
+		this._model = model;
+	}
 
 	@Override public void stop() {
 		_comms.stop();
@@ -135,7 +157,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		ProtocolCommsResponseHandler handler = new ProtocolCommsResponseHandler() {
 			private void executeNextTask() {
 				ChunkRetrievalPlan.PlanTask task;
-				while((task = plan.getNextTask()) != null) {
+				while ((task = plan.getNextTask()) != null) {
 					FetchChunkProtocolRequest request = new FetchChunkProtocolRequest(task.chunkID, task.source);
 					try {
 						MessageID messageID = _comms.sendMessage(task.source, request, this);
@@ -145,14 +167,14 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 						plan.markChunkAsFailed(task.chunkID);
 					}
 				}
-				if(plan.isComplete()) {
+				if (plan.isComplete()) {
 					chunksHandler.fetchedAllChunks(state);
 				}
 			}
 
 			@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
 				String chunkID = chunkRequests.remove(messageID);
-				if(response instanceof GiveChunkProtocolResponse) {
+				if (response instanceof GiveChunkProtocolResponse) {
 					GiveChunkProtocolResponse resp = (GiveChunkProtocolResponse) response;
 					plan.markChunkAsFetched(chunkID);
 					try {
@@ -184,7 +206,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				executeNextTask();
 			}
 		};
-		while((task = plan.getNextTask()) != null) {
+		while ((task = plan.getNextTask()) != null) {
 			request = new FetchChunkProtocolRequest(task.chunkID, task.source);
 			try {
 				MessageID messageID = _comms.sendMessage(task.source, request, handler);
@@ -201,28 +223,36 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			try {
 				ProtocolMessage response;
 				CurrentUser me = _model.getCurrentUser();
-				if(request instanceof FetchChunkProtocolRequest) {
+				if (request instanceof FetchChunkProtocolRequest) {
 					FetchChunkProtocolRequest req = (FetchChunkProtocolRequest) request;
-					if(_chunkStorage.hasChunk(req.getChunkID())) {
-						try {
-							byte[] data = _chunkStorage.getChunkData(req.getChunkID());
-							response = new GiveChunkProtocolResponse(req.getChunkID(), data, me.getUserID());
-						} catch (NoSuchChunkException | IOException e) {
-							_log.error("Unexpected internal issue", e);
+					if (req.getAuthToken().equals(_myMemberNode.getAuthToken())) {
+						if (_chunkStorage.hasChunk(req.getChunkID())) {
+							try {
+								byte[] data = _chunkStorage.getChunkData(req.getChunkID());
+								response = new GiveChunkProtocolResponse(req.getChunkID(), data, me.getUserID());
+							} catch (NoSuchChunkException | IOException e) {
+								_log.error("Unexpected internal issue", e);
+								response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
+							}
+						} else {
 							response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
 						}
 					} else {
-						response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
+						response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 					}
-				} else if(request instanceof QueryChunksProtocolRequest) {
+				} else if (request instanceof QueryChunksProtocolRequest) {
 					QueryChunksProtocolRequest req = (QueryChunksProtocolRequest) request;
-					List<String> chunksIHave = new ArrayList<>();
-					for(String chunkID : req.getChunksRequired()) {
-						if(_chunkStorage.hasChunk(chunkID)) {
-							chunksIHave.add(chunkID);
+					if (req.getAuthToken().equals(_myMemberNode.getAuthToken())) {
+						List<String> chunksIHave = new ArrayList<>();
+						for (String chunkID : req.getChunksRequired()) {
+							if (_chunkStorage.hasChunk(chunkID)) {
+								chunksIHave.add(chunkID);
+							}
 						}
+						response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[0]), me.getUserID());
+					} else {
+						response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 					}
-					response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[0]), me.getUserID());
 				} else {
 					_log.warn("Received unknown request type " + request.getType() + ", not processing");
 					response = new ErrorProtocolResponse("I don't understand", me.getUserID());
@@ -249,7 +279,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			_log.error("Unexpected error in default handler: " + message);
 			try {
 				CurrentUser me = _model.getCurrentUser();
-				if(shouldReply) {
+				if (shouldReply) {
 					_comms.reply(new ErrorProtocolResponse(message, me.getUserID()), messageId);
 				}
 			} catch (NoSuchUserException e) {
