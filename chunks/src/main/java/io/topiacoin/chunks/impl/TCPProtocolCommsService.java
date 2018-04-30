@@ -65,20 +65,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_messageFactory = new ProtocolMessageFactory();
 	}
 
-	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message)
-			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
-		return sendMessage(location, port, transferPublicKey, message, null);
-	}
-
-	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler optionalHandler) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
-		return sendMessage(targetNode.getHostname(), targetNode.getPort(), targetNode.getPublicKey(), message, optionalHandler);
-	}
-
-	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
-		return sendMessage(targetNode.getHostname(), targetNode.getPort(), targetNode.getPublicKey(), message, null);
-	}
-
-	@Override public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message, ProtocolCommsResponseHandler handler)
+	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler)
 			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
 		if (!message.isRequest()) {
 			throw new InvalidMessageException("Cannot send non-request type message as a request");
@@ -89,7 +76,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		if (!_listenerThread.isAlive()) {
 			throw new FailedToStartCommsListenerException("Listener must be started before sending messages");
 		}
-		InetSocketAddress addr = new InetSocketAddress(location, port);
+		InetSocketAddress addr = new InetSocketAddress(targetNode.getHostname(), targetNode.getPort());
 		MessageID messageID = new MessageID(_messageIdTracker++, addr);
 		_messageAddresses.put(messageID, addr);
 		if (handler != null) {
@@ -99,7 +86,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		ProtocolConnectionState state = _connections.get(addr);
 		if (state == null) {
 			try {
-				state = new ProtocolConnectionState(addr, messageID, transferPublicKey);
+				state = new ProtocolConnectionState(addr, messageID, targetNode.getPublicKey());
 			} catch (InvalidKeySpecException e) {
 				throw new InvalidKeyException("Public Key Data was invalid", e);
 			}

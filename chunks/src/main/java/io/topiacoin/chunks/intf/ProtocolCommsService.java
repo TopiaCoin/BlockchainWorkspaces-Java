@@ -17,8 +17,8 @@ import java.util.concurrent.TimeUnit;
 public interface ProtocolCommsService {
 
 	/**
-	 * Sends a ProtocolMessage to the given location on the given port. If this is an initial request to this address, the transferKey will be required to be passed in
-	 * Also, the authToken should be passed in. These values can be retrieved from the blockchain. Finally, the message you want to send should be passed in.
+	 * Sends a ProtocolMessage to the given target Node.
+	 * The message you want to send should be passed in.
 	 * Before calling this function, typically the ProtocolMessage should be signed.
 	 * This function takes care of encrypting and framing the protocol message, establishing a connection (if necessary) to the destination, and sending the data.
 	 *
@@ -26,28 +26,16 @@ public interface ProtocolCommsService {
 	 *
 	 * If the listener hasn't been started, a FailedToStartCommsListenerException will the thrown. see {@link #startListener()} for more information
 	 *
-	 * @param location The destination location (typically an IP address or hostname)
-	 * @param port The port number on the destination to connect to
-	 * @param transferPublicKey The public transferKey of the destination, used to generate cryptographic keys for communications - from the blockchain
+	 * @param targetNode The destination node
 	 * @param message The message you want to send
-	 * @param optionalHandler An optional handler for handling the response to this message - if null, the handler specified in {@link #setHandler(ProtocolCommsHandler)} will be used
+	 * @param handler A handler for handling the response to this message
 	 * @return the messageID of this communication
 	 * @throws InvalidKeyException If the transferPublicKey is invalid or, if this is an initial message, null.
 	 * @throws IOException If a connection could not be established
 	 * @throws InvalidMessageException If the message passed in is not properly formed, or if you pass a Response-type message in
 	 * @throws FailedToStartCommsListenerException If you try to send a message without first starting the listener
 	 */
-	public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message, ProtocolCommsResponseHandler optionalHandler)
-			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
-
-	/**
-	 * See {@link #sendMessage(String, int, byte[], ProtocolMessage, ProtocolCommsResponseHandler)}
-	 */
-	public MessageID sendMessage(String location, int port, byte[] transferPublicKey, ProtocolMessage message)
-			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
-
-	public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler optionalHandler) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
-	public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
+	public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
 
 	/**
 	 * Replies to a received message - since this is a connection-based protocol, every received message is expected to be replied to, even if the reply indicates some failure.
