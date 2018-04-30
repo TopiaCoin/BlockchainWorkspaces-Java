@@ -151,9 +151,6 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			messageData.get(messageArray);
 			ByteBuffer decryptedBuffer;
 			if (!_messageFactory.isError(messageType)) {
-				if (messageArray.length % 16 != 0) {
-					throw new InvalidMessageException("Encrypted Message Data length is not a multiple of 16, and is therefore invalid");
-				}
 				_log.debug("Decrypting: " + (messageArray.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(messageArray)));
 				_log.debug("With Key: " + DatatypeConverter.printHexBinary(responseKey.getEncoded()));
 				byte[] decrypted = CryptoUtils.decryptWithSecretKey(messageArray, responseKey, null);

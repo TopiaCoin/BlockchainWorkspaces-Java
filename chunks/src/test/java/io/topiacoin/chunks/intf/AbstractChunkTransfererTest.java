@@ -1,18 +1,23 @@
 package io.topiacoin.chunks.intf;
 
 import io.topiacoin.chunks.InMemoryChunkStorage;
+import io.topiacoin.chunks.exceptions.DuplicateChunkException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
+import io.topiacoin.chunks.exceptions.InsufficientSpaceException;
+import io.topiacoin.chunks.exceptions.InvalidReservationException;
 import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 import io.topiacoin.chunks.impl.SimpleChunkRetrievalStrategyFactory;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.MemberNode;
+import org.apache.commons.io.IOUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -595,6 +600,358 @@ public abstract class AbstractChunkTransfererTest {
 			fail();
 		} catch (IllegalStateException ex) {
 			//good
+		} finally {
+			if (transfererA != null) {
+				transfererA.stop();
+			}
+			if (transfererB != null) {
+				transfererB.stop();
+			}
+		}
+	}
+
+	@Test
+	public void testFetchNonExistantChunk() throws Exception {
+		Map<String, byte[]> testChunks = new HashMap<>();
+		testChunks.put("foo", "DEADBEEF".getBytes());
+		ChunkTransferer transfererA = null;
+		ChunkTransferer transfererB = null;
+		try {
+			ChunkStorage transfererAChunkStorage = new InMemoryChunkStorage();
+			ChunkStorage transfererBChunkStorage = new ChunkStorage() {
+				@Override public void addChunk(String chunkID, InputStream chunkStream, ReservationID reservationID, boolean purgeable) throws DuplicateChunkException, InvalidReservationException, InsufficientSpaceException, IOException {
+					//lol no
+				}
+
+				@Override public InputStream getChunkDataStream(String chunkID) throws NoSuchChunkException {
+					throw new NoSuchChunkException("haha");
+				}
+
+				@Override public byte[] getChunkData(String chunkID) throws NoSuchChunkException, IOException {
+					throw new NoSuchChunkException("wut?");
+				}
+
+				@Override public boolean hasChunk(String chunkID) {
+					return true;
+				}
+
+				@Override public boolean removeChunk(String chunkID) {
+					return true;
+				}
+
+				@Override public long getStorageQuota() {
+					return 999999999;
+				}
+
+				@Override public long getAvailableStorage() {
+					return 999999999;
+				}
+
+				@Override public boolean purgeStorage(long neededAvailableSpace) {
+					return false;
+				}
+
+				@Override public ReservationID reserveStorageSpace(long spaceToReserve) throws InsufficientSpaceException {
+					return null;
+				}
+
+				@Override public void releaseSpaceReservation(ReservationID reservationID) throws InvalidReservationException {
+
+				}
+			};
+			for (String chunkID : testChunks.keySet()) {
+				transfererBChunkStorage.addChunk(chunkID, new ByteArrayInputStream(testChunks.get(chunkID)), null, true);
+			}
+
+			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final CountDownLatch lock = new CountDownLatch(1);
+			String testContainerId = "containerA";
+			int userAPort = 7777;
+			int userBPort = 7778;
+			String userAAuthToken = "potawto";
+			String userBAuthToken = "potatoe";
+			MemberNode userAMemberNode = new MemberNode("userA", "127.0.0.1", userAPort, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
+			MemberNode userBMemberNode = new MemberNode("userB", "127.0.0.1", userBPort, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			List<MemberNode> containerAMemberNodes = new ArrayList<>();
+			containerAMemberNodes.add(userAMemberNode);
+			containerAMemberNodes.add(userBMemberNode);
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com");
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com");
+
+			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
+			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
+			transfererA.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererB.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererA.setChunkStorage(transfererAChunkStorage);
+			transfererB.setChunkStorage(transfererBChunkStorage);
+
+			DataModel mockModelA = EasyMock.mock(DataModel.class);
+			transfererA.setDataModel(mockModelA);
+			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
+			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
+			EasyMock.replay(mockModelA);
+			DataModel mockModelB = EasyMock.mock(DataModel.class);
+			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
+			transfererB.setDataModel(mockModelB);
+			EasyMock.replay(mockModelB);
+			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
+			ChunksTransferHandler handler = new ChunksTransferHandler() {
+				@Override public void didFetchChunk(String chunkID, Object state) {
+					assertTrue(chunksExpected.remove(chunkID));
+					lock.countDown();
+				}
+
+				@Override public void failedToFetchChunk(String failedChunkID, String message, Exception cause, Object state) {
+					assertTrue(testChunks.containsKey(failedChunkID));
+					lock.countDown();
+				}
+
+				@Override public void fetchedAllChunks(Object state) {
+					fail();
+				}
+
+				@Override public void failedToBuildFetchPlan() {
+					fail();
+				}
+			};
+			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
+			transfererA.fetchChunksRemotely(testChunkIDs, testContainerId, handler, null);
+			assertTrue("Chunk fetch never finished in its failed state", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			if (transfererA != null) {
+				transfererA.stop();
+			}
+			if (transfererB != null) {
+				transfererB.stop();
+			}
+		}
+	}
+
+	@Test
+	public void testFetchNonExistantChunkPt2() throws Exception {
+		Map<String, byte[]> testChunks = new HashMap<>();
+		testChunks.put("foo", "DEADBEEF".getBytes());
+		ChunkTransferer transfererA = null;
+		ChunkTransferer transfererB = null;
+		try {
+			ChunkStorage transfererAChunkStorage = new InMemoryChunkStorage();
+			ChunkStorage transfererBChunkStorage = new ChunkStorage() {
+				@Override public void addChunk(String chunkID, InputStream chunkStream, ReservationID reservationID, boolean purgeable) throws DuplicateChunkException, InvalidReservationException, InsufficientSpaceException, IOException {
+					//lol no
+				}
+
+				@Override public InputStream getChunkDataStream(String chunkID) throws NoSuchChunkException {
+					throw new NoSuchChunkException("haha");
+				}
+
+				@Override public byte[] getChunkData(String chunkID) throws NoSuchChunkException, IOException {
+					throw new NoSuchChunkException("wut?");
+				}
+
+				@Override public boolean hasChunk(String chunkID) {
+					return false;
+				}
+
+				@Override public boolean removeChunk(String chunkID) {
+					return true;
+				}
+
+				@Override public long getStorageQuota() {
+					return 999999999;
+				}
+
+				@Override public long getAvailableStorage() {
+					return 999999999;
+				}
+
+				@Override public boolean purgeStorage(long neededAvailableSpace) {
+					return false;
+				}
+
+				@Override public ReservationID reserveStorageSpace(long spaceToReserve) throws InsufficientSpaceException {
+					return null;
+				}
+
+				@Override public void releaseSpaceReservation(ReservationID reservationID) throws InvalidReservationException {
+
+				}
+			};
+			for (String chunkID : testChunks.keySet()) {
+				transfererBChunkStorage.addChunk(chunkID, new ByteArrayInputStream(testChunks.get(chunkID)), null, true);
+			}
+
+			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final CountDownLatch lock = new CountDownLatch(1);
+			String testContainerId = "containerA";
+			int userAPort = 7777;
+			int userBPort = 7778;
+			String userAAuthToken = "potawto";
+			String userBAuthToken = "potatoe";
+			MemberNode userAMemberNode = new MemberNode("userA", "127.0.0.1", userAPort, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
+			MemberNode userBMemberNode = new MemberNode("userB", "127.0.0.1", userBPort, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			List<MemberNode> containerAMemberNodes = new ArrayList<>();
+			containerAMemberNodes.add(userAMemberNode);
+			containerAMemberNodes.add(userBMemberNode);
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com");
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com");
+
+			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
+			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
+			transfererA.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererB.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererA.setChunkStorage(transfererAChunkStorage);
+			transfererB.setChunkStorage(transfererBChunkStorage);
+
+			DataModel mockModelA = EasyMock.mock(DataModel.class);
+			transfererA.setDataModel(mockModelA);
+			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
+			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
+			EasyMock.replay(mockModelA);
+			DataModel mockModelB = EasyMock.mock(DataModel.class);
+			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
+			transfererB.setDataModel(mockModelB);
+			EasyMock.replay(mockModelB);
+			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
+			ChunksTransferHandler handler = new ChunksTransferHandler() {
+				@Override public void didFetchChunk(String chunkID, Object state) {
+					fail();
+				}
+
+				@Override public void failedToFetchChunk(String failedChunkID, String message, Exception cause, Object state) {
+					fail();
+
+				}
+
+				@Override public void fetchedAllChunks(Object state) {
+					fail();
+				}
+
+				@Override public void failedToBuildFetchPlan() {
+					lock.countDown();
+				}
+			};
+			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
+			transfererA.fetchChunksRemotely(testChunkIDs, testContainerId, handler, null);
+			assertTrue("Chunk fetch never finished in its failed state", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			if (transfererA != null) {
+				transfererA.stop();
+			}
+			if (transfererB != null) {
+				transfererB.stop();
+			}
+		}
+	}
+
+	@Test
+	public void testFetchNonExistantChunkPt3() throws Exception {
+		Map<String, byte[]> testChunks = new HashMap<>();
+		testChunks.put("foo", "DEADBEEF".getBytes());
+		ChunkTransferer transfererA = null;
+		ChunkTransferer transfererB = null;
+		try {
+			ChunkStorage transfererAChunkStorage = new InMemoryChunkStorage();
+			ChunkStorage transfererBChunkStorage = new ChunkStorage() {
+				Set<String> chunksImKeenOnLyingAbout = new HashSet<String>();
+				@Override public void addChunk(String chunkID, InputStream chunkStream, ReservationID reservationID, boolean purgeable) throws DuplicateChunkException, InvalidReservationException, InsufficientSpaceException, IOException {
+					//lol no
+				}
+
+				@Override public InputStream getChunkDataStream(String chunkID) throws NoSuchChunkException {
+					throw new NoSuchChunkException("haha");
+				}
+
+				@Override public byte[] getChunkData(String chunkID) throws NoSuchChunkException, IOException {
+					throw new NoSuchChunkException("wut?");
+				}
+
+				@Override public boolean hasChunk(String chunkID) {
+					 return chunksImKeenOnLyingAbout.add(chunkID);
+				}
+
+				@Override public boolean removeChunk(String chunkID) {
+					return true;
+				}
+
+				@Override public long getStorageQuota() {
+					return 999999999;
+				}
+
+				@Override public long getAvailableStorage() {
+					return 999999999;
+				}
+
+				@Override public boolean purgeStorage(long neededAvailableSpace) {
+					return false;
+				}
+
+				@Override public ReservationID reserveStorageSpace(long spaceToReserve) throws InsufficientSpaceException {
+					return null;
+				}
+
+				@Override public void releaseSpaceReservation(ReservationID reservationID) throws InvalidReservationException {
+
+				}
+			};
+			for (String chunkID : testChunks.keySet()) {
+				transfererBChunkStorage.addChunk(chunkID, new ByteArrayInputStream(testChunks.get(chunkID)), null, true);
+			}
+
+			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final CountDownLatch lock = new CountDownLatch(1);
+			String testContainerId = "containerA";
+			int userAPort = 7777;
+			int userBPort = 7778;
+			String userAAuthToken = "potawto";
+			String userBAuthToken = "potatoe";
+			MemberNode userAMemberNode = new MemberNode("userA", "127.0.0.1", userAPort, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
+			MemberNode userBMemberNode = new MemberNode("userB", "127.0.0.1", userBPort, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			List<MemberNode> containerAMemberNodes = new ArrayList<>();
+			containerAMemberNodes.add(userAMemberNode);
+			containerAMemberNodes.add(userBMemberNode);
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com");
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com");
+
+			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
+			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
+			transfererA.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererB.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererA.setChunkStorage(transfererAChunkStorage);
+			transfererB.setChunkStorage(transfererBChunkStorage);
+
+			DataModel mockModelA = EasyMock.mock(DataModel.class);
+			transfererA.setDataModel(mockModelA);
+			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
+			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
+			EasyMock.replay(mockModelA);
+			DataModel mockModelB = EasyMock.mock(DataModel.class);
+			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
+			transfererB.setDataModel(mockModelB);
+			EasyMock.replay(mockModelB);
+			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
+			ChunksTransferHandler handler = new ChunksTransferHandler() {
+				@Override public void didFetchChunk(String chunkID, Object state) {
+					fail();
+				}
+
+				@Override public void failedToFetchChunk(String failedChunkID, String message, Exception cause, Object state) {
+					lock.countDown();
+				}
+
+				@Override public void fetchedAllChunks(Object state) {
+					fail();
+				}
+
+				@Override public void failedToBuildFetchPlan() {
+					fail();
+				}
+			};
+			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
+			transfererA.fetchChunksRemotely(testChunkIDs, testContainerId, handler, null);
+			assertTrue("Chunk fetch never finished in its failed state", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			if (transfererA != null) {
 				transfererA.stop();

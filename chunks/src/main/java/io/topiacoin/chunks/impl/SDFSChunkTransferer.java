@@ -160,6 +160,12 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				}
 				if (plan.isComplete()) {
 					chunksHandler.fetchedAllChunks(state);
+				} else {
+					//We've run out of tasks, but the plan isn't complete, which means it failed. Get the failed chunks and report them
+					List<String> failedChunks = plan.getFailedChunks();
+					for(String chunk : failedChunks) {
+						chunksHandler.failedToFetchChunk(chunk, "Nobody has this chunk", null, state);
+					}
 				}
 			}
 

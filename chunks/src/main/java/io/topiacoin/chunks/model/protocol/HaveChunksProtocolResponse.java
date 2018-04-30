@@ -16,6 +16,6 @@ public class HaveChunksProtocolResponse extends ChunksProtocolMessage {
 	}
 
 	@Override public boolean isValid() {
-		return _userID != null && _chunks != null && _chunks.length > 0;
+		return _userID != null && _chunks != null;
 	}
 }
