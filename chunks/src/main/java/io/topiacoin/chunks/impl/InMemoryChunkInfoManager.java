@@ -22,7 +22,7 @@ public class InMemoryChunkInfoManager implements ChunkInfoManager {
     }
 
     @PreDestroy
-    public void shudown() {
+    public void shutdown() {
 
     }
 

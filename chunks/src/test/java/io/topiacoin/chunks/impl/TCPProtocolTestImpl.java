@@ -6,7 +6,6 @@ import io.topiacoin.chunks.exceptions.UnknownMessageTypeException;
 import io.topiacoin.chunks.intf.AbstractProtocolTest;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
 import io.topiacoin.chunks.model.MessageID;
-import io.topiacoin.chunks.model.protocol.ProtocolConnectionState;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 
 import java.io.IOException;
@@ -15,10 +14,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class TCPProtocolTestImpl extends AbstractProtocolTest {
@@ -56,7 +53,7 @@ public class TCPProtocolTestImpl extends AbstractProtocolTest {
 		List<MessageID> messageIDs = new ArrayList<>();
 		int totalSize = 0;
 		for(ProtocolMessage message : messages) {
-			MessageID messageID = new MessageID(commsService._messageIdTracker++, addr);
+			MessageID messageID = new MessageID(commsService._messageIdTracker.getAndIncrement(), addr);
 			messageIDs.add(messageID);
 			commsService._messageAddresses.put(messageID, addr);
 			if (state == null) {
@@ -71,7 +68,6 @@ public class TCPProtocolTestImpl extends AbstractProtocolTest {
 			commsService._connections.put(addr, state);
 
 			ByteBuffer data = commsService.encryptAndFrameMessage(message, messageID, state);
-			data.flip();
 			totalSize += data.remaining();
 			datas.add(data);
 		}
@@ -85,7 +81,7 @@ public class TCPProtocolTestImpl extends AbstractProtocolTest {
 			putAsMuchAsPossible(partialData, totalData);
 			partialData.flip();
 			state.addWriteBuffer(partialData);
-			commsService._listenerRunnable.wakeupSelector();
+			commsService._listenerRunnable.wakeup();
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {

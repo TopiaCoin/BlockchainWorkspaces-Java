@@ -1,4 +1,4 @@
-package io.topiacoin.chunks.model.protocol;
+package io.topiacoin.chunks.impl;
 
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.crypto.CryptoUtils;

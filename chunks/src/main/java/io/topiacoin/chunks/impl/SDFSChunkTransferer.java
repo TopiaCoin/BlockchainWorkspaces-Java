@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.impl;
 
+import io.topiacoin.chunks.exceptions.CommsListenerNotStartedException;
 import io.topiacoin.chunks.exceptions.DuplicateChunkException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InsufficientSpaceException;
@@ -72,34 +73,44 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		final Map<MessageID, MemberNode> memberMessages = new HashMap<>();
 		final ChunkRetrievalStrategy strategy = _chunkRetrievalStrategyFactory.createStrategy(chunkIDs);
 		ProtocolCommsResponseHandler handler = new ProtocolCommsResponseHandler() {
+			boolean isExecuting = false;
 			@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
 				MemberNode memNode = memberMessages.remove(messageID);
-				if (!strategy.isCompletePlan()) {
-					if (response instanceof HaveChunksProtocolResponse) {
-						strategy.submitLocationResponse((HaveChunksProtocolResponse) response, memNode);
-						if (strategy.isCompletePlan()) {
-							executeStrategy(strategy, chunksHandler, state);
-						}
-					} else if (response instanceof ErrorProtocolResponse) {
-						strategy.submitLocationResponse((ErrorProtocolResponse) response, memNode);
-					} else {
-						_log.warn("Received an unxepected response type: " + response.getType());
-					}
+				if (response instanceof HaveChunksProtocolResponse) {
+					strategy.submitLocationResponse((HaveChunksProtocolResponse) response, memNode);
+				} else if (response instanceof ErrorProtocolResponse) {
+					strategy.submitLocationResponse((ErrorProtocolResponse) response, memNode);
+				} else {
+					_log.warn("Received an unxepected response type: " + response.getType());
 				}
-				if (memberMessages.isEmpty()) {
-					strategy.allResponsesSubmitted();
-					if (!strategy.isCompletePlan()) {
-						chunksHandler.failedToBuildFetchPlan();
-					}
-				}
+				checkForCompletion();
 			}
 
 			@Override public void error(Throwable t, MessageID messageID) {
+				memberMessages.remove(messageID);
 				_log.error("Error determining chunk locations", t);
+				checkForCompletion();
 			}
 
-			@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+			@Override public void error(String message, boolean shouldReply, MessageID messageID) {
+				memberMessages.remove(messageID);
 				_log.warn("Error determining chunk locations: " + message);
+				checkForCompletion();
+			}
+
+			private void checkForCompletion() {
+				boolean allMessagesFetched = memberMessages.isEmpty();
+				if (allMessagesFetched) {
+					strategy.allResponsesSubmitted();
+				}
+				if (strategy.isCompletePlan()) {
+					if(!isExecuting) {
+						isExecuting = true;
+						executeStrategy(strategy, chunksHandler, state);
+					}
+				} else if(allMessagesFetched) {
+					chunksHandler.failedToBuildFetchPlan();
+				}
 			}
 		};
 		QueryChunksProtocolRequest request;
@@ -108,7 +119,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			try {
 				MessageID messageId = _comms.sendMessage(memberNode, request, handler);
 				memberMessages.put(messageId, memberNode);
-			} catch (InvalidKeyException | FailedToStartCommsListenerException | InvalidMessageException | IOException e) {
+			} catch (InvalidKeyException | CommsListenerNotStartedException | InvalidMessageException | IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -153,7 +164,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 					try {
 						MessageID messageID = _comms.sendMessage(task.source, request, this);
 						chunkRequests.put(messageID, task.chunkID);
-					} catch (InvalidKeyException | IOException | InvalidMessageException | FailedToStartCommsListenerException e) {
+					} catch (InvalidKeyException | IOException | InvalidMessageException | CommsListenerNotStartedException e) {
 						_log.warn("Failed to fetch chunk", e);
 						plan.markChunkAsFailed(task.chunkID);
 					}
@@ -208,7 +219,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			try {
 				MessageID messageID = _comms.sendMessage(task.source, request, handler);
 				chunkRequests.put(messageID, task.chunkID);
-			} catch (InvalidKeyException | IOException | InvalidMessageException | FailedToStartCommsListenerException e) {
+			} catch (InvalidKeyException | IOException | InvalidMessageException | CommsListenerNotStartedException e) {
 				_log.warn("Failed to fetch chunk", e);
 				plan.markChunkAsFailed(task.chunkID);
 			}
@@ -257,7 +268,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				_comms.reply(response, messageID);
 			} catch (NoSuchUserException e) {
 				_log.warn("Cannot respond to messages if I'm not logged in");
-			} catch (FailedToStartCommsListenerException | InvalidMessageException e) {
+			} catch (CommsListenerNotStartedException | InvalidMessageException e) {
 				_log.error("Internal Error", e);
 			} catch (InvalidMessageIDException e) {
 				_log.warn("Could not reply to request because I don't have a MessageID for it");
@@ -281,7 +292,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				}
 			} catch (NoSuchUserException e) {
 				_log.warn("Can't reply if not logged in");
-			} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+			} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 				_log.warn("Failed to send error response", e);
 			}
 		}

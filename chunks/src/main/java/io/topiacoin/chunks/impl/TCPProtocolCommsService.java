@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.impl;
 
+import io.topiacoin.chunks.exceptions.CommsListenerNotStartedException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
@@ -7,14 +8,13 @@ import io.topiacoin.chunks.exceptions.UnknownMessageTypeException;
 import io.topiacoin.chunks.intf.ProtocolCommsHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsResponseHandler;
 import io.topiacoin.chunks.intf.ProtocolCommsService;
-import io.topiacoin.model.MemberNode;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
-import io.topiacoin.chunks.model.protocol.ProtocolConnectionState;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
+import io.topiacoin.model.MemberNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -38,11 +38,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TCPProtocolCommsService implements ProtocolCommsService {
 	private static final Log _log = LogFactory.getLog(TCPProtocolCommsService.class);
 	private static final long _unusedConnectionCloseThresholdMillis = 15000;
 	private final KeyPair _chunkTransferKeyPair;
+	private int _listenerPort;
 	Thread _listenerThread;
 	TCPListenerRunnable _listenerRunnable;
 	private Throwable _listenerRunnableThrowable = null;
@@ -53,58 +55,60 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	private final Map<MessageID, Long> _messageSendTimes = new HashMap<>();
 
 	private ProtocolMessageFactory _messageFactory;
-	int _messageIdTracker = 0;
+	AtomicInteger _messageIdTracker = new AtomicInteger();
 	private ProtocolCommsHandler _handler = null;
 	private long _timeoutMs = 30000;
 
 	TCPProtocolCommsService(int port, KeyPair chunkTransferKeyPair) throws IOException {
+		_listenerPort = port;
 		_chunkTransferKeyPair = chunkTransferKeyPair;
 		_listenerRunnable = new TCPListenerRunnable(port);
-		_listenerThread = new Thread(_listenerRunnable, "ProtocolComms:" + port);
-		_listenerThread.setDaemon(true);
 		_messageFactory = new ProtocolMessageFactory();
 	}
 
 	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler)
-			throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException {
-		if (!message.isRequest()) {
-			throw new InvalidMessageException("Cannot send non-request type message as a request");
-		}
-		if (!message.isValid()) {
-			throw new InvalidMessageException("Message not valid, will not send");
-		}
-		if (!_listenerThread.isAlive()) {
-			throw new FailedToStartCommsListenerException("Listener must be started before sending messages");
-		}
-		InetSocketAddress addr = new InetSocketAddress(targetNode.getHostname(), targetNode.getPort());
-		MessageID messageID = new MessageID(_messageIdTracker++, addr);
-		_messageAddresses.put(messageID, addr);
-		if (handler != null) {
-			_messageSpecificHandlers.put(messageID, handler);
-		}
-		_messageSendTimes.put(messageID, System.currentTimeMillis());
-		ProtocolConnectionState state = _connections.get(addr);
-		if (state == null) {
-			try {
-				state = new ProtocolConnectionState(addr, messageID, targetNode.getPublicKey());
-			} catch (InvalidKeySpecException e) {
-				throw new InvalidKeyException("Public Key Data was invalid", e);
+			throws InvalidKeyException, IOException, InvalidMessageException, CommsListenerNotStartedException {
+		if (message.isRequest()) {
+			if (message.isValid()) {
+				if (_listenerThread.isAlive()) {
+					InetSocketAddress addr = new InetSocketAddress(targetNode.getHostname(), targetNode.getPort());
+					MessageID messageID = new MessageID(_messageIdTracker.getAndIncrement(), addr);
+					_messageAddresses.put(messageID, addr);
+					if (handler != null) {
+						_messageSpecificHandlers.put(messageID, handler);
+					}
+					_messageSendTimes.put(messageID, System.currentTimeMillis());
+
+					ProtocolConnectionState state = _connections.get(addr);
+					if (state == null) {
+						try {
+							state = new ProtocolConnectionState(addr, messageID, targetNode.getPublicKey());
+						} catch (InvalidKeySpecException e) {
+							throw new InvalidKeyException("Public Key Data was invalid", e);
+						}
+					} else {
+						state.addMessageID(messageID);
+					}
+					_connections.put(addr, state);
+
+					ByteBuffer data = null;
+					try {
+						data = encryptAndFrameMessage(message, messageID, state);
+					} catch (UnknownMessageTypeException e) {
+						throw new InvalidMessageException("Cannot send message", e);
+					}
+					state.addWriteBuffer(data);
+					_listenerRunnable.wakeup();
+					return messageID;
+				} else {
+					throw new CommsListenerNotStartedException("Listener must be started before sending messages");
+				}
+			} else {
+				throw new InvalidMessageException("Message not valid, will not send");
 			}
 		} else {
-			state.addMessageID(messageID);
+			throw new InvalidMessageException("Cannot send non-request type message as a request");
 		}
-		_connections.put(addr, state);
-
-		ByteBuffer data = null;
-		try {
-			data = encryptAndFrameMessage(message, messageID, state);
-		} catch (UnknownMessageTypeException e) {
-			throw new InvalidMessageException("Cannot send message", e);
-		}
-		data.flip();
-		state.addWriteBuffer(data);
-		_listenerRunnable.wakeupSelector();
-		return messageID;
 	}
 
 	ByteBuffer encryptAndFrameMessage(ProtocolMessage message, MessageID messageID, ProtocolConnectionState state)
@@ -118,18 +122,23 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		Byte messageType = _messageFactory.getMessageByteIdentifier(message);
 		int transferPubKeyLength = state.getMyPublicKey() == null ? 0 : state.getMyPublicKey().length;
 		ByteBuffer data = message.toBytes();
-		if (!(message instanceof ErrorProtocolResponse)) {
+		//Error Messages cannot be reliably encrypted, so we don't encrypt them. Be sure to not leak secret data in the error messages.
+		boolean shouldEncryptMessage = !(message instanceof ErrorProtocolResponse);
+		if (shouldEncryptMessage) {
 			try {
 				_log.debug("Encrypting: " + (data.remaining() > 5000 ? "<a lot of data> " : DatatypeConverter.printHexBinary(message.toBytes().array())));
 				_log.debug("With Key: " + DatatypeConverter.printHexBinary(state.getMessageKey().getEncoded()));
 				byte[] encrypted = CryptoUtils.encryptWithSecretKey(data.array(), state.getMessageKey(), null);
 				ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + encrypted.length);
-				toReturn.put(messageType).putInt(messageID.getId()).putInt(transferPubKeyLength);
+				toReturn.put(messageType);
+				toReturn.putInt(messageID.getId());
+				toReturn.putInt(transferPubKeyLength);
 				if (transferPubKeyLength > 0) {
 					toReturn.put(state.getMyPublicKey());
 				}
 				toReturn.putInt(encrypted.length).put(encrypted);
 				_log.debug("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(encrypted)));
+				toReturn.flip();
 				return toReturn;
 			} catch (CryptographicException e) {
 				throw new RuntimeException("Crypto failure", e);
@@ -166,40 +175,42 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 	}
 
-	@Override public void reply(ProtocolMessage message, MessageID messageID) throws InvalidMessageException, FailedToStartCommsListenerException, InvalidMessageIDException {
-		if (message.isRequest()) {
-			throw new InvalidMessageException("Cannot send non-response type message as a response");
-		}
-		if (!message.isValid()) {
-			throw new InvalidMessageException("Message not valid, will not send");
-		}
-		if (!_listenerThread.isAlive()) {
-			throw new FailedToStartCommsListenerException("Listener must be started before sending messages");
-		}
-		SocketAddress addr = _messageAddresses.get(messageID);
-		if (addr != null) {
-			ProtocolConnectionState state = _connections.get(addr);
-			if (state != null) {
-				try {
-					if (!(message instanceof ErrorProtocolResponse)) {
-						state.buildMessageKey(_chunkTransferKeyPair);
+	@Override public void reply(ProtocolMessage message, MessageID messageID) throws InvalidMessageException, CommsListenerNotStartedException, InvalidMessageIDException {
+		if (!message.isRequest()) {
+			if (message.isValid()) {
+				if (_listenerThread.isAlive()) {
+					SocketAddress addr = _messageAddresses.get(messageID);
+					if (addr != null) {
+						ProtocolConnectionState state = _connections.get(addr);
+						if (state != null) {
+							try {
+								if (!(message instanceof ErrorProtocolResponse)) {
+									state.buildMessageKey(_chunkTransferKeyPair);
+								}
+								ByteBuffer data = encryptAndFrameMessage(message, messageID, state);
+								state.addWriteBuffer(data);
+								state.removeMessageID(messageID);
+								_messageAddresses.remove(messageID);
+								_listenerRunnable.wakeup();
+							} catch (InvalidKeyException e) {
+								throw new IllegalStateException("Cannot reply to message " + messageID + " because of crypto errors", e);
+							} catch (UnknownMessageTypeException e) {
+								throw new InvalidMessageException("Cannot reply with this message", e);
+							}
+						} else {
+							throw new InvalidMessageIDException("Could not find connection for MessageID");
+						}
+					} else {
+						throw new InvalidMessageIDException("Could not find address for MessageID");
 					}
-					ByteBuffer data = encryptAndFrameMessage(message, messageID, state);
-					data.flip();
-					state.addWriteBuffer(data);
-					state.removeMessageID(messageID);
-					_messageAddresses.remove(messageID);
-					_listenerRunnable.wakeupSelector();
-				} catch (InvalidKeyException e) {
-					throw new IllegalStateException("Cannot reply to message " + messageID + " because of crypto errors", e);
-				} catch (UnknownMessageTypeException e) {
-					throw new InvalidMessageException("Cannot reply with this message", e);
+				} else {
+					throw new CommsListenerNotStartedException("Listener must be started before sending messages");
 				}
 			} else {
-				throw new InvalidMessageIDException("Could not find connection for MessageID");
+				throw new InvalidMessageException("Message not valid, will not send");
 			}
 		} else {
-			throw new InvalidMessageIDException("Could not find address for MessageID");
+			throw new InvalidMessageException("Cannot send non-response type message as a response");
 		}
 	}
 
@@ -215,12 +226,17 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		if (_handler == null) {
 			throw new IllegalStateException("Cannot startListener without a message handler");
 		}
+		if(_listenerThread != null) {
+			throw new IllegalStateException("Cannot Start Listener - it's already started");
+		}
 		Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
 			@Override public void uncaughtException(Thread t, Throwable e) {
 				_handler.error(e);
 				setListenerRunnableThrowable(e);
 			}
 		};
+		_listenerThread = new Thread(_listenerRunnable, "ProtocolComms:" + _listenerPort);
+		_listenerThread.setDaemon(true);
 		_listenerThread.setUncaughtExceptionHandler(h);
 		_listenerThread.start();
 		try {
@@ -240,8 +256,16 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			_listenerRunnable.stop();
 		}
 		if (_listenerThread != null) {
-			_listenerThread.interrupt();
+			try {
+				_listenerThread.join(3000);
+				if (_listenerThread.isAlive()) {
+					_listenerThread.interrupt();
+				}
+			} catch (InterruptedException e) {
+				//NOP
+			}
 		}
+		_listenerThread = null;
 		_listenerRunnableThrowable = null;
 		_messageAddresses.clear();
 		_messageSpecificHandlers.clear();
@@ -268,28 +292,33 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 
 	class TCPListenerRunnable implements Runnable {
 		final InetSocketAddress _hostAddress;
-		final Selector _selector;
+		Selector _selector;
 		ServerSocketChannel _serverSocket;
-		private boolean run = true;
+		private boolean isRunning;
 
 		TCPListenerRunnable(int port) throws IOException {
 			_hostAddress = new InetSocketAddress("127.0.0.1", port);
-			_selector = Selector.open();
 		}
 
-		void wakeupSelector() {
-			_selector.wakeup();
+		void wakeup() {
+			if(_selector != null) {
+				_selector.wakeup();
+			} else {
+				throw new IllegalStateException("Cannot wake stopped runnable");
+			}
 		}
 
 		@Override public void run() {
 			try {
+				isRunning = true;
+				_selector = Selector.open();
 				_serverSocket = ServerSocketChannel.open();
 				_serverSocket.bind(_hostAddress);
 				_serverSocket.configureBlocking(false);
 				_serverSocket.register(_selector, _serverSocket.validOps(), null);
 				ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 				List<MessageID> timeouts = new LinkedList<>();
-				while (run) {
+				while (isRunning) {
 					if (_selector.select(1000) > 0) {
 						final Iterator<SelectionKey> selectionKeyIterator;
 						synchronized (_selector) {
@@ -401,7 +430,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 						}
 					}
 					Iterator<MessageID> messageIDIterator = _messageSendTimes.keySet().iterator();
-					while (messageIDIterator.hasNext()) {
+					while (isRunning && messageIDIterator.hasNext()) {
 						MessageID messageID = messageIDIterator.next();
 						if (System.currentTimeMillis() > _messageSendTimes.get(messageID) + _timeoutMs) {
 							timeouts.add(messageID);
@@ -416,7 +445,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					}
 					//Register All socket channels for write that have things that need to be written
 					Iterator<SocketAddress> addresses = _connections.keySet().iterator();
-					while (addresses.hasNext()) {
+					while (isRunning && addresses.hasNext()) {
 						SocketAddress address = addresses.next();
 						ProtocolConnectionState state = _connections.get(address);
 						for (MessageID tMid : timeouts) {
@@ -438,26 +467,26 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				Thread t = Thread.currentThread();
 				t.getUncaughtExceptionHandler().uncaughtException(t, e);
 			} finally {
-				stop();
+				if (_selector != null && _selector.isOpen()) {
+					try {
+						_selector.close();
+					} catch (IOException e) {
+						//NOP
+					}
+				}
+				if (_serverSocket != null && _serverSocket.isOpen()) {
+					try {
+						_serverSocket.close();
+					} catch (IOException e) {
+						//NOP
+					}
+				}
 			}
 		}
 
 		void stop() {
-			run = false;
-			if (_selector != null && _selector.isOpen()) {
-				try {
-					_selector.close();
-				} catch (IOException e) {
-					//NOP
-				}
-			}
-			if (_serverSocket != null && _serverSocket.isOpen()) {
-				try {
-					_serverSocket.close();
-				} catch (IOException e) {
-					//NOP
-				}
-			}
+			isRunning = false;
+			wakeup();
 		}
 	}
 }

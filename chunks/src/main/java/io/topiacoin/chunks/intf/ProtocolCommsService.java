@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.intf;
 
+import io.topiacoin.chunks.exceptions.CommsListenerNotStartedException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
@@ -33,9 +34,9 @@ public interface ProtocolCommsService {
 	 * @throws InvalidKeyException If the transferPublicKey is invalid or, if this is an initial message, null.
 	 * @throws IOException If a connection could not be established
 	 * @throws InvalidMessageException If the message passed in is not properly formed, or if you pass a Response-type message in
-	 * @throws FailedToStartCommsListenerException If you try to send a message without first starting the listener
+	 * @throws CommsListenerNotStartedException If you try to send a message without first starting the listener
 	 */
-	public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler) throws InvalidKeyException, IOException, InvalidMessageException, FailedToStartCommsListenerException;
+	public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler) throws InvalidKeyException, IOException, InvalidMessageException, CommsListenerNotStartedException;
 
 	/**
 	 * Replies to a received message - since this is a connection-based protocol, every received message is expected to be replied to, even if the reply indicates some failure.
@@ -47,11 +48,11 @@ public interface ProtocolCommsService {
 	 *
 	 * @param message The message you want to send as a reply
 	 * @param messageID the messageID of the message you want to reply to.
-	 * @throws FailedToStartCommsListenerException If you try to send a message without first starting the listener
+	 * @throws CommsListenerNotStartedException If you try to send a message without first starting the listener
 	 * @throws InvalidMessageException If the message passed in is not properly formed, or if you pass a Response-type message in
 	 * @throws InvalidMessageIDException If the messageID passed in is invalid, or a reply address cannot be determined for some reason
 	 */
-	public void reply(ProtocolMessage message, MessageID messageID) throws FailedToStartCommsListenerException, InvalidMessageException, InvalidMessageIDException;
+	public void reply(ProtocolMessage message, MessageID messageID) throws CommsListenerNotStartedException, InvalidMessageException, InvalidMessageIDException;
 
 	/**
 	 * Sets the ProtocolCommsHandler that will be used to handle incoming messages from other SDFS clients. This must be set in order to start the listener.

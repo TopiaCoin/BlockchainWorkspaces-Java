@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.intf;
 
+import io.topiacoin.chunks.exceptions.CommsListenerNotStartedException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
@@ -92,7 +93,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -119,7 +120,7 @@ public abstract class AbstractProtocolTest {
 					try {
 						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					} catch (InvalidKeyException e) {
@@ -141,7 +142,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -226,7 +227,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -253,7 +254,7 @@ public abstract class AbstractProtocolTest {
 					try {
 						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					} catch (InvalidKeyException e) {
@@ -275,7 +276,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -345,7 +346,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 					try {
 						userAservice.sendMessage(userBNode, testMessage, null);
-					} catch (InvalidKeyException | InvalidMessageException | IOException | FailedToStartCommsListenerException e) {
+					} catch (InvalidKeyException | InvalidMessageException | IOException | CommsListenerNotStartedException e) {
 						e.printStackTrace();
 						fail("Didn't expect an Exception");
 					}
@@ -360,7 +361,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -372,7 +373,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
@@ -391,7 +392,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -516,7 +517,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -547,7 +548,7 @@ public abstract class AbstractProtocolTest {
 					try {
 						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					} catch (InvalidKeyException e) {
@@ -569,7 +570,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -639,7 +640,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -660,7 +661,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new GiveChunkProtocolResponse(message.getChunkID(), chunkData, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
@@ -679,7 +680,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -894,7 +895,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -918,7 +919,7 @@ public abstract class AbstractProtocolTest {
 					lock.countDown();
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -984,14 +985,14 @@ public abstract class AbstractProtocolTest {
 		try {
 			service.sendMessage(userBNode, testMessage, null);
 			fail("Expected a FailedToStartCommsListenerException");
-		} catch (FailedToStartCommsListenerException ex) {
+		} catch (CommsListenerNotStartedException ex) {
 			//Good
 		}
 		ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
 		try {
 			service.reply(resp, new MessageID(0, new InetSocketAddress(1234)));
 			fail("Expected a FailedToStartCommsListenerException");
-		} catch (FailedToStartCommsListenerException ex) {
+		} catch (CommsListenerNotStartedException ex) {
 			//Good
 		}
 	}
@@ -1160,7 +1161,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1204,7 +1205,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
 					try {
 						userAservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
@@ -1227,7 +1228,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1244,7 +1245,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
@@ -1268,7 +1269,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1328,7 +1329,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1345,7 +1346,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
@@ -1364,7 +1365,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1421,7 +1422,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1438,7 +1439,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
@@ -1457,7 +1458,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1476,6 +1477,134 @@ public abstract class AbstractProtocolTest {
 				SocketChannel sc = getConnectionForMessageID(userAservice, messageIDs[0]);
 				SocketChannel sc2 = getConnectionForMessageID(userAservice, messageIDs[1]);
 				connectionOpen = sc != null && sc.isConnected() && sc2 != null && sc2.isConnected();
+			}
+			assertTrue("Connection never closed", !connectionOpen);
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
+	@Test
+	public void testStartThenStopThenStartListener() throws Exception {
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(2);
+
+			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+
+			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					try {
+						assertTrue("Message signature verification failed", response.verify(userBSigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+					try {
+						userAservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userAservice.setHandler(handlerA);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					assertEquals("AuthToken wrong", userBAuthToken, message.getAuthToken());
+					try {
+						assertTrue("Message signature verification failed", request.verify(userASigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
+					try {
+						resp.sign(userBSigningKeyPair.getPrivate());
+						userBservice.reply(resp, messageID);
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Couldn't sign");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					//nop
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+			userAservice.stop();
+			userBservice.stop();
+			userAservice.startListener();
+			userBservice.startListener();
+			try {
+				userAservice.startListener();
+				fail();
+			} catch(IllegalStateException e) {
+				//Good
+			}
+
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			testMessage.sign(userASigningKeyPair.getPrivate());
+			MessageID messageID = userAservice.sendMessage(userBNode, testMessage, convertHandler(handlerA));
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
+			boolean connectionOpen = true;
+			for (int i = 0; i < 20 && connectionOpen; i++) {
+				Thread.sleep(100 * i);
+				SocketChannel sc = getConnectionForMessageID(userAservice, messageID);
+				connectionOpen = sc != null && sc.isConnected();
 			}
 			assertTrue("Connection never closed", !connectionOpen);
 		} finally {
