@@ -62,11 +62,12 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	 * @param containerID The ID of the container which these chunks belong to
 	 * @param chunksHandler The Handler for notifying when each chunk succeeds/fails to transfer, and for when the whole list is done being processed
 	 * @param state An opaque object that will be passed to the handler on fetch operation completion.  This can be used to carry state between the initiator of the fetch and the handler.
+	 * @throws IllegalStateException if the data model doesn't contain any member nodes
 	 */
 	@Override public void fetchChunksRemotely(List<String> chunkIDs, String containerID, final ChunksTransferHandler chunksHandler, final Object state) {
 		List<MemberNode> memberNodes = fetchMemberNodes(containerID);
 		if (memberNodes == null || memberNodes.isEmpty()) {
-			throw new RuntimeException();
+			throw new IllegalStateException("MemberNodes cannot be null or blank");
 		}
 		final Map<MessageID, MemberNode> memberMessages = new HashMap<>();
 		final ChunkRetrievalStrategy strategy = _chunkRetrievalStrategyFactory.createStrategy(chunkIDs);
@@ -79,7 +80,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 						if (strategy.isCompletePlan()) {
 							executeStrategy(strategy, chunksHandler, state);
 						}
-					} else if(response instanceof ErrorProtocolResponse) {
+					} else if (response instanceof ErrorProtocolResponse) {
 						strategy.submitLocationResponse((ErrorProtocolResponse) response, memNode);
 					} else {
 						_log.warn("Received an unxepected response type: " + response.getType());
@@ -87,7 +88,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				}
 				if (memberMessages.isEmpty()) {
 					strategy.allResponsesSubmitted();
-					if(!strategy.isCompletePlan()) {
+					if (!strategy.isCompletePlan()) {
 						chunksHandler.failedToBuildFetchPlan();
 					}
 				}
@@ -114,19 +115,9 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	}
 
 	private List<MemberNode> fetchMemberNodes(String containerID) {
-		try {
-			CurrentUser me = _model.getCurrentUser();
-			List<MemberNode> toReturn = _model.getMemberNodesForContainer(containerID);
-			for (MemberNode node : toReturn) {
-				if (node.getUserId().equals(me.getUserID())) {
-					toReturn.remove(node);
-				}
-			}
-			return toReturn;
-		} catch (NoSuchUserException e) {
-			_log.error("", e);
-			return null;
-		}
+		List<MemberNode> toReturn = _model.getMemberNodesForContainer(containerID);
+		toReturn.remove(_myMemberNode);
+		return toReturn;
 	}
 
 	@Override public void setConfiguration(Configuration configuration) {
