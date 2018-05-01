@@ -19,6 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -120,6 +121,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		//messageId, an int
 		//Transfer Public Key Length, an int (which is set to 0 if no Transfer Public Key is provided,
 		//Transfer Public Key, bytes, if provided
+		//IV length
+		//IV bytes
 		//Data Length, an int, the length of the encrypted message data.
 		Byte messageType = _messageFactory.getMessageByteIdentifier(message);
 		int transferPubKeyLength = state.getMyPublicKey() == null ? 0 : state.getMyPublicKey().length;
@@ -130,14 +133,17 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			try {
 				_log.debug("Encrypting: " + (data.remaining() > 5000 ? "<a lot of data> " : DatatypeConverter.printHexBinary(message.toBytes().array())));
 				_log.debug("With Key: " + DatatypeConverter.printHexBinary(state.getMessageKey().getEncoded()));
-				byte[] encrypted = CryptoUtils.encryptWithSecretKey(data.array(), state.getMessageKey(), null);
-				ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + encrypted.length);
+				IvParameterSpec ivSpec = CryptoUtils.generateIV(state.getMessageKey().getAlgorithm());
+				byte[] encrypted = CryptoUtils.encryptWithSecretKey(data.array(), state.getMessageKey(), ivSpec);
+				ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + ivSpec.getIV().length + Integer.BYTES + encrypted.length);
 				toReturn.put(messageType);
 				toReturn.putInt(messageID.getId());
 				toReturn.putInt(transferPubKeyLength);
 				if (transferPubKeyLength > 0) {
 					toReturn.put(state.getMyPublicKey());
 				}
+				toReturn.putInt(ivSpec.getIV().length);
+				toReturn.put(ivSpec.getIV());
 				toReturn.putInt(encrypted.length).put(encrypted);
 				_log.debug("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(encrypted)));
 				toReturn.flip();
@@ -148,10 +154,11 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		} else {
 			_log.debug("NOT Encrypting Error");
 			int dataLength = data.array().length;
-			ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + Integer.BYTES + dataLength);
+			ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + Integer.BYTES + Integer.BYTES + dataLength);
 			data.flip();
 			toReturn.put(messageType);
 			toReturn.putInt(messageID.getId());
+			toReturn.putInt(0);
 			toReturn.putInt(0);
 			toReturn.putInt(dataLength);
 			toReturn.put(data);
@@ -160,7 +167,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		}
 	}
 
-	private ProtocolMessage decryptAndReconstituteMessage(byte messageType, ByteBuffer messageData, SecretKey responseKey)
+	private ProtocolMessage decryptAndReconstituteMessage(byte messageType, ByteBuffer messageData, SecretKey messageKey, IvParameterSpec messageIV)
 			throws InvalidKeyException, InvalidMessageException {
 		try {
 			byte[] messageArray = new byte[messageData.remaining()];
@@ -168,8 +175,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			ByteBuffer decryptedBuffer;
 			if (!_messageFactory.isError(messageType)) {
 				_log.debug("Decrypting: " + (messageArray.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(messageArray)));
-				_log.debug("With Key: " + DatatypeConverter.printHexBinary(responseKey.getEncoded()));
-				byte[] decrypted = CryptoUtils.decryptWithSecretKey(messageArray, responseKey, null);
+				_log.debug("With Key: " + DatatypeConverter.printHexBinary(messageKey.getEncoded()));
+				byte[] decrypted = CryptoUtils.decryptWithSecretKey(messageArray, messageKey, messageIV);
 				_log.debug("Decrypted: " + (decrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(decrypted)));
 				decryptedBuffer = ByteBuffer.wrap(decrypted);
 			} else {
@@ -364,9 +371,11 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 													readBuffer.getInt(); //Then the messageID, it's value is also ignored for now
 													int transferPubKeyLength = readBuffer.getInt(); //Then, the length of the publicKey that may or may not be attached - we need this
 													readBuffer.get(new byte[transferPubKeyLength]); //We'll read past the publicKey if it exists - we don't need its value right now.
+													int ivLength = readBuffer.getInt(); //Then, the length of the IV, which is attached unless there is an error.
+													readBuffer.get(new byte[ivLength]); //Read past the IV data - we don't need it right now.
 													int dataLength = readBuffer.getInt(); //Finally, we'll read the data length int - if we've made it this far, we can allocate the buffer.
 													connection.allocatePacketBuffer(
-															1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + dataLength);
+															1 + Integer.BYTES + Integer.BYTES + transferPubKeyLength + Integer.BYTES + ivLength + Integer.BYTES + dataLength);
 												} catch (BufferUnderflowException ex) {
 													//Ok, we couldn't read off enough data to determine how big to make the packetBuffer, so we'll try again next time.
 													readBufferIsUsable = false;
@@ -406,8 +415,12 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 													}
 													ProtocolMessage message;
 													try {
+														int ivLen = packetBuffer.getInt(); //The IV length
+														byte[] iv = new byte[ivLen];
+														packetBuffer.get(iv); //The IV bytes
+														IvParameterSpec ivSpec = new IvParameterSpec(iv);
 														packetBuffer.getInt(); //Read off the data length int, which we don't need because we've already sorted that out.
-														message = decryptAndReconstituteMessage(messageType, packetBuffer, connection.getMessageKey());
+														message = decryptAndReconstituteMessage(messageType, packetBuffer, connection.getMessageKey(), ivSpec);
 													} catch (InvalidMessageException | InvalidKeyException e) {
 														throw new RuntimeException("", e);
 													}
