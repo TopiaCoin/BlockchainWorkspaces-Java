@@ -1,5 +1,6 @@
 package io.topiacoin.core;
 
+import io.topiacoin.core.exceptions.UnableToCreateUserException;
 import io.topiacoin.model.User;
 
 public interface UsersAPI {
@@ -7,7 +8,7 @@ public interface UsersAPI {
     /**
      * Returns the user with the specified identifier, if available. Depending on the configuration of the SDK, the
      * userIdentifier may be the userID, email address, or blockchain wallet address. If no user can be found with this
-     * identifier, an error is returned.
+     * identifier, null is returned.
      *
      * @param userIdentifier
      *
@@ -24,7 +25,7 @@ public interface UsersAPI {
      *
      * @return
      */
-    User createUser(String emailAddress);
+    User createUser(String emailAddress) throws UnableToCreateUserException;
 
     /**
      * Attempts to update the specified user account to set the wallet Address associated with it. If the wallet Address

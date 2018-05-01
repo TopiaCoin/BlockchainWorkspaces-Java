@@ -28,7 +28,7 @@ public abstract class AbstractMessageSigningProviderTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = messageSigner.verify(dataToSign, keyPair, signature) ;
+        boolean verified = messageSigner.verify(dataToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -40,6 +40,7 @@ public abstract class AbstractMessageSigningProviderTest {
         secureRandom.nextBytes(dataToSign);
 
         ByteBuffer bufferToSign = ByteBuffer.wrap(dataToSign) ;
+        bufferToSign.mark();
 
         KeyPair keyPair = getKeyPair() ;
 
@@ -49,7 +50,8 @@ public abstract class AbstractMessageSigningProviderTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = messageSigner.verify(bufferToSign, keyPair, signature) ;
+        bufferToSign.reset();
+        boolean verified = messageSigner.verify(bufferToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }

@@ -15,7 +15,12 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -90,6 +95,14 @@ public class CommunicationServer {
                 int sigLength = packetBuffer.getInt();
                 byte[] signature = new byte[sigLength];
                 packetBuffer.get(signature) ;
+                int pubKeyLength = packetBuffer.getInt();
+                byte[] pubKey = new byte[pubKeyLength];
+                packetBuffer.get(pubKey);
+
+                // TODO Reconstruct the Public Key from the Buffer
+
+                KeyFactory keyFactory = KeyFactory.getInstance("EC");
+                PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(pubKey)) ;
 
 //                System.out.println ( "public key: " + Arrays.toString(keyPair.getPublic().getEncoded()));
 //                System.out.println ( "signature length: " + signature.length);
@@ -97,11 +110,11 @@ public class CommunicationServer {
 //
 //                System.out.println ("packet buffer: " + Arrays.toString(packetBuffer.array())) ;
 
-                packetBuffer.mark();
-                if ( messageSigner.verify(packetBuffer, this.keyPair, signature) ) {
-                    packetBuffer.reset();
+                int messageLength = packetBuffer.getInt();
 
-                    int messageLength = packetBuffer.getInt();
+                packetBuffer.mark();
+                if ( messageSigner.verify(packetBuffer, publicKey, signature) ) {
+                    packetBuffer.reset();
 
                     byte[] nodeIDBytes = new byte[20] ;
                     byte[] validationBytes = new byte[20] ;
@@ -147,6 +160,10 @@ public class CommunicationServer {
                 // Failed to read the data.  Move along
             } catch (CryptographicException e) {
                 // Failed to verify the data.  Move along
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (InvalidKeySpecException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -216,10 +233,14 @@ public class CommunicationServer {
             _log.warn ( "Unable to generate signature for Message", e) ;
         }
 
+        byte[] publicKey = this.keyPair.getPublic().getEncoded();
+
         ByteBuffer packetBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         packetBuffer.order(ByteOrder.BIG_ENDIAN); // Network Byte Order
         packetBuffer.putInt(signature.length);
         packetBuffer.put(signature);
+        packetBuffer.putInt(publicKey.length);
+        packetBuffer.put(publicKey);
         packetBuffer.putInt(messageBuffer.remaining());
         packetBuffer.put(messageBuffer);
         packetBuffer.flip();

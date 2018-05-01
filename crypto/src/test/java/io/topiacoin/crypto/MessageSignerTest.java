@@ -24,7 +24,7 @@ public class MessageSignerTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = MessageSigner.verify(dataToSign, keyPair, signature) ;
+        boolean verified = MessageSigner.verify(dataToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -36,6 +36,7 @@ public class MessageSignerTest {
         secureRandom.nextBytes(dataToSign);
 
         ByteBuffer bufferToSign = ByteBuffer.wrap(dataToSign) ;
+        bufferToSign.mark();
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA") ;
         KeyPair keyPair = kpg.generateKeyPair();
@@ -44,7 +45,8 @@ public class MessageSignerTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = MessageSigner.verify(bufferToSign, keyPair, signature) ;
+        bufferToSign.reset();
+        boolean verified = MessageSigner.verify(bufferToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -62,7 +64,7 @@ public class MessageSignerTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = MessageSigner.verify(dataToSign, keyPair, signature) ;
+        boolean verified = MessageSigner.verify(dataToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -74,6 +76,7 @@ public class MessageSignerTest {
         secureRandom.nextBytes(dataToSign);
 
         ByteBuffer bufferToSign = ByteBuffer.wrap(dataToSign) ;
+        bufferToSign.mark();
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC") ;
         KeyPair keyPair = kpg.generateKeyPair();
@@ -82,7 +85,8 @@ public class MessageSignerTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = MessageSigner.verify(bufferToSign, keyPair, signature) ;
+        bufferToSign.reset();
+        boolean verified = MessageSigner.verify(bufferToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -100,7 +104,7 @@ public class MessageSignerTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = MessageSigner.verify(dataToSign, keyPair, signature) ;
+        boolean verified = MessageSigner.verify(dataToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -112,6 +116,7 @@ public class MessageSignerTest {
         secureRandom.nextBytes(dataToSign);
 
         ByteBuffer bufferToSign = ByteBuffer.wrap(dataToSign) ;
+        bufferToSign.mark();
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA") ;
         KeyPair keyPair = kpg.generateKeyPair();
@@ -120,7 +125,8 @@ public class MessageSignerTest {
 
         assertNotNull ( signature ) ;
 
-        boolean verified = MessageSigner.verify(bufferToSign, keyPair, signature) ;
+        bufferToSign.reset();
+        boolean verified = MessageSigner.verify(bufferToSign, keyPair.getPublic(), signature) ;
 
         assertTrue ( verified) ;
     }
@@ -144,7 +150,7 @@ public class MessageSignerTest {
         }
 
         try {
-            boolean verified = MessageSigner.verify(dataToSign, keyPair, signature);
+            boolean verified = MessageSigner.verify(dataToSign, keyPair.getPublic(), signature);
             fail ( "Expected CryptographicException Not Thrown") ;
         } catch ( CryptographicException e ) {
             // NOOP - Expected Exception
@@ -172,7 +178,7 @@ public class MessageSignerTest {
         }
 
         try {
-            boolean verified = MessageSigner.verify(bufferToSign, keyPair, signature);
+            boolean verified = MessageSigner.verify(bufferToSign, keyPair.getPublic(), signature);
             fail ( "Expected CryptographicException Not Thrown") ;
         } catch ( CryptographicException e ) {
             // NOOP - Expected Exception

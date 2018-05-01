@@ -331,6 +331,9 @@ public class BlockchainWorkspaceAPI implements WorkspaceAPI {
     }
 
     /**
+     * Adds a tag to the specified file.  Private tags will only be visible to the user who creates them.  Public tags
+     * are visible to all users in the workspace.
+     *
      * @param workspaceGUID
      * @param fileGUID
      * @param tagName
@@ -341,6 +344,8 @@ public class BlockchainWorkspaceAPI implements WorkspaceAPI {
     }
 
     /**
+     * Removes a tag from the specified file.  Only tags that are visible to the user can be removed.
+     *
      * @param workspaceGUID
      * @param fileGUID
      * @param tagName

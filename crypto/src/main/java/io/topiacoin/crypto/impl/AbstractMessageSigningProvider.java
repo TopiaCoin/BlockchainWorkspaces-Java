@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 
@@ -51,16 +52,15 @@ public abstract class AbstractMessageSigningProvider implements MessageSigningPr
     }
 
     @Override
-    public boolean verify(byte[] bufferToVerify, KeyPair keyPair, byte[] signature) {
+    public boolean verify(byte[] bufferToVerify, PublicKey publicKey, byte[] signature) {
 
         boolean signatureIsValid = false;
 
         try {
             Signature dsa = Signature.getInstance(getSignatureAlgorithm());
-            dsa.initVerify(keyPair.getPublic());
+            dsa.initVerify(publicKey);
             dsa.update(bufferToVerify);
-            dsa.verify(signature);
-            signatureIsValid = true;
+            signatureIsValid = dsa.verify(signature);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (InvalidKeyException e) {
@@ -72,16 +72,15 @@ public abstract class AbstractMessageSigningProvider implements MessageSigningPr
         return signatureIsValid;
     }
 
-    public boolean verify(ByteBuffer bufferToVerify, KeyPair keyPair, byte[] signature) {
+    public boolean verify(ByteBuffer bufferToVerify, PublicKey publicKey, byte[] signature) {
 
         boolean signatureIsValid = false;
 
         try {
             Signature dsa = Signature.getInstance(getSignatureAlgorithm());
-            dsa.initVerify(keyPair.getPublic());
+            dsa.initVerify(publicKey);
             dsa.update(bufferToVerify);
-            dsa.verify(signature);
-            signatureIsValid = true;
+            signatureIsValid = dsa.verify(signature);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (InvalidKeyException e) {

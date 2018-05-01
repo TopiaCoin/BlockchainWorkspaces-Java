@@ -2,6 +2,7 @@ package io.topiacoin.crypto.impl;
 
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
+import java.security.PublicKey;
 
 public interface MessageSigningProvider {
 
@@ -9,8 +10,8 @@ public interface MessageSigningProvider {
 
     byte[] sign(ByteBuffer bufferToSign, KeyPair keyPair);
 
-    boolean verify(byte[] bufferToVerify, KeyPair keyPair, byte[] signature);
+    boolean verify(byte[] bufferToVerify, PublicKey publicKey, byte[] signature);
 
-    boolean verify(ByteBuffer bufferToVerify, KeyPair keyPair, byte[] signature);
+    boolean verify(ByteBuffer bufferToVerify, PublicKey publicKey, byte[] signature);
 
 }
