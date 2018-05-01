@@ -17,7 +17,7 @@ public class MemberNode implements Comparable<MemberNode> {
 		this.authToken = authToken;
 	}
 
-	public String getUserId() {
+	public String getUserID() {
 		return userId;
 	}
 

@@ -77,7 +77,9 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 					if (handler != null) {
 						_messageSpecificHandlers.put(messageID, handler);
 					}
-					_messageSendTimes.put(messageID, System.currentTimeMillis());
+					synchronized (_messageSendTimes) {
+						_messageSendTimes.put(messageID, System.currentTimeMillis());
+					}
 
 					ProtocolConnectionState state = _connections.get(addr);
 					if (state == null) {
@@ -274,7 +276,9 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_listenerRunnableThrowable = null;
 		_messageAddresses.clear();
 		_messageSpecificHandlers.clear();
-		//_messageSendTimes.clear(); - Normally I'd clear this, but doing so causes test failures due to ConcurrentModEx, and this shouldn't really matter in prod.
+		synchronized (_messageSendTimes) {
+			_messageSendTimes.clear();
+		}
 		for (SocketAddress address : _connections.keySet()) {
 			ProtocolConnectionState state = _connections.get(address);
 			try {
@@ -434,17 +438,19 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 							selectionKeyIterator.remove();
 						}
 					}
-					Iterator<MessageID> messageIDIterator = _messageSendTimes.keySet().iterator();
-					while (isRunning && messageIDIterator.hasNext()) {
-						MessageID messageID = messageIDIterator.next();
-						if (System.currentTimeMillis() > _messageSendTimes.get(messageID) + _timeoutMs) {
-							timeouts.add(messageID);
-							ProtocolCommsResponseHandler handler = _messageSpecificHandlers.remove(messageID);
-							messageIDIterator.remove();
-							if (handler != null) {
-								handler.error("Request Timed out", false, messageID);
-							} else {
-								_handler.error("Request Timed out", false, messageID);
+					synchronized (_messageSendTimes) {
+						Iterator<MessageID> messageIDIterator = _messageSendTimes.keySet().iterator();
+						while (isRunning && messageIDIterator.hasNext()) {
+							MessageID messageID = messageIDIterator.next();
+							if (System.currentTimeMillis() > _messageSendTimes.get(messageID) + _timeoutMs) {
+								timeouts.add(messageID);
+								ProtocolCommsResponseHandler handler = _messageSpecificHandlers.remove(messageID);
+								messageIDIterator.remove();
+								if (handler != null) {
+									handler.error("Request Timed out", false, messageID);
+								} else {
+									_handler.error("Request Timed out", false, messageID);
+								}
 							}
 						}
 					}

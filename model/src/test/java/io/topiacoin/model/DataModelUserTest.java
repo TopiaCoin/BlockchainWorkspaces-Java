@@ -1,9 +1,11 @@
 package io.topiacoin.model;
 
+import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.UserAlreadyExistsException;
 import org.junit.Test;
 
+import java.security.KeyPair;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,10 +20,12 @@ public class DataModelUserTest {
 
         String userID = UUID.randomUUID().toString();
         String email = "foo@example.com";
+        KeyPair keyPair = CryptoUtils.generateECKeyPair();
 
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(keyPair.getPublic());
 
         DataModel dataModel = new DataModel();
 
@@ -65,7 +69,7 @@ public class DataModelUserTest {
         assertNotNull(users);
         assertEquals(0, users.size());
 
-        CurrentUser currentUser = new CurrentUser(userID, email);
+        CurrentUser currentUser = new CurrentUser(userID, email, keyPair.getPublic(), keyPair.getPrivate());
         dataModel.setCurrentUser(currentUser);
 
         CurrentUser fetchedCurrentUser = dataModel.getCurrentUser();

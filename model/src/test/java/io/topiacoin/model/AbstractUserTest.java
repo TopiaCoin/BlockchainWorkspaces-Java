@@ -1,14 +1,18 @@
 package io.topiacoin.model;
 
+import io.topiacoin.crypto.CryptoUtils;
 import org.junit.Test;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
 
 public abstract class AbstractUserTest {
 
-    public abstract User getUser(String userID, String email);
+    public abstract User getUser(String userID, String email, PublicKey pubKey, PrivateKey privKeyWhereApplicable);
 
     public abstract User getUser();
 
@@ -24,8 +28,9 @@ public abstract class AbstractUserTest {
     public void testConstructor() throws Exception {
         String userID = UUID.randomUUID().toString();
         String email = "foo@example.com";
+        KeyPair keyPair = CryptoUtils.generateECKeyPair();
 
-        User user = getUser(userID, email);
+        User user = getUser(userID, email, keyPair.getPublic(), keyPair.getPrivate());
 
         assertEquals(userID, user.getUserID());
         assertEquals(email, user.getEmail());
@@ -55,9 +60,10 @@ public abstract class AbstractUserTest {
     public void testEqualsAndHashCode() throws Exception {
         String userID = UUID.randomUUID().toString();
         String email = "foo@example.com";
+		KeyPair keyPair = CryptoUtils.generateECKeyPair();
 
-        User user1 = getUser(userID, email);
-        User user2 = getUser(userID, email);
+        User user1 = getUser(userID, email, keyPair.getPublic(), keyPair.getPrivate());
+        User user2 = getUser(userID, email, keyPair.getPublic(), keyPair.getPrivate());
 
         assertEquals(user1, user1);
         assertEquals(user2, user2);
