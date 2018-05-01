@@ -18,8 +18,6 @@ public interface ChunkTransferer {
 	 */
 	public void fetchChunksRemotely(final List<String> chunkIDs, final String containerID, final ChunksTransferHandler handler, final Object state);
 
-	void setConfiguration(Configuration configuration);
-
 	void setChunkRetrievalStrategyFactory(ChunkRetrievalStrategyFactory stratFac);
 
 	void setChunkStorage(ChunkStorage storage);

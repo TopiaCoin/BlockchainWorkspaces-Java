@@ -47,7 +47,6 @@ import java.util.Map;
 
 public class SDFSChunkTransferer implements ChunkTransferer {
 	private static final Log _log = LogFactory.getLog(SDFSChunkTransferer.class);
-	private Configuration _configuration;
 	private ChunkRetrievalStrategyFactory _chunkRetrievalStrategyFactory;
 	private ProtocolCommsService _comms;
 	private ChunkStorage _chunkStorage;
@@ -156,10 +155,6 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		List<MemberNode> toReturn = _model.getMemberNodesForContainer(containerID);
 		toReturn.remove(_myMemberNode);
 		return toReturn;
-	}
-
-	@Override public void setConfiguration(Configuration configuration) {
-		this._configuration = configuration;
 	}
 
 	@Override public void setChunkRetrievalStrategyFactory(ChunkRetrievalStrategyFactory stratFac) {
