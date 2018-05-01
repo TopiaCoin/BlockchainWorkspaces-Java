@@ -1180,4 +1180,209 @@ public abstract class AbstractChunkTransfererTest {
 			}
 		}
 	}
+
+	@Test
+	public void testAttemptRequestWithBadSignature() throws Exception {
+		Map<String, byte[]> testChunks = new HashMap<>();
+		testChunks.put("foo", "DEADBEEF".getBytes());
+		ChunkTransferer transfererA = null;
+		ChunkTransferer transfererB = null;
+		try {
+			ChunkStorage transfererAChunkStorage = new InMemoryChunkStorage();
+			ChunkStorage transfererBChunkStorage = new InMemoryChunkStorage();
+			for (String chunkID : testChunks.keySet()) {
+				transfererBChunkStorage.addChunk(chunkID, new ByteArrayInputStream(testChunks.get(chunkID)), null, true);
+			}
+
+			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final CountDownLatch lock = new CountDownLatch(1);
+			String testContainerId = "containerA";
+			int userAPort = 7777;
+			int userBPort = 7778;
+			String userAAuthToken = "potawto";
+			String userBAuthToken = "potatoe";
+			MemberNode userAMemberNode = new MemberNode("userA", "127.0.0.1", userAPort, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
+			MemberNode userBMemberNode = new MemberNode("userB", "127.0.0.1", userBPort, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			List<MemberNode> containerAMemberNodes = new ArrayList<>();
+			containerAMemberNodes.add(userAMemberNode);
+			containerAMemberNodes.add(userBMemberNode);
+			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
+			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
+			KeyPair jackedUpKeyPair = CryptoUtils.generateECKeyPair();
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
+			CurrentUser jackedUpUserA = new CurrentUser("userA", "userA@email.com", jackedUpKeyPair.getPublic(), jackedUpKeyPair.getPrivate());
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
+
+			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
+			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
+			transfererA.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererB.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererA.setChunkStorage(transfererAChunkStorage);
+			transfererB.setChunkStorage(transfererBChunkStorage);
+
+			DataModel mockModelA = EasyMock.mock(DataModel.class);
+			transfererA.setDataModel(mockModelA);
+			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
+			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
+			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
+			EasyMock.replay(mockModelA);
+			DataModel mockModelB = EasyMock.mock(DataModel.class);
+			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
+			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(jackedUpUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
+			transfererB.setDataModel(mockModelB);
+			EasyMock.replay(mockModelB);
+			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
+			ChunksTransferHandler handler = new ChunksTransferHandler() {
+				@Override public void didFetchChunk(String chunkID, Object state) {
+					fail();
+				}
+
+				@Override public void failedToFetchChunk(String chunkID, String message, Exception cause, Object state) {
+					fail();
+				}
+
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
+					fail();
+				}
+
+				@Override public void failedToBuildFetchPlan() {
+					lock.countDown();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					fail();
+				}
+			};
+			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
+			transfererA.fetchChunksRemotely(testChunkIDs, testContainerId, handler, null);
+			assertTrue("Chunks never fetched", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			if (transfererA != null) {
+				transfererA.stop();
+			}
+			if (transfererB != null) {
+				transfererB.stop();
+			}
+		}
+	}
+
+	@Test
+	public void testAttemptRequestFromNonCohort() throws Exception {
+		Map<String, byte[]> testChunks = new HashMap<>();
+		testChunks.put("foo", "DEADBEEF".getBytes());
+		ChunkTransferer transfererA = null;
+		ChunkTransferer transfererB = null;
+		try {
+			ChunkStorage transfererAChunkStorage = new InMemoryChunkStorage();
+			ChunkStorage transfererBChunkStorage = new InMemoryChunkStorage();
+			for (String chunkID : testChunks.keySet()) {
+				transfererBChunkStorage.addChunk(chunkID, new ByteArrayInputStream(testChunks.get(chunkID)), null, true);
+			}
+
+			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+			final CountDownLatch lock = new CountDownLatch(1);
+			String testContainerId = "containerA";
+			int userAPort = 7777;
+			int userBPort = 7778;
+			String userAAuthToken = "potawto";
+			String userBAuthToken = "potatoe";
+			MemberNode userAMemberNode = new MemberNode("userA", "127.0.0.1", userAPort, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
+			MemberNode userBMemberNode = new MemberNode("userB", "127.0.0.1", userBPort, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			List<MemberNode> containerAMemberNodes = new ArrayList<>();
+			containerAMemberNodes.add(userAMemberNode);
+			containerAMemberNodes.add(userBMemberNode);
+			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
+			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			//members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
+
+			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
+			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
+			transfererA.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererB.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+			transfererA.setChunkStorage(transfererAChunkStorage);
+			transfererB.setChunkStorage(transfererBChunkStorage);
+
+			DataModel mockModelA = EasyMock.mock(DataModel.class);
+			transfererA.setDataModel(mockModelA);
+			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
+			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
+			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
+			EasyMock.replay(mockModelA);
+			DataModel mockModelB = EasyMock.mock(DataModel.class);
+			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
+			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
+			transfererB.setDataModel(mockModelB);
+			EasyMock.replay(mockModelB);
+			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
+			ChunksTransferHandler handler = new ChunksTransferHandler() {
+				@Override public void didFetchChunk(String chunkID, Object state) {
+					fail();
+				}
+
+				@Override public void failedToFetchChunk(String chunkID, String message, Exception cause, Object state) {
+					fail();
+				}
+
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
+					for (String chunkID : testChunks.keySet()) {
+						assertTrue(transfererAChunkStorage.hasChunk(chunkID));
+						try {
+							assertTrue(Arrays.equals(testChunks.get(chunkID), transfererAChunkStorage.getChunkData(chunkID)));
+							lock.countDown();
+						} catch (NoSuchChunkException | IOException e) {
+							e.printStackTrace();
+							fail();
+						}
+					}
+				}
+
+				@Override public void failedToBuildFetchPlan() {
+					lock.countDown();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					fail();
+				}
+			};
+			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
+			transfererA.fetchChunksRemotely(testChunkIDs, testContainerId, handler, null);
+			assertTrue("Chunks never fetched", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			if (transfererA != null) {
+				transfererA.stop();
+			}
+			if (transfererB != null) {
+				transfererB.stop();
+			}
+		}
+	}
 }
