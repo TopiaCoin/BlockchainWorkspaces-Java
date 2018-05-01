@@ -27,8 +27,10 @@ import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
+import io.topiacoin.model.Member;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.User;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -287,24 +289,28 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 						_log.error(
 								"Model info for " + requestImpl.getUserID() + " contains an invalid Public Key, cannot validate signature - ignoring message");
 					}
-					if (sigIsValid) {
-						if (requestImpl.getAuthToken().equals(_myMemberNode.getAuthToken())) {
-							if (_chunkStorage.hasChunk(requestImpl.getChunkID())) {
-								try {
-									byte[] data = _chunkStorage.getChunkData(requestImpl.getChunkID());
-									response = new GiveChunkProtocolResponse(requestImpl.getChunkID(), data, me.getUserID());
-								} catch (NoSuchChunkException | IOException e) {
-									_log.error("Unexpected internal issue", e);
+					if(userIsAllowedToAskMeForChunks(sender)) {
+						if (sigIsValid) {
+							if (requestImpl.getAuthToken().equals(_myMemberNode.getAuthToken())) {
+								if (_chunkStorage.hasChunk(requestImpl.getChunkID())) {
+									try {
+										byte[] data = _chunkStorage.getChunkData(requestImpl.getChunkID());
+										response = new GiveChunkProtocolResponse(requestImpl.getChunkID(), data, me.getUserID());
+									} catch (NoSuchChunkException | IOException e) {
+										_log.error("Unexpected internal issue", e);
+										response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
+									}
+								} else {
 									response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
 								}
 							} else {
-								response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
+								response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 							}
 						} else {
-							response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
+							response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
 						}
 					} else {
-						response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
+						response = new ErrorProtocolResponse("I don't know you", me.getUserID());
 					}
 				} else if (request instanceof QueryChunksProtocolRequest) {
 					QueryChunksProtocolRequest requestImpl = (QueryChunksProtocolRequest) request;
@@ -317,20 +323,24 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 					} catch (InvalidKeyException e) {
 						_log.error("Model info for " + requestImpl.getUserID() + " contains an invalid Public Key, cannot validate signature - ignoring message");
 					}
-					if (sigIsValid) {
-						if (requestImpl.getAuthToken().equals(_myMemberNode.getAuthToken())) {
-							List<String> chunksIHave = new ArrayList<>();
-							for (String chunkID : requestImpl.getChunksRequired()) {
-								if (_chunkStorage.hasChunk(chunkID)) {
-									chunksIHave.add(chunkID);
+					if(userIsAllowedToAskMeForChunks(sender)) {
+						if (sigIsValid) {
+							if (requestImpl.getAuthToken().equals(_myMemberNode.getAuthToken())) {
+								List<String> chunksIHave = new ArrayList<>();
+								for (String chunkID : requestImpl.getChunksRequired()) {
+									if (_chunkStorage.hasChunk(chunkID)) {
+										chunksIHave.add(chunkID);
+									}
 								}
+								response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[chunksIHave.size()]), me.getUserID());
+							} else {
+								response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 							}
-							response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[chunksIHave.size()]), me.getUserID());
 						} else {
-							response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
+							response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
 						}
 					} else {
-						response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
+						response = new ErrorProtocolResponse("I don't know you", me.getUserID());
 					}
 				} else {
 					_log.warn("Received unknown request type " + request.getType() + ", not processing");
@@ -374,5 +384,16 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				_log.error("Could not sign a message with my private key. That's very bad");
 			}
 		}
+	}
+
+	private boolean userIsAllowedToAskMeForChunks(User user) {
+		for(Workspace workspace : _model.getWorkspaces()) {
+			for(Member m : workspace.getMembers()) {
+				if(m.getUserID().equals(user.getUserID())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

@@ -10,8 +10,10 @@ import io.topiacoin.chunks.impl.SimpleChunkRetrievalStrategyFactory;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
+import io.topiacoin.model.Member;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.User;
+import io.topiacoin.model.Workspace;
 import org.apache.commons.io.IOUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -67,6 +69,17 @@ public abstract class AbstractChunkTransfererTest {
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -80,10 +93,12 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
 			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
@@ -163,6 +178,17 @@ public abstract class AbstractChunkTransfererTest {
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -176,10 +202,12 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
 			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
@@ -276,6 +304,23 @@ public abstract class AbstractChunkTransfererTest {
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
 			CurrentUser currentUserC = new CurrentUser("userC", "userC@email.com", userCKeyPair.getPublic(), userCKeyPair.getPrivate());
 			CurrentUser currentUserD = new CurrentUser("userD", "userD@email.com", userDKeyPair.getPublic(), userDKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			Member memberC = new Member();
+			Member memberD = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			memberB.setUserID(currentUserC.getUserID());
+			memberB.setUserID(currentUserD.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			members.add(memberC);
+			members.add(memberD);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -297,12 +342,14 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userC")).andReturn(new User(currentUserC)).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userD")).andReturn(new User(currentUserD)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userC")).andReturn(new User(currentUserC)).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userD")).andReturn(new User(currentUserD)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			DataModel mockModelC = EasyMock.mock(DataModel.class);
@@ -310,6 +357,7 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelC.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
 			EasyMock.expect(mockModelC.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
 			EasyMock.expect(mockModelC.getUserByID("userD")).andReturn(new User(currentUserD)).anyTimes();
+			EasyMock.expect(mockModelC.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererC.setDataModel(mockModelC);
 			EasyMock.replay(mockModelC);
 			DataModel mockModelD = EasyMock.mock(DataModel.class);
@@ -317,6 +365,7 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelD.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
 			EasyMock.expect(mockModelD.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
 			EasyMock.expect(mockModelD.getUserByID("userC")).andReturn(new User(currentUserC)).anyTimes();
+			EasyMock.expect(mockModelD.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererD.setDataModel(mockModelD);
 			EasyMock.replay(mockModelD);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
@@ -420,6 +469,23 @@ public abstract class AbstractChunkTransfererTest {
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
 			CurrentUser currentUserC = new CurrentUser("userC", "userC@email.com", userCKeyPair.getPublic(), userCKeyPair.getPrivate());
 			CurrentUser currentUserD = new CurrentUser("userD", "userD@email.com", userDKeyPair.getPublic(), userDKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			Member memberC = new Member();
+			Member memberD = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			memberC.setUserID(currentUserC.getUserID());
+			memberD.setUserID(currentUserD.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			members.add(memberC);
+			members.add(memberD);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -441,12 +507,14 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userC")).andReturn(new User(currentUserC)).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userD")).andReturn(new User(currentUserD)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userC")).andReturn(new User(currentUserC)).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userD")).andReturn(new User(currentUserD)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			DataModel mockModelC = EasyMock.mock(DataModel.class);
@@ -454,6 +522,7 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelC.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
 			EasyMock.expect(mockModelC.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
 			EasyMock.expect(mockModelC.getUserByID("userD")).andReturn(new User(currentUserD)).anyTimes();
+			EasyMock.expect(mockModelC.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererC.setDataModel(mockModelC);
 			EasyMock.replay(mockModelC);
 			DataModel mockModelD = EasyMock.mock(DataModel.class);
@@ -461,6 +530,7 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelD.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
 			EasyMock.expect(mockModelD.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
 			EasyMock.expect(mockModelD.getUserByID("userC")).andReturn(new User(currentUserC)).anyTimes();
+			EasyMock.expect(mockModelD.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererD.setDataModel(mockModelD);
 			EasyMock.replay(mockModelD);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
@@ -534,6 +604,17 @@ public abstract class AbstractChunkTransfererTest {
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -547,10 +628,12 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
 			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
@@ -697,11 +780,11 @@ public abstract class AbstractChunkTransfererTest {
 				}
 
 				@Override public InputStream getChunkDataStream(String chunkID) throws NoSuchChunkException {
-					throw new NoSuchChunkException("haha");
+					throw new NoSuchChunkException("This is by design for the unit test");
 				}
 
 				@Override public byte[] getChunkData(String chunkID) throws NoSuchChunkException, IOException {
-					throw new NoSuchChunkException("wut?");
+					throw new NoSuchChunkException("This is by design for the unit test");
 				}
 
 				@Override public boolean hasChunk(String chunkID) {
@@ -753,6 +836,17 @@ public abstract class AbstractChunkTransfererTest {
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -766,10 +860,12 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
 			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
@@ -879,6 +975,17 @@ public abstract class AbstractChunkTransfererTest {
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -892,10 +999,12 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
 			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
@@ -1005,6 +1114,17 @@ public abstract class AbstractChunkTransfererTest {
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspaces.add(workspace);
 
 			transfererA = getChunkTransferer(userAMemberNode, userAChunkTransferKeyPair);
 			transfererB = getChunkTransferer(userBMemberNode, userBChunkTransferKeyPair);
@@ -1018,10 +1138,12 @@ public abstract class AbstractChunkTransfererTest {
 			EasyMock.expect(mockModelA.getMemberNodesForContainer("containerA")).andReturn(containerAMemberNodes);
 			EasyMock.expect(mockModelA.getCurrentUser()).andReturn(currentUserA).anyTimes();
 			EasyMock.expect(mockModelA.getUserByID("userB")).andReturn(new User(currentUserB)).anyTimes();
+			EasyMock.expect(mockModelA.getWorkspaces()).andReturn(workspaces).anyTimes();
 			EasyMock.replay(mockModelA);
 			DataModel mockModelB = EasyMock.mock(DataModel.class);
 			EasyMock.expect(mockModelB.getCurrentUser()).andReturn(currentUserB).anyTimes();
 			EasyMock.expect(mockModelB.getUserByID("userA")).andReturn(new User(currentUserA)).anyTimes();
+			EasyMock.expect(mockModelB.getWorkspaces()).andReturn(workspaces).anyTimes();
 			transfererB.setDataModel(mockModelB);
 			EasyMock.replay(mockModelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
