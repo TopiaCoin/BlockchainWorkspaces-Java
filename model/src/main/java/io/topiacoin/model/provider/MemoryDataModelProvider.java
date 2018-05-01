@@ -1,11 +1,13 @@
 package io.topiacoin.model.provider;
 
+import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.File;
 import io.topiacoin.model.FileChunk;
 import io.topiacoin.model.FileTag;
 import io.topiacoin.model.FileVersion;
 import io.topiacoin.model.FileVersionReceipt;
 import io.topiacoin.model.Member;
+import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
@@ -45,8 +47,10 @@ public class MemoryDataModelProvider implements DataModelProvider {
     private Map<String, List<FileVersionReceipt>> _fileVersionsReceiptMap;
     private Map<String, List<FileChunk>> _fileChunkMap;
     private Map<String, List<FileTag>> _fileVersionsTagMap;
+    private Map<String, List<MemberNode>> _containerMemberNodeMap;
 
     private Map<String, User> _userMap;
+    private CurrentUser _currentUser = null;
 
     public MemoryDataModelProvider() {
         _workspaceMap = new HashMap<String, Workspace>();
@@ -59,6 +63,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
         _fileVersionsReceiptMap = new HashMap<String, List<FileVersionReceipt>>();
         _fileChunkMap = new HashMap<String, List<FileChunk>>();
         _fileVersionsTagMap = new HashMap<String, List<FileTag>>();
+        _containerMemberNodeMap = new HashMap<>();
 
         _userMap = new HashMap<String, User>();
     }
@@ -1085,6 +1090,41 @@ public class MemoryDataModelProvider implements DataModelProvider {
         if (_userMap.remove(userID) == null) {
             throw new NoSuchUserException("No user exists with the specified ID");
         }
+    }
+
+    @Override public CurrentUser getCurrentUser() throws NoSuchUserException {
+        if(_currentUser != null) {
+            return _currentUser;
+        }
+        throw new NoSuchUserException();
+    }
+
+    @Override public void setCurrentUser(CurrentUser user) {
+        _currentUser = user;
+    }
+
+    @Override public void removeCurrentUser() {
+        _currentUser = null;
+    }
+
+    @Override public void addMemberNode(String containerID, MemberNode memberNode) {
+        List<MemberNode> memberNodes = _containerMemberNodeMap.get(containerID);
+        if(memberNodes == null) {
+            memberNodes = new ArrayList<MemberNode>();
+        }
+        memberNodes.add(memberNode);
+        _containerMemberNodeMap.put(containerID, memberNodes);
+    }
+
+    @Override public void removeMemberNode(String containerID, MemberNode memberNode) {
+        List<MemberNode> memberNodes = _containerMemberNodeMap.get(containerID);
+        if(memberNodes != null) {
+            memberNodes.remove(memberNode);
+        }
+    }
+
+    public List<MemberNode> getMemberNodesForContainer(String containerID) {
+        return _containerMemberNodeMap.get(containerID);
     }
 
     // -------- Private Methods --------

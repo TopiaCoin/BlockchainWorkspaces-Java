@@ -4,11 +4,11 @@ import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 
 public interface ProtocolCommsHandler {
-	public void requestReceived(ProtocolMessage request, MessageID mesesageID);
+	void requestReceived(ProtocolMessage request, MessageID messageID);
 
-	public void responseReceived(ProtocolMessage response);
+	void responseReceived(ProtocolMessage response, MessageID messageID);
 
-	public void error(Throwable t);
+	void error(Throwable t);
 
-	public void error(String message, boolean shouldReply, MessageID messageId);
+	void error(String message, boolean shouldReply, MessageID messageId);
 }

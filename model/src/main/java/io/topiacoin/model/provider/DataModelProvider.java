@@ -1,11 +1,13 @@
 package io.topiacoin.model.provider;
 
+import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.File;
 import io.topiacoin.model.FileChunk;
 import io.topiacoin.model.FileTag;
 import io.topiacoin.model.FileVersion;
 import io.topiacoin.model.FileVersionReceipt;
 import io.topiacoin.model.Member;
+import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
@@ -205,4 +207,16 @@ public interface DataModelProvider {
 
     void removeUser(String userID)
             throws NoSuchUserException;
+
+    CurrentUser getCurrentUser() throws NoSuchUserException;
+
+    void setCurrentUser(CurrentUser user);
+
+    void removeCurrentUser();
+
+    void addMemberNode(String containerID, MemberNode memberNode);
+
+    void removeMemberNode(String containerID, MemberNode memberNode);
+
+    List<MemberNode> getMemberNodesForContainer(String containerID);
 }

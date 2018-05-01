@@ -14,7 +14,6 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 	private String _chunkId;
 	private byte[] _chunkdata;
 	private byte[] _signature = null;
-	private String _authToken;
 	private String _messageType = "GIVE_CHUNK";
 
 	public GiveChunkProtocolResponse(String chunkId, byte[] data, String userID) {
@@ -88,11 +87,6 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 		if(includeSig) {
 			toAlloc += _signature == null ? 0 : _signature.length; //signature bytes
 		}
-		toAlloc += Integer.BYTES; //authToken length
-		if(_authToken != null) {
-			toAlloc += _authToken.getBytes(Charset.forName("UTF-8")).length; //authToken
-		}
-
 		//There, now allocate the buffer and put the stuff in
 		ByteBuffer toReturn = ByteBuffer.allocate(toAlloc);
 		byte[] userIDBytes = _userID.getBytes(Charset.forName("UTF-8"));
@@ -106,13 +100,6 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 		toReturn.putInt(_signature == null ? 0 : _signature.length); //signature length
 		if(includeSig && _signature != null) {
 			toReturn.put(_signature); //signature bytes
-		}
-		if(_authToken != null) {
-			byte[] authTokenBytes = _authToken.getBytes(Charset.forName("UTF-8"));
-			toReturn.putInt(authTokenBytes.length);
-			toReturn.put(authTokenBytes);
-		} else {
-			toReturn.putInt(0);
 		}
 		return toReturn;
 	}
@@ -136,12 +123,6 @@ public class GiveChunkProtocolResponse implements ProtocolMessage {
 		if(signatureLength > 0) {
 			_signature = new byte[signatureLength];
 			bytes.get(_signature);
-		}
-		int authTokenLength = bytes.getInt();
-		if(authTokenLength > 0) {
-			byte[] authTokenBytes = new byte[authTokenLength];
-			bytes.get(authTokenBytes);
-			_authToken = new String(authTokenBytes, Charset.forName("UTF-8"));
 		}
 	}
 

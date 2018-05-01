@@ -34,7 +34,7 @@ public class DataModel {
     }
 
     public static synchronized DataModel getInstance() {
-        if (__instance != null) {
+        if (__instance == null) {
             __instance = new DataModel();
         }
         return __instance;
@@ -302,5 +302,29 @@ public class DataModel {
     public void removeUser(String userID)
             throws NoSuchUserException {
         _provider.removeUser(userID);
+    }
+
+    public CurrentUser getCurrentUser() throws NoSuchUserException {
+        return _provider.getCurrentUser();
+    }
+
+    public void setCurrentUser(CurrentUser user) {
+        _provider.setCurrentUser(user);
+    }
+
+    public void removeCurrentUser() {
+        _provider.removeCurrentUser();
+    }
+
+    public void addMemberNode(String containerID, MemberNode memberNode) {
+        _provider.addMemberNode(containerID, memberNode);
+    }
+
+    public void removeMemberNode(String containerID, MemberNode memberNode) {
+        _provider.removeMemberNode(containerID, memberNode);
+    }
+
+    public List<MemberNode> getMemberNodesForContainer(String containerID) {
+        return _provider.getMemberNodesForContainer(containerID);
     }
 }

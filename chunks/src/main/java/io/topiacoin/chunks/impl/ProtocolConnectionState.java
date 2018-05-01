@@ -1,4 +1,4 @@
-package io.topiacoin.chunks.model.protocol;
+package io.topiacoin.chunks.impl;
 
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.crypto.CryptoUtils;
@@ -7,7 +7,6 @@ import io.topiacoin.crypto.HashUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
@@ -19,13 +18,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,7 +134,7 @@ public class ProtocolConnectionState {
 			}
 			PublicKey theirPubKey = CryptoUtils.getECPublicKeyFromEncodedBytes(_theirPublicKey);
 			byte[] sharedSecret = CryptoUtils.generateECDHSharedSecret(myKeyPair.getPrivate(), theirPubKey);
-			if(_log.isDebugEnabled()) {
+			if (_log.isDebugEnabled()) {
 				_log.debug("My PubKey: " + DatatypeConverter.printHexBinary(myKeyPair.getPublic().getEncoded()));
 				_log.debug("Their PubKey: " + DatatypeConverter.printHexBinary(theirPubKey.getEncoded()));
 				_log.debug("Shared Secret: " + DatatypeConverter.printHexBinary(sharedSecret));

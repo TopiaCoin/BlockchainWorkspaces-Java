@@ -7,6 +7,7 @@ import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 import io.topiacoin.chunks.intf.ChunkInfoManager;
 import io.topiacoin.chunks.intf.ChunkStorage;
 import io.topiacoin.chunks.intf.ReservationID;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -128,7 +129,7 @@ public class FileSystemChunkStorage implements ChunkStorage {
      *
      * @throws NoSuchChunkException If there is no chunk data with the specified chunkID.
      */
-    public InputStream getChunkData(final String chunkID) throws NoSuchChunkException {
+    public InputStream getChunkDataStream(final String chunkID) throws NoSuchChunkException {
         File storageFile = getDataFilePathForChunkID(chunkID);
 
         if (!storageFile.exists()) {
@@ -145,6 +146,13 @@ public class FileSystemChunkStorage implements ChunkStorage {
             _log.info("Requested chunk not found!");
             throw new NoSuchChunkException("Chunk " + chunkID + " does not exist.");
         }
+    }
+
+    public byte[] getChunkData(final String chunkID) throws NoSuchChunkException, IOException {
+        InputStream data = getChunkDataStream(chunkID);
+        byte[] tr = IOUtils.toByteArray(data);
+        data.close();
+        return tr;
     }
 
     /**

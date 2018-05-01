@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.intf;
 
+import io.topiacoin.chunks.exceptions.CommsListenerNotStartedException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
@@ -14,6 +15,7 @@ import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
 import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
+import io.topiacoin.model.MemberNode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,7 +27,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -61,12 +62,13 @@ public abstract class AbstractProtocolTest {
 			final CountDownLatch lock = new CountDownLatch(2);
 
 			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
 					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
 					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
@@ -91,7 +93,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -118,7 +120,7 @@ public abstract class AbstractProtocolTest {
 					try {
 						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					} catch (InvalidKeyException e) {
@@ -127,7 +129,7 @@ public abstract class AbstractProtocolTest {
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -140,7 +142,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -151,7 +153,141 @@ public abstract class AbstractProtocolTest {
 
 			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			testMessage.sign(userASigningKeyPair.getPrivate());
-			MessageID messageID = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+			MessageID messageID = userAservice.sendMessage(userBNode, testMessage, convertHandler(handlerA));
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
+			boolean connectionOpen = true;
+			for (int i = 0; i < 20 && connectionOpen; i++) {
+				Thread.sleep(100 * i);
+				SocketChannel sc = getConnectionForMessageID(userAservice, messageID);
+				connectionOpen = sc != null && sc.isConnected();
+			}
+			assertTrue("Connection never closed", !connectionOpen);
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
+	@Test
+	public void testSendMessageWithSpecificHandlerWorks() throws Exception {
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(2);
+
+			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+
+			ProtocolCommsHandler failHandler = new ProtocolCommsHandler() {
+
+				@Override public void requestReceived(ProtocolMessage request, MessageID mesesageID) {
+					fail();
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
+					fail();
+				}
+
+				@Override public void error(Throwable t) {
+					fail();
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					fail();
+				}
+			};
+
+			ProtocolCommsResponseHandler handlerA = new ProtocolCommsResponseHandler() {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					try {
+						assertTrue("Message signature verification failed", response.verify(userBSigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t, MessageID messageID) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+					try {
+						userAservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userAservice.setHandler(failHandler);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					assertEquals("AuthToken wrong", userBAuthToken, message.getAuthToken());
+					try {
+						assertTrue("Message signature verification failed", request.verify(userASigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
+					try {
+						resp.sign(userBSigningKeyPair.getPrivate());
+						userBservice.reply(resp, messageID);
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Couldn't sign");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					//nop
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			testMessage.sign(userASigningKeyPair.getPrivate());
+			MessageID messageID = userAservice.sendMessage(userBNode, testMessage, handlerA);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 			boolean connectionOpen = true;
 			for (int i = 0; i < 20 && connectionOpen; i++) {
@@ -176,7 +312,7 @@ public abstract class AbstractProtocolTest {
 		testMessage = new HaveChunksProtocolResponse(new String[] { "foo", "bar", "baz" }, "userA");
 		testMessage.sign(signingKeypair.getPrivate());
 		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
-		testMessage = new FetchChunkProtocolRequest( "foo", "userA", "foo");
+		testMessage = new FetchChunkProtocolRequest("foo", "userA", "foo");
 		testMessage.sign(signingKeypair.getPrivate());
 		assertTrue("Verification failed", testMessage.verify(signingKeypair.getPublic()));
 		testMessage = new GiveChunkProtocolResponse("foo", new byte[100], "userA");
@@ -194,6 +330,7 @@ public abstract class AbstractProtocolTest {
 
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		final String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
@@ -203,13 +340,13 @@ public abstract class AbstractProtocolTest {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					lock.countDown();
 					//Ok, this would be non-standard, but it's not technically invalid, so it should work...I think
 					ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 					try {
-						userAservice.sendMessage("127.0.0.1", 7778, null, testMessage);
-					} catch (InvalidKeyException | InvalidMessageException | IOException | FailedToStartCommsListenerException e) {
+						userAservice.sendMessage(userBNode, testMessage, null);
+					} catch (InvalidKeyException | InvalidMessageException | IOException | CommsListenerNotStartedException e) {
 						e.printStackTrace();
 						fail("Didn't expect an Exception");
 					}
@@ -224,7 +361,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -236,13 +373,13 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -255,7 +392,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -265,7 +402,7 @@ public abstract class AbstractProtocolTest {
 			userBservice.startListener();
 
 			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
-			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+			userAservice.sendMessage(userBNode, testMessage, null);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			userAservice.stop();
@@ -338,6 +475,7 @@ public abstract class AbstractProtocolTest {
 		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
 		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
@@ -349,7 +487,7 @@ public abstract class AbstractProtocolTest {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof GiveChunkProtocolResponse);
 					GiveChunkProtocolResponse message = (GiveChunkProtocolResponse) response;
 					assertEquals("request_type wrong", "GIVE_CHUNK", message.getMessageType());
@@ -379,7 +517,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -410,7 +548,7 @@ public abstract class AbstractProtocolTest {
 					try {
 						resp.sign(userBSigningKeyPair.getPrivate());
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					} catch (InvalidKeyException e) {
@@ -419,7 +557,7 @@ public abstract class AbstractProtocolTest {
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -432,7 +570,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -444,7 +582,7 @@ public abstract class AbstractProtocolTest {
 			for (String testChunk : testChunks.keySet()) {
 				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA", userBAuthToken);
 				testMessage.sign(userASigningKeyPair.getPrivate());
-				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+				userAservice.sendMessage(userBNode, testMessage, null);
 			}
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
@@ -468,6 +606,7 @@ public abstract class AbstractProtocolTest {
 
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
@@ -479,7 +618,7 @@ public abstract class AbstractProtocolTest {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof GiveChunkProtocolResponse);
 					GiveChunkProtocolResponse message = (GiveChunkProtocolResponse) response;
 					assertEquals("request_type wrong", "GIVE_CHUNK", message.getMessageType());
@@ -501,7 +640,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -522,13 +661,13 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new GiveChunkProtocolResponse(message.getChunkID(), chunkData, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -541,7 +680,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -552,7 +691,7 @@ public abstract class AbstractProtocolTest {
 
 			for (String testChunk : testChunks.keySet()) {
 				ProtocolMessage testMessage = new FetchChunkProtocolRequest(testChunk, "userA", userBAuthToken);
-				userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+				userAservice.sendMessage(userBNode, testMessage, null);
 			}
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
@@ -591,7 +730,7 @@ public abstract class AbstractProtocolTest {
 
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 
 				}
 
@@ -610,7 +749,7 @@ public abstract class AbstractProtocolTest {
 
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 
 				}
 
@@ -730,6 +869,7 @@ public abstract class AbstractProtocolTest {
 
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, null);
@@ -738,7 +878,7 @@ public abstract class AbstractProtocolTest {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof ErrorProtocolResponse);
 					ErrorProtocolResponse message = (ErrorProtocolResponse) response;
 					assertTrue("Error Message Wrong", message.getErrorMessage().startsWith("503"));
@@ -755,7 +895,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -766,7 +906,7 @@ public abstract class AbstractProtocolTest {
 					fail("Wasn't expecting requestReceived to fire");
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -779,7 +919,7 @@ public abstract class AbstractProtocolTest {
 					lock.countDown();
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -789,7 +929,7 @@ public abstract class AbstractProtocolTest {
 			userBservice.startListener();
 
 			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
-			userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+			userAservice.sendMessage(userBNode, testMessage, null);
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			userAservice.stop();
@@ -802,6 +942,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		try {
 			service.setHandler(new ProtocolCommsHandler() {
@@ -809,7 +950,7 @@ public abstract class AbstractProtocolTest {
 
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 
 				}
 
@@ -823,7 +964,7 @@ public abstract class AbstractProtocolTest {
 			service.startListener();
 			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			try {
-				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+				service.sendMessage(userBNode, testMessage, null);
 				fail("Expected a ConnectException");
 			} catch (ConnectException ex) {
 				//Good
@@ -838,19 +979,20 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "The password is password";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 		try {
-			service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+			service.sendMessage(userBNode, testMessage, null);
 			fail("Expected a FailedToStartCommsListenerException");
-		} catch (FailedToStartCommsListenerException ex) {
+		} catch (CommsListenerNotStartedException ex) {
 			//Good
 		}
 		ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
 		try {
 			service.reply(resp, new MessageID(0, new InetSocketAddress(1234)));
 			fail("Expected a FailedToStartCommsListenerException");
-		} catch (FailedToStartCommsListenerException ex) {
+		} catch (CommsListenerNotStartedException ex) {
 			//Good
 		}
 	}
@@ -860,6 +1002,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "The password is password";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		try {
 			service.setHandler(new ProtocolCommsHandler() {
@@ -867,7 +1010,7 @@ public abstract class AbstractProtocolTest {
 
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 
 				}
 
@@ -881,7 +1024,7 @@ public abstract class AbstractProtocolTest {
 			service.startListener();
 			ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
 			try {
-				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), resp);
+				service.sendMessage(userBNode, resp, null);
 				fail("Expected a InvalidMessageException");
 			} catch (InvalidMessageException ex) {
 				//Good
@@ -895,7 +1038,7 @@ public abstract class AbstractProtocolTest {
 			}
 			testMessage = new QueryChunksProtocolRequest(null, "userA", userBAuthToken);
 			try {
-				service.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
+				service.sendMessage(userBNode, testMessage, null);
 				fail("Expected a InvalidMessageException");
 			} catch (InvalidMessageException ex) {
 				//Good
@@ -916,6 +1059,7 @@ public abstract class AbstractProtocolTest {
 	public void testSendQueryChunksRequestWithNoPublicKey() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, null, userBAuthToken);
 		ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		ProtocolCommsService userBservice = getProtocolCommsService(7778, null);
 		try {
@@ -924,7 +1068,7 @@ public abstract class AbstractProtocolTest {
 
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 
 				}
 
@@ -941,7 +1085,7 @@ public abstract class AbstractProtocolTest {
 
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 
 				}
 
@@ -956,17 +1100,79 @@ public abstract class AbstractProtocolTest {
 			userBservice.startListener();
 			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			try {
-				userAservice.sendMessage("127.0.0.1", 7778, null, testMessage);
+				userAservice.sendMessage(userBNode, testMessage, null);
 				fail("Expected a InvalidKeyException");
 			} catch (InvalidKeyException ex) {
 				//Good
 			}
-			try {
-				userAservice.sendMessage("127.0.0.1", 7778, null, testMessage);
-				fail("Expected a InvalidKeyException");
-			} catch (InvalidKeyException ex) {
-				//Good
-			}
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
+	@Test
+	public void testRequestTimeout() throws Exception {
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(1);
+
+			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+
+			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					fail("Wasn't expecting a response - kind of invalidates the test");
+				}
+
+				@Override
+				public void error(Throwable t) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					assertTrue(message.equalsIgnoreCase("Request Timed out"));
+					lock.countDown();
+				}
+			};
+			userAservice.setHandler(handlerA);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					//Hey, I received a request - let's do nothing!
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					//nop
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+			userAservice.setTimeout(5, TimeUnit.SECONDS);
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			MessageID messageID = userAservice.sendMessage(userBNode, testMessage, null);
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 		} finally {
 			userAservice.stop();
 			userBservice.stop();
@@ -985,6 +1191,8 @@ public abstract class AbstractProtocolTest {
 
 			String userAAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 			String userBAuthToken = "<('.'<) (>'.')>";
+			MemberNode userANode = new MemberNode("userA", "127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
@@ -997,13 +1205,13 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userA");
 					try {
 						userAservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
 					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
 					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
@@ -1020,7 +1228,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1037,13 +1245,13 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
 					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
 					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
@@ -1061,7 +1269,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1072,8 +1280,8 @@ public abstract class AbstractProtocolTest {
 
 			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 			ProtocolMessage testMessage2 = new QueryChunksProtocolRequest(testChunks, "userB", userAAuthToken);
-			MessageID messageID1 = userAservice.sendMessage("127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), testMessage);
-			MessageID messageID2 = userBservice.sendMessage("127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded(), testMessage2);
+			MessageID messageID1 = userAservice.sendMessage(userBNode, testMessage, convertHandler(handlerA));
+			MessageID messageID2 = userBservice.sendMessage(userANode, testMessage2, convertHandler(handlerB));
 			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
 			boolean connectionOpen = true;
 			for (int i = 0; i < 20 && connectionOpen; i++) {
@@ -1104,7 +1312,7 @@ public abstract class AbstractProtocolTest {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
 					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
 					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
@@ -1121,7 +1329,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1138,13 +1346,13 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -1157,7 +1365,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1197,7 +1405,7 @@ public abstract class AbstractProtocolTest {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
 					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
 					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
@@ -1214,7 +1422,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
 					try {
 						userAservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1231,13 +1439,13 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
 					try {
 						userBservice.reply(resp, messageID);
-					} catch (FailedToStartCommsListenerException | InvalidMessageException | InvalidMessageIDException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
 						e.printStackTrace();
 						fail("Couldn't reply");
 					}
 				}
 
-				@Override public void responseReceived(ProtocolMessage response) {
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
 					//nop
 				}
 
@@ -1250,7 +1458,7 @@ public abstract class AbstractProtocolTest {
 					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
 					try {
 						userBservice.reply(error, messageId);
-					} catch (FailedToStartCommsListenerException | InvalidMessageIDException | InvalidMessageException e) {
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
 						e.printStackTrace();
 					}
 				}
@@ -1277,6 +1485,134 @@ public abstract class AbstractProtocolTest {
 		}
 	}
 
+	@Test
+	public void testStartThenStopThenStartListener() throws Exception {
+		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
+		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
+		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
+		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
+		try {
+			final String[] testChunks = new String[] { "foo", "bar", "baz" };
+			final CountDownLatch lock = new CountDownLatch(2);
+
+			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+
+			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					assertTrue("Message wrong type", response instanceof HaveChunksProtocolResponse);
+					HaveChunksProtocolResponse message = (HaveChunksProtocolResponse) response;
+					assertEquals("request_type wrong", "HAVE_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunkIDs(), testChunks));
+					assertEquals("userID wrong", "userB", message.getUserID());
+					try {
+						assertTrue("Message signature verification failed", response.verify(userBSigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
+					lock.countDown();
+				}
+
+				@Override
+				public void error(Throwable t) {
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userA");
+					try {
+						userAservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userAservice.setHandler(handlerA);
+			ProtocolCommsHandler handlerB = new ProtocolCommsHandler() {
+				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
+					assertTrue("Message wrong type", request instanceof QueryChunksProtocolRequest);
+					QueryChunksProtocolRequest message = (QueryChunksProtocolRequest) request;
+					assertEquals("request_type wrong", "QUERY_CHUNKS", message.getMessageType());
+					assertTrue("chunks_required wrong", Arrays.equals(message.getChunksRequired(), testChunks));
+					assertEquals("userID wrong", "userA", message.getUserID());
+					assertEquals("AuthToken wrong", userBAuthToken, message.getAuthToken());
+					try {
+						assertTrue("Message signature verification failed", request.verify(userASigningKeyPair.getPublic()));
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Message signing key invalid");
+					} catch (SignatureException e) {
+						fail("Didn't expect a sig exception");
+					}
+					lock.countDown();
+					ProtocolMessage resp = new HaveChunksProtocolResponse(testChunks, "userB");
+					try {
+						resp.sign(userBSigningKeyPair.getPrivate());
+						userBservice.reply(resp, messageID);
+					} catch (CommsListenerNotStartedException | InvalidMessageException | InvalidMessageIDException e) {
+						e.printStackTrace();
+						fail("Couldn't reply");
+					} catch (InvalidKeyException e) {
+						e.printStackTrace();
+						fail("Couldn't sign");
+					}
+				}
+
+				@Override public void responseReceived(ProtocolMessage response, MessageID mid) {
+					//nop
+				}
+
+				@Override
+				public void error(Throwable t) {
+
+				}
+
+				@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+					ProtocolMessage error = new ErrorProtocolResponse(message, "userB");
+					try {
+						userBservice.reply(error, messageId);
+					} catch (CommsListenerNotStartedException | InvalidMessageIDException | InvalidMessageException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			userBservice.setHandler(handlerB);
+			userAservice.startListener();
+			userBservice.startListener();
+			userAservice.stop();
+			userBservice.stop();
+			userAservice.startListener();
+			userBservice.startListener();
+			try {
+				userAservice.startListener();
+				fail();
+			} catch(IllegalStateException e) {
+				//Good
+			}
+
+			ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
+			testMessage.sign(userASigningKeyPair.getPrivate());
+			MessageID messageID = userAservice.sendMessage(userBNode, testMessage, convertHandler(handlerA));
+			assertTrue("Message never received", lock.await(10, TimeUnit.SECONDS));
+			boolean connectionOpen = true;
+			for (int i = 0; i < 20 && connectionOpen; i++) {
+				Thread.sleep(100 * i);
+				SocketChannel sc = getConnectionForMessageID(userAservice, messageID);
+				connectionOpen = sc != null && sc.isConnected();
+			}
+			assertTrue("Connection never closed", !connectionOpen);
+		} finally {
+			userAservice.stop();
+			userBservice.stop();
+		}
+	}
+
 	protected void putAsMuchAsPossible(ByteBuffer srcBuffer, ByteBuffer readBuffer) {
 		//This is basically the way ByteBuffer.put(ByteBuffer) works, but without the ability to throw BufferOverflowExceptions
 		//I don't need a BufferOverflow - if there's more data to be read, the readBuffer will be compacted and the loop will go on
@@ -1284,6 +1620,22 @@ public abstract class AbstractProtocolTest {
 		for (int i = 0; i < n; i++) {
 			srcBuffer.put(readBuffer.get());
 		}
+	}
+
+	private ProtocolCommsResponseHandler convertHandler(ProtocolCommsHandler h) {
+		return new ProtocolCommsResponseHandler() {
+			@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
+				h.responseReceived(response, messageID);
+			}
+
+			@Override public void error(Throwable t, MessageID messageID) {
+				h.error(t);
+			}
+
+			@Override public void error(String message, boolean shouldReply, MessageID messageId) {
+				h.error(message, shouldReply, messageId);
+			}
+		};
 	}
 
 	/**

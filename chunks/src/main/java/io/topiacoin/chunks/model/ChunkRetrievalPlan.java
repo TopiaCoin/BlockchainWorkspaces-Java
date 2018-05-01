@@ -1,63 +1,110 @@
 package io.topiacoin.chunks.model;
 
-import javax.crypto.SecretKey;
-import java.util.ArrayList;
+import io.topiacoin.model.MemberNode;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
+
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ChunkRetrievalPlan {
-	private Map<String, Chunk> chunks = new HashMap<String, Chunk>();
-	private Map<String, SecretKey> keys = new HashMap<String, SecretKey>();
-	private List<String> chunkIDs;
-	private List<String> plannedChunkIDs = new ArrayList<>();
+	private List<String> _plannedChunkIDs;
+	private Set<String> _retrievableChunkIDs = new HashSet<String>();
+	private Set<MemberNode> _sources = new HashSet<>();
+	private Map<MemberNode, Set<String>> _nodeChunks = new HashMap<>();
+	private BidiMap<String, MemberNode> _chunksAndSourcesInUse = new DualTreeBidiMap<>();
+	private Set<String> _fetchedChunks = new HashSet<>();
 
 	public ChunkRetrievalPlan(List<String> chunkIDs) {
-		this.chunkIDs = chunkIDs;
+		this._plannedChunkIDs = chunkIDs;
 	}
 
-	public void addChunk(int chunkIdx, String chunkID, String chunkSource) {
-		if(chunkIDs.contains(chunkID)) {
-			Chunk chunk = getChunk(chunkID);
-			if (chunk == null) {
-				chunk = new Chunk(chunkIdx, chunkID);
+	public void addChunk(String chunkID, MemberNode chunkSource) {
+		if (_plannedChunkIDs.contains(chunkID)) {
+			_sources.add(chunkSource);
+			Set<String> nodeChunkSet = _nodeChunks.get(chunkSource);
+			if(nodeChunkSet == null) {
+				nodeChunkSet = new HashSet<>();
 			}
-			chunk.addSource(chunkSource);
-			chunks.put(chunkID, chunk);
-			plannedChunkIDs.add(chunkID);
+			nodeChunkSet.add(chunkID);
+			_nodeChunks.put(chunkSource, nodeChunkSet);
+			_retrievableChunkIDs.add(chunkID);
 		}
 	}
 
-	public Chunk getChunk(String chunkID) {
-		return chunks.get(chunkID);
+	public boolean isFullyFormedPlan() {
+		return _retrievableChunkIDs.size() == _plannedChunkIDs.size();
 	}
 
-	public void addKey(String source, SecretKey key) {
-		keys.put(source, key);
-	}
-
-	public SecretKey getKey(String source) {
-		return keys.get(source);
-	}
-
-	public boolean isCompletePlan() {
-		return chunkIDs.size() == plannedChunkIDs.size();
-	}
-
-	public class Chunk {
-		int chunkIdx;
-		String chunkID;
-		List<String> chunkSources = new ArrayList<String>();
-
-		public Chunk(int idx, String id) {
-			chunkIdx = idx;
-			chunkID = id;
-		}
-
-		public void addSource(String source) {
-			if(!chunkSources.contains(source)) {
-				chunkSources.add(source);
+	public PlanTask getNextTask() {
+		PlanTask tr = null;
+		//Remove the set of sources in use from the list of all sources
+		Set<MemberNode> unusedNodes = new HashSet<>(_sources);
+		unusedNodes.removeAll(_chunksAndSourcesInUse.values());
+		//If there are any sources that are not currently in use...
+		if(!unusedNodes.isEmpty()) {
+			//Iterate over the set of unused nodes
+			Iterator<MemberNode> nodeIterator = unusedNodes.iterator();
+			while(tr == null && nodeIterator.hasNext()) {
+				MemberNode unusedNode = nodeIterator.next();
+				//Grab the full chunk list for the node
+				Set<String> nodeChunkSet = _nodeChunks.get(unusedNode);
+				//Remove the set of chunks we've already fetched
+				nodeChunkSet.removeAll(_fetchedChunks);
+				if(nodeChunkSet.isEmpty()) {
+					//This source no longer has anything useful for us. Drop it
+					_sources.remove(unusedNode);
+					_nodeChunks.remove(unusedNode);
+				} else {
+					//...then remove the set of chunks we're already working on
+					nodeChunkSet.removeAll(_chunksAndSourcesInUse.keySet());
+					if(!nodeChunkSet.isEmpty()) {
+						//This node, which is not in use, has at least one chunk we are not currently fetching.
+						String chunk = nodeChunkSet.iterator().next();
+						_chunksAndSourcesInUse.put(chunk, unusedNode);
+						tr = new PlanTask(chunk, unusedNode);
+					} //else this node doesn't presently have anything useful for us
+				}
 			}
+		}
+		//If all sources are in use, or if none of the unused nodes have anything useful for us at the moment, there is no next task.
+		return tr;
+	}
+
+	public void markChunkAsFetched(String chunkID) {
+		MemberNode node = _chunksAndSourcesInUse.remove(chunkID);
+		_fetchedChunks.add(chunkID);
+		Set<String> chunks = _nodeChunks.get(node);
+		chunks.remove(chunkID);
+	}
+
+	public void markChunkAsFailed(String chunkID) {
+		MemberNode node = _chunksAndSourcesInUse.remove(chunkID);
+		Set<String> chunks = _nodeChunks.get(node);
+		chunks.remove(chunkID);
+	}
+
+	public boolean isComplete() {
+		return _fetchedChunks.size() == _plannedChunkIDs.size() || _sources.isEmpty();
+	}
+
+	public List<String> getFailedChunks() {
+		List<String> failedChunks = _plannedChunkIDs;
+		failedChunks.removeAll(_fetchedChunks);
+		return failedChunks;
+	}
+
+	public class PlanTask {
+		public String chunkID;
+		public MemberNode source;
+
+		PlanTask(String chunkID, MemberNode source) {
+			this.chunkID = chunkID;
+			this.source = source;
 		}
 	}
 }
