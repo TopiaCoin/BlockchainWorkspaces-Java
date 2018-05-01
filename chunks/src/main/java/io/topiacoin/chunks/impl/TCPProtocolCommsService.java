@@ -168,7 +168,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	}
 
 	private ProtocolMessage decryptAndReconstituteMessage(byte messageType, ByteBuffer messageData, SecretKey messageKey, IvParameterSpec messageIV)
-			throws InvalidKeyException, InvalidMessageException {
+			throws InvalidMessageException {
 		try {
 			byte[] messageArray = new byte[messageData.remaining()];
 			messageData.get(messageArray);
@@ -421,7 +421,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 														IvParameterSpec ivSpec = new IvParameterSpec(iv);
 														packetBuffer.getInt(); //Read off the data length int, which we don't need because we've already sorted that out.
 														message = decryptAndReconstituteMessage(messageType, packetBuffer, connection.getMessageKey(), ivSpec);
-													} catch (InvalidMessageException | InvalidKeyException e) {
+													} catch (InvalidMessageException e) {
 														throw new RuntimeException("", e);
 													}
 													if (message.isRequest()) {
