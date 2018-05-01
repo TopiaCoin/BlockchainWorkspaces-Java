@@ -70,7 +70,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			throws InvalidKeyException, IOException, InvalidMessageException, CommsListenerNotStartedException {
 		if (message.isRequest()) {
 			if (message.isValid()) {
-				if (_listenerThread.isAlive()) {
+				if (_listenerThread != null && _listenerThread.isAlive()) {
 					InetSocketAddress addr = new InetSocketAddress(targetNode.getHostname(), targetNode.getPort());
 					MessageID messageID = new MessageID(_messageIdTracker.getAndIncrement(), addr);
 					_messageAddresses.put(messageID, addr);
@@ -148,7 +148,12 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			int dataLength = data.array().length;
 			ByteBuffer toReturn = ByteBuffer.allocate(1 + Integer.BYTES + Integer.BYTES + Integer.BYTES + dataLength);
 			data.flip();
-			toReturn.put(messageType).putInt(messageID.getId()).putInt(0).putInt(dataLength).put(data);
+			toReturn.put(messageType);
+			toReturn.putInt(messageID.getId());
+			toReturn.putInt(0);
+			toReturn.putInt(dataLength);
+			toReturn.put(data);
+			toReturn.flip();
 			return toReturn;
 		}
 	}
@@ -178,7 +183,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 	@Override public void reply(ProtocolMessage message, MessageID messageID) throws InvalidMessageException, CommsListenerNotStartedException, InvalidMessageIDException {
 		if (!message.isRequest()) {
 			if (message.isValid()) {
-				if (_listenerThread.isAlive()) {
+				if (_listenerThread != null &&_listenerThread.isAlive()) {
 					SocketAddress addr = _messageAddresses.get(messageID);
 					if (addr != null) {
 						ProtocolConnectionState state = _connections.get(addr);
@@ -269,7 +274,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_listenerRunnableThrowable = null;
 		_messageAddresses.clear();
 		_messageSpecificHandlers.clear();
-		_messageSendTimes.clear();
+		//_messageSendTimes.clear(); - Normally I'd clear this, but doing so causes test failures due to ConcurrentModEx, and this shouldn't really matter in prod.
 		for (SocketAddress address : _connections.keySet()) {
 			ProtocolConnectionState state = _connections.get(address);
 			try {

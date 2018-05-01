@@ -92,7 +92,7 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					for (String chunkID : testChunks.keySet()) {
 						assertTrue(transfererAChunkStorage.hasChunk(chunkID));
 						try {
@@ -106,6 +106,10 @@ public abstract class AbstractChunkTransfererTest {
 				}
 
 				@Override public void failedToBuildFetchPlan() {
+					fail();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
 					fail();
 				}
 			};
@@ -179,7 +183,7 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					for (String chunkID : testChunks.keySet()) {
 						assertTrue(transfererAChunkStorage.hasChunk(chunkID));
 						try {
@@ -193,6 +197,10 @@ public abstract class AbstractChunkTransfererTest {
 				}
 
 				@Override public void failedToBuildFetchPlan() {
+					fail();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
 					fail();
 				}
 			};
@@ -296,7 +304,7 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					for (String chunkID : testChunks.keySet()) {
 						assertTrue(transfererAChunkStorage.hasChunk(chunkID));
 						try {
@@ -310,6 +318,10 @@ public abstract class AbstractChunkTransfererTest {
 				}
 
 				@Override public void failedToBuildFetchPlan() {
+					fail();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
 					fail();
 				}
 			};
@@ -419,12 +431,16 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					fail();
 				}
 
 				@Override public void failedToBuildFetchPlan() {
 					lock.countDown();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					fail();
 				}
 			};
 			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
@@ -501,12 +517,16 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					fail();
 				}
 
 				@Override public void failedToBuildFetchPlan() {
 					lock.countDown();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					fail();
 				}
 			};
 			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
@@ -578,7 +598,7 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					for (String chunkID : testChunks.keySet()) {
 						assertTrue(transfererAChunkStorage.hasChunk(chunkID));
 						try {
@@ -592,6 +612,10 @@ public abstract class AbstractChunkTransfererTest {
 				}
 
 				@Override public void failedToBuildFetchPlan() {
+					fail();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
 					fail();
 				}
 			};
@@ -665,7 +689,7 @@ public abstract class AbstractChunkTransfererTest {
 
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
-			final CountDownLatch lock = new CountDownLatch(1);
+			final CountDownLatch lock = new CountDownLatch(2);
 			String testContainerId = "containerA";
 			int userAPort = 7777;
 			int userBPort = 7778;
@@ -707,8 +731,12 @@ public abstract class AbstractChunkTransfererTest {
 					lock.countDown();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					fail();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					lock.countDown();
 				}
 
 				@Override public void failedToBuildFetchPlan() {
@@ -824,12 +852,16 @@ public abstract class AbstractChunkTransfererTest {
 
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					fail();
 				}
 
 				@Override public void failedToBuildFetchPlan() {
 					lock.countDown();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					fail();
 				}
 			};
 			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
@@ -901,7 +933,7 @@ public abstract class AbstractChunkTransfererTest {
 
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
-			final CountDownLatch lock = new CountDownLatch(1);
+			final CountDownLatch lock = new CountDownLatch(2);
 			String testContainerId = "containerA";
 			int userAPort = 7777;
 			int userBPort = 7778;
@@ -941,12 +973,16 @@ public abstract class AbstractChunkTransfererTest {
 					lock.countDown();
 				}
 
-				@Override public void fetchedAllChunks(Object state) {
+				@Override public void fetchedAllChunksSuccessfully(Object state) {
 					fail();
 				}
 
 				@Override public void failedToBuildFetchPlan() {
 					fail();
+				}
+
+				@Override public void failedToFetchAllChunks(Object state) {
+					lock.countDown();
 				}
 			};
 			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());

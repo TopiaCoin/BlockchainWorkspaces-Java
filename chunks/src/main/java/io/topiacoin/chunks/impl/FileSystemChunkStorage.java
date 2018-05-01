@@ -150,7 +150,9 @@ public class FileSystemChunkStorage implements ChunkStorage {
 
     public byte[] getChunkData(final String chunkID) throws NoSuchChunkException, IOException {
         InputStream data = getChunkDataStream(chunkID);
-        return IOUtils.toByteArray(data);
+        byte[] tr = IOUtils.toByteArray(data);
+        data.close();
+        return tr;
     }
 
     /**

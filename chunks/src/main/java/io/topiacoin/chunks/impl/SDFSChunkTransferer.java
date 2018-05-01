@@ -115,7 +115,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		};
 		QueryChunksProtocolRequest request;
 		for (MemberNode memberNode : memberNodes) {
-			request = new QueryChunksProtocolRequest(chunkIDs.toArray(new String[0]), memberNode);
+			request = new QueryChunksProtocolRequest(chunkIDs.toArray(new String[chunkIDs.size()]), memberNode);
 			try {
 				MessageID messageId = _comms.sendMessage(memberNode, request, handler);
 				memberMessages.put(messageId, memberNode);
@@ -170,12 +170,14 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 					}
 				}
 				if (plan.isComplete()) {
-					chunksHandler.fetchedAllChunks(state);
-				} else {
-					//We've run out of tasks, but the plan isn't complete, which means it failed. Get the failed chunks and report them
 					List<String> failedChunks = plan.getFailedChunks();
-					for(String chunk : failedChunks) {
-						chunksHandler.failedToFetchChunk(chunk, "Nobody has this chunk", null, state);
+					if(failedChunks.isEmpty()) {
+						chunksHandler.fetchedAllChunksSuccessfully(state);
+					} else {
+						for(String chunk : failedChunks) {
+							chunksHandler.failedToFetchChunk(chunk, "Nobody has this chunk", null, state);
+						}
+						chunksHandler.failedToFetchAllChunks(state);
 					}
 				}
 			}
@@ -257,7 +259,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 								chunksIHave.add(chunkID);
 							}
 						}
-						response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[0]), me.getUserID());
+						response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[chunksIHave.size()]), me.getUserID());
 					} else {
 						response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 					}

@@ -89,7 +89,7 @@ public class ChunkRetrievalPlan {
 	}
 
 	public boolean isComplete() {
-		return _fetchedChunks.size() == _plannedChunkIDs.size();
+		return _fetchedChunks.size() == _plannedChunkIDs.size() || _sources.isEmpty();
 	}
 
 	public List<String> getFailedChunks() {

@@ -169,12 +169,16 @@ public class ChunkManager {
 				failedChunks.add(chunkID);
 			}
 
-			@Override public void fetchedAllChunks(Object state) {
+			@Override public void fetchedAllChunksSuccessfully(Object state) {
 				handler.finishedFetchingChunks(successfulChunks, failedChunks, state);
 			}
 
 			@Override public void failedToBuildFetchPlan() {
 				handler.errorFetchingChunks("Failed to find a place to download the requested chunks", null, state);
+			}
+
+			@Override public void failedToFetchAllChunks(Object state) {
+				handler.finishedFetchingChunks(successfulChunks, failedChunks, state);
 			}
 		};
 		_chunkTransferer.fetchChunksRemotely(unfetchedChunks, containerID, chunkFetchHandler, state);
