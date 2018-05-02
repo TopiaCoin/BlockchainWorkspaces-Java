@@ -14,12 +14,25 @@ public interface Configuration {
      * @param name the name of the configuration property to change
      * @param value the new value of the configuration property
      */
-    void setConfigurationOption(String name, String value);
+//    void setConfigurationOption(String name, String value);
 
-    /**
-     * Returns the configuration value associated with the given name, or null if no such name exists
-     * @param name the name of the configuration value to return
-     * @return the value of the configuration property, or null if no such property exists
-     */
+    <T> void setConfigurationOption(String name, T value) ;
+
+        /**
+         * Returns the configuration value associated with the given name, or null if no such name exists
+         * @param name the name of the configuration value to return
+         * @return the value of the configuration property, or null if no such property exists
+         */
     String getConfigurationOption(String name);
+
+    <T> T getConfigurationOption(String name, Class<T> returnType) throws IllegalArgumentException ;
+
+        /**
+         * Returns the configuration value associated with the given name.  If no configuration value exists, the default value
+         * will be returned.  The return value will be cast the default value's type.
+         *
+         * @param name the name of the configuration value to return
+         * @return the value of the configuration property, or null if no such property exists
+         */
+    <T> T getConfigurationOption(String name, T defaultValue) ;
 }

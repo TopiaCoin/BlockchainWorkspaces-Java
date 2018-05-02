@@ -1,8 +1,7 @@
 package io.topiacoin.dht;
 
 import io.topiacoin.crypto.CryptoUtils;
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
@@ -28,7 +27,7 @@ public class DHTBootstrapTest {
     @Test
     public void testBootstrapNode() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
         configuration.setResponseTimeout(250);
@@ -104,7 +103,7 @@ public class DHTBootstrapTest {
     @Test
     public void testBootstrapMultipleNodeInAChain() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -328,7 +327,7 @@ public class DHTBootstrapTest {
     @Test
     public void testBootstrapMultipleNodeFromSingleNode() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
         configuration.setK(160);
@@ -554,7 +553,7 @@ public class DHTBootstrapTest {
     @Test
     public void testBootstrapAndRefreshNode() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -588,7 +587,7 @@ public class DHTBootstrapTest {
 
     @Test
     public void testBootstrapWithNonExistentNode() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -614,7 +613,7 @@ public class DHTBootstrapTest {
 
     @Test
     public void testStartAlreadyRunningDHT() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 

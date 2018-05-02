@@ -1,7 +1,7 @@
 package io.topiacoin.dht.messages;
 
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
+import io.topiacoin.dht.DHTTestConfiguration;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
 import org.junit.BeforeClass;
@@ -17,7 +17,7 @@ public class NodeLookupRequestTest implements MessageTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 

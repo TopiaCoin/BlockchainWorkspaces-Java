@@ -1,8 +1,8 @@
 package io.topiacoin.dht.routing;
 
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
+import io.topiacoin.dht.DHTTestConfiguration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
@@ -20,7 +20,7 @@ public class RoutingTableTest {
     @Test
     public void testInsertingNode() throws Exception {
         Random random = new Random();
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -48,7 +48,7 @@ public class RoutingTableTest {
     @Test
     public void testInsertingNodeMultipleTimes() throws Exception {
         Random random = new Random();
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -78,7 +78,7 @@ public class RoutingTableTest {
     @Test
     public void testEncodingDecoding() throws Exception {
         Random random = new Random();
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 

@@ -1,7 +1,7 @@
 package io.topiacoin.dht.routing;
 
 import io.topiacoin.dht.DHTComponents;
-import io.topiacoin.dht.config.Configuration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 
@@ -29,7 +29,7 @@ public class RoutingTable {
 
     public void initialize() {
 
-        Configuration configuration = _dhtComponents.getConfiguration();
+        DHTConfiguration configuration = _dhtComponents.getConfiguration();
 
         routeBuckets = new RouteBucket[160] ;
 

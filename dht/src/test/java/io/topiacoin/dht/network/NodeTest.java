@@ -1,7 +1,7 @@
 package io.topiacoin.dht.network;
 
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
+import io.topiacoin.dht.DHTTestConfiguration;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -12,7 +12,7 @@ public class NodeTest {
 
     @Test
     public void testEncodeDecode() throws  Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 

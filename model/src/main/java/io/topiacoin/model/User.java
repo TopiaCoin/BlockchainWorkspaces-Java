@@ -6,9 +6,9 @@ import java.util.Objects;
 
 public class User {
 
-    String userID;
-    String email;
-    PublicKey publicKey;
+    protected String userID;
+    protected String email;
+    protected PublicKey publicKey;
 
     public User() {
     }

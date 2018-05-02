@@ -4,6 +4,7 @@ import io.topiacoin.core.Configuration;
 import io.topiacoin.util.Notification;
 import io.topiacoin.util.NotificationCenter;
 import io.topiacoin.util.NotificationHandler;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -131,5 +132,39 @@ public class DefaultConfigurationTest {
 		assertEquals("NotificationInfo wrong", "testProp2", gotNotificationsWithClassifier.get(1).get("key"));
 		assertEquals("NotificationInfo wrong", null, gotNotificationsWithClassifier.get(1).get("value"));
 		assertEquals("NotificationInfo wrong", "test", gotNotificationsWithClassifier.get(1).get("oldValue"));
+	}
+
+	@Test
+	public void testGetAndSetWithDefaultValues() throws Exception {
+		Configuration conf = new DefaultConfiguration();
+
+		Integer intValue;
+		Long longValue;
+		String stringValue;
+
+		intValue = conf.getConfigurationOption("prop1", 1234);
+		assertEquals ( 1234, (int)intValue) ;
+
+		conf.setConfigurationOption("prop1", 23456);
+
+		intValue = conf.getConfigurationOption("prop1", 1234) ;
+		assertEquals ( 23456, (int)intValue) ;
+
+		stringValue = conf.getConfigurationOption("prop1");
+		assertEquals("23456", stringValue);
+
+		conf.setConfigurationOption("prop2", "99876");
+
+		stringValue = conf.getConfigurationOption("prop2");
+		assertEquals ( "99876", stringValue) ;
+
+		intValue = conf.getConfigurationOption("prop2", int.class) ;
+		assertEquals ( 99876, (int)intValue);
+
+		longValue = conf.getConfigurationOption("prop2", Long.class) ;
+		assertEquals ( 99876L, (long)longValue);
+
+		stringValue = conf.getConfigurationOption("prop2", String.class) ;
+		assertEquals ( "99876", stringValue) ;
 	}
 }

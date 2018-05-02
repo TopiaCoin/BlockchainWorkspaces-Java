@@ -3,7 +3,7 @@ package io.topiacoin.dht.network;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.crypto.HashUtils;
-import io.topiacoin.dht.config.Configuration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.util.Utilities;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,9 +16,9 @@ public class NodeIDGenerator {
 
     private Log _log = LogFactory.getLog(this.getClass());
 
-    private Configuration configuration;
+    private DHTConfiguration configuration;
 
-    public NodeIDGenerator(Configuration configuration) {
+    public NodeIDGenerator(DHTConfiguration configuration) {
         this.configuration = configuration;
     }
 

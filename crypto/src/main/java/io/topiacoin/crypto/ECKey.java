@@ -45,27 +45,28 @@ import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
- * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
- * Creating a new ECKey with the empty constructor will generate a new random keypair. Other static methods can be used
- * when you already have the public or private parts. If you create a key with only the public part, you can check
- * signatures but not create them.</p>
- *
- * <p>The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can
- * be reversed to find the public key used to calculate it. This can be convenient when you have a message and a
- * signature and want to find out who signed it, rather than requiring the user to provide the expected identity.</p>
- *
- * <p>A key can be <i>compressed</i> or <i>uncompressed</i>. This refers to whether the public key is represented
- * when encoded into bytes as an (x, y) coordinate on the elliptic curve, or whether it's represented as just an X
+ * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not
+ * encryption. Creating a new ECKey with the empty constructor will generate a new random keypair. Other static methods
+ * can be used when you already have the public or private parts. If you create a key with only the public part, you can
+ * check signatures but not create them.</p>
+ * <p>
+ * <p>The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can be
+ * reversed to find the public key used to calculate it. This can be convenient when you have a message and a signature
+ * and want to find out who signed it, rather than requiring the user to provide the expected identity.</p>
+ * <p>
+ * <p>A key can be <i>compressed</i> or <i>uncompressed</i>. This refers to whether the public key is represented when
+ * encoded into bytes as an (x, y) coordinate on the elliptic curve, or whether it's represented as just an X
  * co-ordinate and an extra byte that carries a sign bit. With the latter form the Y coordinate can be calculated
  * dynamically, however, <b>because the binary serialization is different the address of a key changes if its
- * compression status is changed</b>. If you deviate from the defaults it's important to understand this: money sent
- * to a compressed version of the key will have a different address to the same key in uncompressed form. Whether
- * a public key is compressed or not is recorded in the SEC binary serialisation format, and preserved in a flag in
- * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
- * can usually ignore the compressed/uncompressed distinction.</p>
- *
- * This code is borrowed from the bitcoinj project and altered to fit Ethereum.<br>
- * See <a href="https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/com/google/bitcoin/core/ECKey.java">bitcoinj on GitHub</a>
+ * compression status is changed</b>. If you deviate from the defaults it's important to understand this: money sent to
+ * a compressed version of the key will have a different address to the same key in uncompressed form. Whether a public
+ * key is compressed or not is recorded in the SEC binary serialisation format, and preserved in a flag in this class so
+ * round-tripping preserves state. Unless you're working with old software or doing unusual things, you can usually
+ * ignore the compressed/uncompressed distinction.</p>
+ * <p>
+ * This code is borrowed from the bitcoinj project and altered to fit Ethereum.<br> See <a
+ * href="https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/com/google/bitcoin/core/ECKey.java">bitcoinj
+ * on GitHub</a>
  */
 public class ECKey implements Serializable {
     private static final Log logger = LogFactory.getLog(ECKey.class);
@@ -73,12 +74,14 @@ public class ECKey implements Serializable {
     private static final int MAX_ENTRIES = 100; // Should contain most commonly hashed values
     public static final byte[] EMPTY_DATA_HASH = Hex.decode("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
 
-    /** The parameters of the secp256k1 curve that Ethereum uses. */
+    /**
+     * The parameters of the secp256k1 curve that Ethereum uses.
+     */
     public static final ECDomainParameters CURVE;
 
     /**
-     * Equal to CURVE.getN().shiftRight(1), used for canonicalising the S value of a signature. If you aren't
-     * sure what this is about, you can ignore it.
+     * Equal to CURVE.getN().shiftRight(1), used for canonicalising the S value of a signature. If you aren't sure what
+     * this is about, you can ignore it.
      */
     public static final BigInteger HALF_CURVE_ORDER;
 
@@ -103,8 +106,8 @@ public class ECKey implements Serializable {
     transient private byte[] pubKeyHash;
 
     /**
-     * Generates an entirely new keypair. Point compression is used so the resulting public key will be 33 bytes
-     * (32 for the co-ordinate and 1 byte to represent the y bit).
+     * Generates an entirely new keypair. Point compression is used so the resulting public key will be 33 bytes (32 for
+     * the co-ordinate and 1 byte to represent the y bit).
      */
     public ECKey() {
         this(secureRandom);
@@ -133,24 +136,24 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Utility for compressing an elliptic curve point. Returns the same point if it's already compressed.
-     * See the ECKey class docs for a discussion of point compression.
+     * Utility for compressing an elliptic curve point. Returns the same point if it's already compressed. See the ECKey
+     * class docs for a discussion of point compression.
      */
     public static ECPoint compressPoint(ECPoint uncompressed) {
         return CURVE.getCurve().decodePoint(uncompressed.getEncoded(true));
     }
 
     /**
-     * Utility for decompressing an elliptic curve point. Returns the same point if it's already compressed.
-     * See the ECKey class docs for a discussion of point compression.
+     * Utility for decompressing an elliptic curve point. Returns the same point if it's already compressed. See the
+     * ECKey class docs for a discussion of point compression.
      */
     public static ECPoint decompressPoint(ECPoint compressed) {
         return CURVE.getCurve().decodePoint(compressed.getEncoded(false));
     }
 
     /**
-     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). Note that
-     * the resulting public key is compressed.
+     * Creates an ECKey given the private key only.  The public key is calculated from it (this is slow). Note that the
+     * resulting public key is compressed.
      */
     public static ECKey fromPrivate(BigInteger privKey) {
         return new ECKey(privKey, compressPoint(CURVE.getG().multiply(privKey)));
@@ -193,16 +196,16 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given encoded point.
-     * The compression state of pub will be preserved.
+     * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given encoded point. The
+     * compression state of pub will be preserved.
      */
     public static ECKey fromPublicOnly(byte[] pub) {
         return new ECKey(null, CURVE.getCurve().decodePoint(pub));
     }
 
     /**
-     * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would
-     * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
+     * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would never
+     * need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
      */
     public ECKey decompress() {
         if (!pub.isCompressed())
@@ -212,31 +215,32 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Returns true if this key doesn't have access to private key bytes. This may be because it was never
-     * given any private key bytes to begin with (a watching key).
+     * Returns true if this key doesn't have access to private key bytes. This may be because it was never given any
+     * private key bytes to begin with (a watching key).
      */
     public boolean isPubKeyOnly() {
         return priv == null;
     }
 
     /**
-     * Returns true if this key has access to private key bytes. Does the opposite of
-     * {@link #isPubKeyOnly()}.
+     * Returns true if this key has access to private key bytes. Does the opposite of {@link #isPubKeyOnly()}.
      */
     public boolean hasPrivKey() {
         return priv != null;
     }
 
     /**
-     * Returns public key bytes from the given private key. To convert a byte array into a BigInteger, use <tt>
-     * new BigInteger(1, bytes);</tt>
+     * Returns public key bytes from the given private key. To convert a byte array into a BigInteger, use <tt> new
+     * BigInteger(1, bytes);</tt>
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = CURVE.getG().multiply(privKey);
         return point.getEncoded(compressed);
     }
 
-    /** Gets the hash160 form of the public key (as seen in addresses). */
+    /**
+     * Gets the hash160 form of the public key (as seen in addresses).
+     */
     public byte[] getAddress() {
         if (pubKeyHash == null) {
             byte[] pubBytes = this.pub.getEncoded(false);
@@ -246,21 +250,23 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Gets the raw public key value. This appears in transaction scriptSigs. Note that this is <b>not</b> the same
-     * as the pubKeyHash/address.
+     * Gets the raw public key value. This appears in transaction scriptSigs. Note that this is <b>not</b> the same as
+     * the pubKeyHash/address.
      */
     public byte[] getPubKey() {
         return pub.getEncoded();
     }
 
-    /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
+    /**
+     * Gets the public key in the form of an elliptic curve point object from Bouncy Castle.
+     */
     public ECPoint getPubKeyPoint() {
         return pub;
     }
 
     /**
-     * Gets the private key in the form of an integer field element. The public key is derived by performing EC
-     * point addition this number of times (i.e. point multiplying).
+     * Gets the private key in the form of an integer field element. The public key is derived by performing EC point
+     * addition this number of times (i.e. point multiplying).
      *
      * @throws java.lang.IllegalStateException if the private key bytes are not available.
      */
@@ -284,8 +290,8 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Produce a string rendering of the ECKey INCLUDING the private key.
-     * Unless you absolutely need the private key it is better for security reasons to just use toString().
+     * Produce a string rendering of the ECKey INCLUDING the private key. Unless you absolutely need the private key it
+     * is better for security reasons to just use toString().
      */
     public String toStringWithPrivate() {
         StringBuilder b = new StringBuilder();
@@ -297,12 +303,14 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Groups the two components that make up a signature, and provides a way to encode to Base64 form, which is
-     * how ECDSA signatures are represented when embedded in other data structures in the Ethereum protocol. The raw
+     * Groups the two components that make up a signature, and provides a way to encode to Base64 form, which is how
+     * ECDSA signatures are represented when embedded in other data structures in the Ethereum protocol. The raw
      * components can be useful for doing further EC maths on them.
      */
     public static class ECDSASignature {
-        /** The two components of the signature. */
+        /**
+         * The two components of the signature.
+         */
         public final BigInteger r, s;
         public byte v;
 
@@ -326,9 +334,9 @@ public class ECKey implements Serializable {
 
         /**
          * Will automatically adjust the S component to be less than or equal to half the curve order, if necessary.
-         * This is required because for every signature (r,s) the signature (r, -s (mod N)) is a valid signature of
-         * the same message. However, we dislike the ability to modify the bits of a Ethereum transaction after it's
-         * been signed, as that violates various assumed invariants. Thus in future only one of those forms will be
+         * This is required because for every signature (r,s) the signature (r, -s (mod N)) is a valid signature of the
+         * same message. However, we dislike the ability to modify the bits of a Ethereum transaction after it's been
+         * signed, as that violates various assumed invariants. Thus in future only one of those forms will be
          * considered legal and the other will be banned.
          */
         public ECDSASignature toCanonicalised() {
@@ -374,10 +382,10 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Signs the given hash and returns the R and S components as BigIntegers
-     * and put them in ECDSASignature
+     * Signs the given hash and returns the R and S components as BigIntegers and put them in ECDSASignature
      *
      * @param input to sign
+     *
      * @return ECDSASignature signature that contains the R and S components
      */
     public ECDSASignature doSign(byte[] input) {
@@ -417,12 +425,13 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * Given a piece of text and a message signature encoded in base64, returns an ECKey
-     * containing the public key that was used to sign it. This can then be compared to the expected public key to
-     * determine if the signature was correct.
+     * Given a piece of text and a message signature encoded in base64, returns an ECKey containing the public key that
+     * was used to sign it. This can then be compared to the expected public key to determine if the signature was
+     * correct.
      *
-     * @param messageHash a piece of human readable text that was signed
+     * @param messageHash     a piece of human readable text that was signed
      * @param signatureBase64 The Ethereum-format message signature in base64
+     *
      * @throws SignatureException If the public key could not be recovered or if there was a signature format error.
      */
     public static ECKey signatureToKey(byte[] messageHash, String signatureBase64) throws SignatureException {
@@ -458,9 +467,8 @@ public class ECKey implements Serializable {
 
     /**
      * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
-     *
-     * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
-     * larger than 520 bytes.</p>
+     * <p>
+     * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be larger than 520 bytes.</p>
      *
      * @param data      Hash of the data to verify.
      * @param signature signature.
@@ -533,23 +541,24 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * <p>Given the components of a signature and a selector value, recover and return the public key
-     * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
-     *
-     * <p>The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the correct one. Because
-     * the key recovery operation yields multiple potential keys, the correct key must either be stored alongside the
+     * <p>Given the components of a signature and a selector value, recover and return the public key that generated the
+     * signature according to the algorithm in SEC1v2 section 4.1.6.</p>
+     * <p>
+     * <p>The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the correct one. Because the
+     * key recovery operation yields multiple potential keys, the correct key must either be stored alongside the
      * signature, or you must be willing to try each recId in turn until you find one that outputs the key you are
      * expecting.</p>
-     *
+     * <p>
      * <p>If this method returns null it means recovery was not possible and recId should be iterated.</p>
+     * <p>
+     * <p>Given the above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the output
+     * is null OR a key that is not the one you expect, you try again with the next recId.</p>
      *
-     * <p>Given the above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the
-     * output is null OR a key that is not the one you expect, you try again with the next recId.</p>
-     *
-     * @param recId Which possible key to recover.
-     * @param sig the R and S components of the signature, wrapped.
+     * @param recId       Which possible key to recover.
+     * @param sig         the R and S components of the signature, wrapped.
      * @param messageHash Hash of the data that was signed.
-     * @param compressed Whether or not the original pubkey was compressed.
+     * @param compressed  Whether or not the original pubkey was compressed.
+     *
      * @return An ECKey containing only the public part, or null if recovery wasn't possible.
      */
 
@@ -603,7 +612,9 @@ public class ECKey implements Serializable {
         return ECKey.fromPublicOnly(q.getEncoded(compressed));
     }
 
-    /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
+    /**
+     * Decompress a compressed public key (x co-ord and low-bit of y-coord).
+     */
     private static ECPoint decompressKey(BigInteger xBN, boolean yBit) {
         X9IntegerConverter x9 = new X9IntegerConverter();
         byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(CURVE.getCurve()));
@@ -648,11 +659,12 @@ public class ECKey implements Serializable {
     }
 
     /**
-     * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need:
-     * it appends a leading zero to indicate that the number is positive and may need padding.
+     * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need: it appends a
+     * leading zero to indicate that the number is positive and may need padding.
      *
-     * @param b the integer to format into a byte array
+     * @param b        the integer to format into a byte array
      * @param numBytes the desired size of the resulting byte array
+     *
      * @return numBytes byte long array.
      */
     public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
@@ -668,11 +680,7 @@ public class ECKey implements Serializable {
 
     public static byte[] sha3(byte[] input) {
         byte[] result = new byte[0];
-        try {
-            result = HashUtils.sha3(input);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
+        result = HashUtils.sha3(input);
         return result;
     }
 

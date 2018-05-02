@@ -1,6 +1,6 @@
 package io.topiacoin.dht.routing;
 
-import io.topiacoin.dht.config.Configuration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.network.Node;
 
 import java.io.IOException;
@@ -11,20 +11,20 @@ import java.util.TreeSet;
 
 public class RouteBucket {
 
-    private final Configuration configuration;
+    private final DHTConfiguration configuration;
 
     private int distance;
     private TreeSet<NodeInfo> nodes;
     private TreeSet<NodeInfo> replacementCache;
 
-    public RouteBucket(int distance, Configuration configuration) {
+    public RouteBucket(int distance, DHTConfiguration configuration) {
         this.configuration = configuration;
         this.distance = distance;
         this.nodes = new TreeSet<NodeInfo>();
         this.replacementCache = new TreeSet<NodeInfo>();
     }
 
-    public RouteBucket(ByteBuffer buffer, Configuration configuration) throws IOException {
+    public RouteBucket(ByteBuffer buffer, DHTConfiguration configuration) throws IOException {
         this.configuration = configuration;
         this.nodes = new TreeSet<NodeInfo>();
         this.replacementCache = new TreeSet<NodeInfo>();

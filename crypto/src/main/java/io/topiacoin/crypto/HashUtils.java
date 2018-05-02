@@ -17,9 +17,13 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-1 hashing.
      */
-    public static byte[] sha1(byte[] input) throws NoSuchAlgorithmException {
-        MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-        return sha1.digest(input);
+    public static byte[] sha1(byte[] input) {
+        try {
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            return sha1.digest(input);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to Find the SHA-1 Algorithm", e);
+        }
     }
 
     /**
@@ -32,7 +36,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-1 hashing.
      */
-    public static  byte[] sha1(String input) throws NoSuchAlgorithmException {
+    public static byte[] sha1(String input) {
         return sha1(input.getBytes());
     }
 
@@ -45,7 +49,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-1 hashing.
      */
-    public static  String sha1String(byte[] input) throws NoSuchAlgorithmException {
+    public static String sha1String(byte[] input) {
         return Hex.toHexString(sha1(input));
     }
 
@@ -59,7 +63,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-1 hashing.
      */
-    public static  String sha1String(String input) throws NoSuchAlgorithmException {
+    public static String sha1String(String input) {
         return sha1String(input.getBytes());
     }
 
@@ -72,12 +76,17 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-256 hashing.
      */
-    public static byte[] sha256(byte[]... inputs) throws NoSuchAlgorithmException {
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-        for(byte[] input : inputs) {
-            sha256.update(input);
+    public static byte[] sha256(byte[]... inputs) {
+        try {
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            for (byte[] input : inputs) {
+                sha256.update(input);
+            }
+            return sha256.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to Find the SHA-256 Algorithm", e);
         }
-        return sha256.digest();
+
     }
 
     /**
@@ -90,7 +99,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-256 hashing.
      */
-    public static byte[] sha256(String input) throws NoSuchAlgorithmException {
+    public static byte[] sha256(String input) {
         return sha256(input.getBytes());
     }
 
@@ -103,7 +112,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-256 hashing.
      */
-    public static  String sha256String(byte[] input) throws NoSuchAlgorithmException {
+    public static String sha256String(byte[] input) {
         return Hex.toHexString(sha256(input));
     }
 
@@ -117,7 +126,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-256 hashing.
      */
-    public static  String sha256String(String input) throws NoSuchAlgorithmException {
+    public static String sha256String(String input) {
         return sha256String(input.getBytes());
     }
 
@@ -130,7 +139,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-3 hashing.
      */
-    public static  byte[] sha3(byte[] input) throws NoSuchAlgorithmException {
+    public static byte[] sha3(byte[] input) {
         SHA3Digest digest = new SHA3Digest(256);
         byte[] hash = new byte[digest.getDigestSize()];
 
@@ -151,7 +160,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-3 hashing.
      */
-    public static  byte[] sha3(String input) throws NoSuchAlgorithmException {
+    public static byte[] sha3(String input) {
         return sha3(input.getBytes());
     }
 
@@ -164,7 +173,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-3 hashing.
      */
-    public static  String sha3String(byte[] input) throws NoSuchAlgorithmException {
+    public static String sha3String(byte[] input) {
         return Hex.toHexString(sha3(input));
     }
 
@@ -178,7 +187,7 @@ public class HashUtils {
      *
      * @throws NoSuchAlgorithmException If the platform does not support SHA-3 hashing.
      */
-    public static  String sha3String(String input) throws NoSuchAlgorithmException {
+    public static String sha3String(String input) {
         return sha3String(input.getBytes());
     }
 }

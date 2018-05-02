@@ -1,39 +1,103 @@
-package io.topiacoin.workspace.blockchain;
+package io.topiacoin.sdk;
 
+import io.topiacoin.core.Configuration;
+import io.topiacoin.core.EventsAPI;
+import io.topiacoin.core.UsersAPI;
 import io.topiacoin.core.WorkspacesAPI;
+import io.topiacoin.core.callbacks.AcceptInvitationCallback;
+import io.topiacoin.core.callbacks.AcknowledgeFileCallback;
+import io.topiacoin.core.callbacks.AcknowledgeMessageCallback;
+import io.topiacoin.core.callbacks.AddFileCallback;
+import io.topiacoin.core.callbacks.AddFileTagCallback;
+import io.topiacoin.core.callbacks.AddFileVersionCallback;
+import io.topiacoin.core.callbacks.AddFolderCallback;
+import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
+import io.topiacoin.core.callbacks.DeclineInvitationCallback;
+import io.topiacoin.core.callbacks.DownloadFileVersionCallback;
+import io.topiacoin.core.callbacks.InviteUserCallback;
+import io.topiacoin.core.callbacks.LeaveWorkspaceCallback;
+import io.topiacoin.core.callbacks.LockFileCallback;
+import io.topiacoin.core.callbacks.RemoveFileCallback;
+import io.topiacoin.core.callbacks.RemoveFileTagCallback;
+import io.topiacoin.core.callbacks.RemoveFileVersionCallback;
+import io.topiacoin.core.callbacks.RemoveFolderCallback;
+import io.topiacoin.core.callbacks.RemoveMemberCallback;
+import io.topiacoin.core.callbacks.SaveFileVersionCallback;
+import io.topiacoin.core.callbacks.UnlockFileCallback;
+import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.model.User;
+import io.topiacoin.model.Workspace;
+import io.topiacoin.sdk.impl.BlockchainUsersAPI;
+import io.topiacoin.sdk.impl.BlockchainWorkspacesAPI;
+import io.topiacoin.sdk.impl.DHTEventsAPI;
 
 import java.io.File;
+import java.util.List;
 
-public class BlockchainWorkspaceAPI implements WorkspacesAPI {
-    /**
-     * Instructs the Blockchain API to connect to the blockchain for the specified workspace ID. This will start the
-     * process of tracking the blockchain for new events. Calling this method for a workspace that is already being
-     * tracked is effectively a NOP.
-     * <p>
-     * On successful connection of the workspace, a notification of type 'workspaceConnectionComplete' will be posted to
-     * the notification center. The classifier of this notification will be the workspace ID. The notification info will
-     * be empty.
-     * <p>
-     * On a failure to connect to the workspace, a notification of type 'workspaceConnectionFailed' will be posted to
-     * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
-     * will include the reason for the failure under the 'reason' key.
-     *
-     * @param workspaceID
-     */
-    public void connectWorkspace(String workspaceID) {
+public class SDFS {
+
+    private WorkspacesAPI _workspaceAPI;
+    private UsersAPI _userAPI;
+    private EventsAPI _eventAPI;
+
+    public SDFS(Configuration configuration) {
+        _workspaceAPI = new BlockchainWorkspacesAPI(configuration);
+        _userAPI = new BlockchainUsersAPI(configuration);
+        _eventAPI = new DHTEventsAPI(configuration);
+    }
+
+
+    // -------- Event API --------
+
+    public void addUpdateListener() {
+
+    }
+
+    public void removeUpdateListener() {
 
     }
 
     /**
-     * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
+     * Requests that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
      * to check all of the tracked blockchains for changes. This functionality is periodically invoked by the API to
      * insure that the system is regularly updated with any new activity. This method is provided so that the client
-     * application can trigger on demand updates, such as when requested by the user. This method does not guarentee
+     * application can trigger on demand updates, such as when requested by the user. This method does not guarantee
      * that an update will occur. In certain cases, the system may choose to ignore the request for updates, such as if
      * an update was recently performed (e.g. within the last 10 seconds).
      */
     public void checkForUpdates() {
 
+    }
+
+
+    // -------- User API --------
+
+    /**
+     * Returns the user with the specified identifier, if available. Depending on the configuration of the SDK, the
+     * userIdentifier may be the userID, email address, or blockchain wallet address. If no user can be found with this
+     * identifier, null is returned.
+     *
+     * @param userIdentifier
+     *
+     * @return
+     */
+    public User getUser(String userIdentifier) {
+        return null;
+    }
+
+    public void updateUser(String userIdentifier, User user) {
+
+    }
+
+    // -------- Workspace API --------
+
+    public List<Workspace> getWorkspaces() {
+        return null;
+    }
+
+    public Workspace getWorkspace(String workspaceID) {
+        return null ;
     }
 
     /**
@@ -55,7 +119,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceName
      * @param workspaceDescription
      */
-    public void createWorkspace(String workspaceName, String workspaceDescription) {
+    public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) {
 
     }
 
@@ -74,7 +138,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param workspaceDescription
      */
-    public void updateWorkspaceDescription(String workspaceGUID, String workspaceDescription) {
+    public void updateWorkspaceDescription(String workspaceGUID, String workspaceDescription, UpdateWorkspaceDescriptionCallback callback) {
 
     }
 
@@ -96,7 +160,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param userID
      * @param inviteMessage
      */
-    public void inviteUser(String workspaceGUID, String userID, String inviteMessage) {
+    public void inviteUser(String workspaceGUID, String userID, String inviteMessage, InviteUserCallback callback) {
 
     }
 
@@ -114,7 +178,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      *
      * @param workspaceGUID
      */
-    public void acceptInvitation(String workspaceGUID) {
+    public void acceptInvitation(String workspaceGUID, AcceptInvitationCallback callback) {
 
     }
 
@@ -132,7 +196,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      *
      * @param workspaceGUID
      */
-    public void declineInvitation(String workspaceGUID) {
+    public void declineInvitation(String workspaceGUID, DeclineInvitationCallback callback) {
 
     }
 
@@ -172,7 +236,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      *
      * @param workspaceGUID
      */
-    public void leaveWorkspace(String workspaceGUID) {
+    public void leaveWorkspace(String workspaceGUID, LeaveWorkspaceCallback callback) {
 
     }
 
@@ -193,7 +257,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param worksapceGUID
      * @param memberID
      */
-    public void removeUserFromWorkspace(String worksapceGUID, String memberID) {
+    public void removeUserFromWorkspace(String worksapceGUID, String memberID, RemoveMemberCallback callback) {
 
     }
 
@@ -227,7 +291,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param folderGUID
      * @param fileToBeAdded
      */
-    public void addFile(String workspaceGUID, String folderGUID, File fileToBeAdded) {
+    public void addFile(String workspaceGUID, String folderGUID, File fileToBeAdded, AddFileCallback callback) {
 
     }
 
@@ -247,7 +311,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param fileGUID
      */
-    public void removeFile(String workspaceGUID, String fileGUID) {
+    public void removeFile(String workspaceGUID, String fileGUID, RemoveFileCallback callback) {
 
     }
 
@@ -282,7 +346,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param fileGUID
      * @param fileToBeAdded
      */
-    public void addFileVersion(String workspaceGUID, String fileGUID, File fileToBeAdded) {
+    public void addFileVersion(String workspaceGUID, String fileGUID, File fileToBeAdded, AddFileVersionCallback callback) {
 
     }
 
@@ -306,7 +370,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param fileGUID
      * @param fileVersionGUID
      */
-    public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID) {
+    public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) {
 
     }
 
@@ -326,31 +390,26 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param fileGUID
      * @param fileVersionGUID
      */
-    public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID) {
+    public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) {
 
     }
 
     /**
-     * Adds a tag to the specified file.  Private tags will only be visible to the user who creates them.  Public tags
-     * are visible to all users in the workspace.
-     *
      * @param workspaceGUID
      * @param fileGUID
      * @param tagName
      * @param isPrivate
      */
-    public void addFileTag(String workspaceGUID, String fileGUID, String tagName, boolean isPrivate) {
+    public void addFileTag(String workspaceGUID, String fileGUID, String tagName, boolean isPrivate, AddFileTagCallback callback) {
 
     }
 
     /**
-     * Removes a tag from the specified file.  Only tags that are visible to the user can be removed.
-     *
      * @param workspaceGUID
      * @param fileGUID
      * @param tagName
      */
-    public void removeFileTag(String workspaceGUID, String fileGUID, String tagName) {
+    public void removeFileTag(String workspaceGUID, String fileGUID, String tagName, RemoveFileTagCallback callback) {
 
     }
 
@@ -385,7 +444,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param fileGUID
      * @param fileVersionGUID
      */
-    public void downloadFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID) {
+    public void downloadFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, DownloadFileVersionCallback callback) {
 
     }
 
@@ -412,7 +471,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param fileVersionGUID
      * @param targetDirectory
      */
-    public void saveFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, String targetDirectory) {
+    public void saveFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, String targetDirectory, SaveFileVersionCallback callback) {
 
     }
 
@@ -433,7 +492,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param fileGUID
      */
-    public void lockFile(String workspaceGUID, String fileGUID) {
+    public void lockFile(String workspaceGUID, String fileGUID, LockFileCallback callback) {
 
     }
 
@@ -454,7 +513,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param fileGUID
      */
-    public void unlockFile(String workspaceGUID, String fileGUID) {
+    public void unlockFile(String workspaceGUID, String fileGUID, UnlockFileCallback callback) {
 
     }
 
@@ -477,7 +536,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param parentGUID
      * @param folderName
      */
-    public void addFolder(String workspaceGUID, String parentGUID, String folderName) {
+    public void addFolder(String workspaceGUID, String parentGUID, String folderName, AddFolderCallback callback) {
 
     }
 
@@ -496,7 +555,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param folderGUID
      */
-    public void removeFolder(String workspaceGUID, String folderGUID) {
+    public void removeFolder(String workspaceGUID, String folderGUID, RemoveFolderCallback callback) {
 
     }
 
@@ -517,7 +576,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param message
      */
-    public void addMessage(String workspaceGUID, String message) {
+    public void addMessage(String workspaceGUID, String message, AddMessageCallback callback) {
 
     }
 
@@ -532,7 +591,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param messageGUID
      */
-    public void acknowledgeMessage(String workspaceGUID, String messageGUID) {
+    public void acknowledgeMessage(String workspaceGUID, String messageGUID, AcknowledgeMessageCallback callback) {
 
     }
 }

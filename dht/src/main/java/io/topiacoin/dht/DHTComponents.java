@@ -1,7 +1,7 @@
 package io.topiacoin.dht;
 
 import io.topiacoin.crypto.MessageSigner;
-import io.topiacoin.dht.config.Configuration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.intf.ValueStorage;
 import io.topiacoin.dht.messages.MessageFactory;
 import io.topiacoin.dht.network.CommunicationServer;
@@ -14,7 +14,7 @@ public class DHTComponents {
     private CommunicationServer _communicationServer;
     private RoutingTable _routingTable;
     private MessageSigner _messageSigner;
-    private Configuration _configuration;
+    private DHTConfiguration _configuration;
     private MessageFactory _messageFactory;
     private ValueStorage _valueStorage;
     private Semaphore _refreshSemaphore;
@@ -43,11 +43,11 @@ public class DHTComponents {
         _messageSigner = messageSigner;
     }
 
-    public Configuration getConfiguration() {
+    public DHTConfiguration getConfiguration() {
         return _configuration;
     }
 
-    public void setConfiguration(Configuration configuration) {
+    public void setConfiguration(DHTConfiguration configuration) {
         _configuration = configuration;
     }
 

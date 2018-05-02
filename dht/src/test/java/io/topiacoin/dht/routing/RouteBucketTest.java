@@ -1,7 +1,7 @@
 package io.topiacoin.dht.routing;
 
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
+import io.topiacoin.dht.DHTTestConfiguration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
@@ -18,11 +18,11 @@ import static org.junit.Assert.*;
 
 public class RouteBucketTest {
 
-    private static Configuration _configuration;
+    private static DHTConfiguration _configuration;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        _configuration = new DefaultConfiguration();
+        _configuration = new DHTTestConfiguration();
         _configuration.setC1(4);
         _configuration.setC2(8);
         _configuration.setK(5);

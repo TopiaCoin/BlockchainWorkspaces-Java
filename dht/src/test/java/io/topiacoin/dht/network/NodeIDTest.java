@@ -1,8 +1,8 @@
 package io.topiacoin.dht.network;
 
 import io.topiacoin.crypto.CryptoUtils;
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
+import io.topiacoin.dht.DHTTestConfiguration;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -23,7 +23,9 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreation() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
+        configuration.setC1(10);
+        configuration.setC2(20);
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -43,7 +45,7 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreationFromNodeIDAndValidation() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -64,7 +66,7 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreationFromKeyPairAndValidation() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -93,7 +95,7 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreationFromNodeIDAndValidationWhenNodeIDIsInvalid() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -112,7 +114,7 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreationFromNodeIDAndValidationWhenValidationIsInvalid() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -131,7 +133,7 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreationFromKeyPairAndValidationWhenKeyPairIsInvalid() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -153,7 +155,7 @@ public class NodeIDTest {
     @Test
     public void testNodeIDCreationFromKeyPairAndValidationWhenValidationIsInvalid() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -174,7 +176,7 @@ public class NodeIDTest {
 
     @Test
     public void testDistanceWithSelf() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -208,7 +210,7 @@ public class NodeIDTest {
 
     @Test
     public void testDistanceBetweenNodes() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -245,7 +247,7 @@ public class NodeIDTest {
 
     @Test
     public void testCreateNodeWithDistance() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -269,7 +271,7 @@ public class NodeIDTest {
 
     @Test
     public void testCreatedDistantNodeNotValid() throws Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 
@@ -285,7 +287,7 @@ public class NodeIDTest {
 
     @Test
     public void testEncodingAndDecoding() throws  Exception {
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 

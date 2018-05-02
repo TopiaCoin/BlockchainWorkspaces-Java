@@ -1,7 +1,7 @@
 package io.topiacoin.dht.messages;
 
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
+import io.topiacoin.dht.DHTTestConfiguration;
 import io.topiacoin.dht.handlers.ConnectRequestHandler;
 import io.topiacoin.dht.handlers.FetchValueRequestHandler;
 import io.topiacoin.dht.handlers.NodeLookupRequestHandler;
@@ -172,7 +172,7 @@ public class MessageFactoryTest {
     @Test
     public void testCreateNodeLookupRequest() {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 

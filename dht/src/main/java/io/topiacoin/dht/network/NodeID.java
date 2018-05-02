@@ -27,7 +27,7 @@ import java.util.Random;
  * validation value.  In either case the class will validate the the keyPair represents a valid NodeID, and that the
  * validation value properly validates the nodeID.
  */
-public class NodeID implements Comparable<NodeID>{
+public class NodeID implements Comparable<NodeID> {
 
     private Log _log = LogFactory.getLog(this.getClass());
 
@@ -54,12 +54,8 @@ public class NodeID implements Comparable<NodeID>{
     }
 
     public NodeID(String key) throws IllegalArgumentException {
-        try {
-            this.nodeID = HashUtils.sha1(key.getBytes());
-            this.validation = null;
-        } catch ( NoSuchAlgorithmException e ) {
-            throw new RuntimeException("Java no longer supports SHA-1!", e);
-        }
+        this.nodeID = HashUtils.sha1(key.getBytes());
+        this.validation = null;
     }
 
     /**
@@ -77,12 +73,7 @@ public class NodeID implements Comparable<NodeID>{
         _keyPair = keyPair;
         this.validation = validation;
 
-        try {
-            this.nodeID = HashUtils.sha1(_keyPair.getPublic().getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            _log.fatal("Unable to find required cryptographic Algorithms", e);
-            throw new RuntimeException("Unable to find the required cryptographic algorithms", e);
-        }
+        this.nodeID = HashUtils.sha1(_keyPair.getPublic().getEncoded());
     }
 
     private NodeID(byte[] nodeID) {
@@ -225,9 +216,9 @@ public class NodeID implements Comparable<NodeID>{
     }
 
     public int compareTo(NodeID o) {
-        for ( int i = 0 ; i < this.nodeID.length ; i++ ) {
-            if ( this.nodeID[i] < o.nodeID[i] ) return -1 ;
-            if ( this.nodeID[i] > o.nodeID[i] ) return 1 ;
+        for (int i = 0; i < this.nodeID.length; i++) {
+            if (this.nodeID[i] < o.nodeID[i]) return -1;
+            if (this.nodeID[i] > o.nodeID[i]) return 1;
         }
 
         return 0;
@@ -247,24 +238,24 @@ public class NodeID implements Comparable<NodeID>{
 
     public void encode(ByteBuffer buffer) {
 
-        buffer.putInt(nodeID.length) ;
-        buffer.put(nodeID) ;
-        buffer.putInt((validation != null ? validation.length : 0)) ;
-        buffer.put((validation != null ? validation : new byte[0])) ;
+        buffer.putInt(nodeID.length);
+        buffer.put(nodeID);
+        buffer.putInt((validation != null ? validation.length : 0));
+        buffer.put((validation != null ? validation : new byte[0]));
 
     }
 
     public static NodeID decode(ByteBuffer buffer) {
-        byte[] nodeID ;
+        byte[] nodeID;
         int nodeIDLength;
         byte[] validation;
         int validationLength;
 
         nodeIDLength = buffer.getInt();
-        nodeID = new byte[nodeIDLength] ;
+        nodeID = new byte[nodeIDLength];
         buffer.get(nodeID);
         validationLength = buffer.getInt();
-        if ( validationLength > 0 ) {
+        if (validationLength > 0) {
             validation = new byte[validationLength];
             buffer.get(validation);
         } else {

@@ -3,57 +3,50 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>topiacoin</groupId>
+        <artifactId>bcWorkspaceLibrary</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
     <!-- Project Information -->
     <groupId>topiacoin</groupId>
-    <artifactId>bcWorkspaceLibrary</artifactId>
+    <artifactId>sdk</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>TopiaCoin Master Project</name>
-    <packaging>pom</packaging>
+    <name>TopiaCoin Model</name>
+    <packaging>jar</packaging>
     <url>https://topiacoin.io</url>
-
-    <!-- Sub Mobules -->
-    <modules>
-        <module>sdk</module>
-        <module>model</module>
-        <module>core</module>
-        <module>workspace-blockchain</module>
-        <module>crypto</module>
-        <module>dht</module>
-        <module>chunks</module>
-    </modules>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
 
     <dependencies>
         <dependency>
             <groupId>topiacoin</groupId>
-            <artifactId>blockchainUtil</artifactId>
+            <artifactId>core</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
-
-        <!-- Test Dependencies -->
-        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>topiacoin</groupId>
+            <artifactId>crypto</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>topiacoin</groupId>
+            <artifactId>model</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>topiacoin</groupId>
+            <artifactId>dht</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>topiacoin</groupId>
+            <artifactId>workspace-blockchain</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

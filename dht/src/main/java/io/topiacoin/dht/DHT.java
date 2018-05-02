@@ -6,7 +6,7 @@ import io.topiacoin.dht.action.FetchValueAction;
 import io.topiacoin.dht.action.PeriodicRefreshAction;
 import io.topiacoin.dht.action.RemoveValueAction;
 import io.topiacoin.dht.action.StoreValueAction;
-import io.topiacoin.dht.config.Configuration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.content.InMemoryExpiringValueStorage;
 import io.topiacoin.dht.intf.FetchContentCallback;
 import io.topiacoin.dht.intf.ValueStorage;
@@ -53,7 +53,7 @@ public class DHT {
 
     private Timer refreshTimer;
 
-    public DHT(int udpPort, KeyPair keyPair, Configuration configuration) throws SocketException, NoSuchAlgorithmException, UnknownHostException {
+    public DHT(int udpPort, KeyPair keyPair, DHTConfiguration configuration) throws SocketException, NoSuchAlgorithmException, UnknownHostException {
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration);
 

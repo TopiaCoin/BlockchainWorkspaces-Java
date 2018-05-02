@@ -1,8 +1,7 @@
 package io.topiacoin.dht;
 
 import io.topiacoin.crypto.CryptoUtils;
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.network.Node;
 import io.topiacoin.dht.network.NodeID;
 import io.topiacoin.dht.network.NodeIDGenerator;
@@ -28,7 +27,7 @@ public class DHTTest {
     @Test
     public void testStoreValue() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -84,7 +83,7 @@ public class DHTTest {
     @Test
     public void testStoreMultipleValues() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -120,7 +119,7 @@ public class DHTTest {
     @Test
     public void testStoreMultipleValuesFromMultipleDHTs() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -176,7 +175,7 @@ public class DHTTest {
     @Test
     public void testStoreMultipleValuesThenAddNewDHT() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -220,7 +219,7 @@ public class DHTTest {
     @Test
     public void testStoreValueWithSecondDHT() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -284,7 +283,7 @@ public class DHTTest {
     @Test
     public void testContentRefresh() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -355,7 +354,7 @@ public class DHTTest {
     @Test
     public void testContentRefreshWithMultipleValues() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -402,7 +401,7 @@ public class DHTTest {
     @Test
     public void testStoreValueWithMultipleServers() throws Exception {
 
-        Configuration configuration = new DefaultConfiguration();
+        DHTConfiguration configuration = new DHTTestConfiguration();
         configuration.setC1(4);
         configuration.setC2(8);
 
@@ -488,7 +487,7 @@ public class DHTTest {
     @Ignore
     @Test
     public void testSaveAndRestoreStateWithFullRoutingTable() throws Exception {
-        Configuration configuration1 = new DefaultConfiguration();
+        DHTConfiguration configuration1 = new DHTTestConfiguration();
         configuration1.setC1(4);
         configuration1.setC2(8);
         configuration1.setNodeDataFolder("./target/node1");
@@ -539,7 +538,7 @@ public class DHTTest {
     public void testRefreshTimer() throws Exception {
         // NOTE:  This test has no assertions as it is not currently possible to verify that the /
         // periodic refresh has actually executed.
-        Configuration configuration1 = new DefaultConfiguration();
+        DHTConfiguration configuration1 = new DHTTestConfiguration();
         configuration1.setC1(4);
         configuration1.setC2(8);
         configuration1.setRestoreInterval(500);
@@ -563,7 +562,7 @@ public class DHTTest {
     public void testRefreshTimerWithMultipleNodes() throws Exception {
         // NOTE:  This test has no assertions as it is not currently possible to verify that the /
         // periodic refresh has actually executed.
-        Configuration configuration1 = new DefaultConfiguration();
+        DHTConfiguration configuration1 = new DHTTestConfiguration();
         configuration1.setC1(4);
         configuration1.setC2(8);
         configuration1.setRestoreInterval(500);

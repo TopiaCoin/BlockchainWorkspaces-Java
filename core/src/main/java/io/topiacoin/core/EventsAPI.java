@@ -1,6 +1,6 @@
 package io.topiacoin.core;
 
-public interface EventAPI {
+public interface EventsAPI {
 
     /**
      * Posted when a workspace event has been received.

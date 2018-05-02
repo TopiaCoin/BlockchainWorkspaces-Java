@@ -2,8 +2,7 @@ package io.topiacoin.dht;
 
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.MessageSigner;
-import io.topiacoin.dht.config.Configuration;
-import io.topiacoin.dht.config.DefaultConfiguration;
+import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.dht.content.InMemoryExpiringValueStorage;
 import io.topiacoin.dht.intf.Message;
 import io.topiacoin.dht.intf.ResponseHandler;
@@ -36,7 +35,7 @@ public class CommunicationServerTest {
         KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
         MessageSigner messageSigner1 = new MessageSigner();
 
-        Configuration configuration1 = new DefaultConfiguration();
+        DHTConfiguration configuration1 = new DHTTestConfiguration();
 
         ValueStorage valueStorage1 = new InMemoryExpiringValueStorage(10000) ;
 
@@ -102,7 +101,7 @@ public class CommunicationServerTest {
         KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
         MessageSigner messageSigner1 = new MessageSigner();
 
-        Configuration configuration1 = new DefaultConfiguration();
+        DHTConfiguration configuration1 = new DHTTestConfiguration();
 
         ValueStorage valueStorage1 = new InMemoryExpiringValueStorage(10000) ;
 
@@ -132,7 +131,7 @@ public class CommunicationServerTest {
         KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
         MessageSigner messageSigner2 = new MessageSigner();
 
-        Configuration configuration2 = new DefaultConfiguration();
+        DHTConfiguration configuration2 = new DHTTestConfiguration();
 
         ValueStorage valueStorage2 = new InMemoryExpiringValueStorage(10000) ;
 

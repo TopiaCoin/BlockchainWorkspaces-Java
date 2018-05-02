@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class FetchValueRequestHandler implements ResponseHandler{
+public class FetchValueRequestHandler implements ResponseHandler {
 
     private final Log _log = LogFactory.getLog(this.getClass());
 
@@ -32,7 +32,7 @@ public class FetchValueRequestHandler implements ResponseHandler{
 
     public void receive(Node origin, Message msg, int msgID) {
         if (msg instanceof FetchValueRequest) {
-            FetchValueRequest fvrMsg = (FetchValueRequest)msg;
+            FetchValueRequest fvrMsg = (FetchValueRequest) msg;
 
             String key = fvrMsg.getKey();
             Set<String> values = new TreeSet<String>();
@@ -41,8 +41,8 @@ public class FetchValueRequestHandler implements ResponseHandler{
             ValueStorage valueStorage = _dhtComponents.getValueStorage();
             Collection<String> localValues = valueStorage.getValues(key);
 
-            if ( localValues != null ) {
-                values.addAll(localValues) ;
+            if (localValues != null) {
+                values.addAll(localValues);
 
                 FetchValueResponse response = new FetchValueResponse();
                 response.setKey(key);
@@ -53,22 +53,18 @@ public class FetchValueRequestHandler implements ResponseHandler{
                 communicationServer.reply(origin, response, msgID);
             } else {
                 // Respond with a NodeLookUpResponse Message containing the closet nodes to the requested Key
-                try {
-                    byte[] keyIDBytes = HashUtils.sha1(key.getBytes());
+                byte[] keyIDBytes = HashUtils.sha1(key.getBytes());
 
-                    NodeID keyID = new NodeID(keyIDBytes, null);
-                    int numNodes = _dhtComponents.getConfiguration().getK();
+                NodeID keyID = new NodeID(keyIDBytes, null);
+                int numNodes = _dhtComponents.getConfiguration().getK();
 
-                    List<Node> closetNodes = _dhtComponents.getRoutingTable().findClosest(keyID, numNodes);
+                List<Node> closetNodes = _dhtComponents.getRoutingTable().findClosest(keyID, numNodes);
 
-                    NodeLookupResponse response = new NodeLookupResponse(closetNodes);
+                NodeLookupResponse response = new NodeLookupResponse(closetNodes);
 
-                    CommunicationServer communicationServer = this._dhtComponents.getCommunicationServer();
+                CommunicationServer communicationServer = this._dhtComponents.getCommunicationServer();
 
-                    communicationServer.reply(origin, response, msgID);
-                } catch ( NoSuchAlgorithmException e ) {
-                    _log.fatal("Java no longer supports SHA-1!");
-                }
+                communicationServer.reply(origin, response, msgID);
             }
         }
     }
