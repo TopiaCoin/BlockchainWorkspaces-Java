@@ -1,5 +1,10 @@
 package io.topiacoin.sdk;
 
+import io.topiacoin.chunks.ChunkManager;
+import io.topiacoin.chunks.exceptions.DuplicateChunkException;
+import io.topiacoin.chunks.exceptions.InsufficientSpaceException;
+import io.topiacoin.chunks.exceptions.NoSuchChunkException;
+import io.topiacoin.chunks.intf.ChunksFetchHandler;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.core.EventsAPI;
 import io.topiacoin.core.UsersAPI;
@@ -26,25 +31,75 @@ import io.topiacoin.core.callbacks.RemoveMemberCallback;
 import io.topiacoin.core.callbacks.SaveFileVersionCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
+import io.topiacoin.crypto.HashUtils;
+import io.topiacoin.model.CurrentUser;
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.File;
+import io.topiacoin.model.FileChunk;
+import io.topiacoin.model.FileVersion;
+import io.topiacoin.model.Member;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.FileAlreadyExistsException;
+import io.topiacoin.model.exceptions.FileChunkAlreadyExistsException;
+import io.topiacoin.model.exceptions.FileVersionAlreadyExistsException;
+import io.topiacoin.model.exceptions.NoSuchFileException;
+import io.topiacoin.model.exceptions.NoSuchFileVersionException;
+import io.topiacoin.model.exceptions.NoSuchUserException;
+import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.sdk.impl.BlockchainUsersAPI;
 import io.topiacoin.sdk.impl.BlockchainWorkspacesAPI;
 import io.topiacoin.sdk.impl.DHTEventsAPI;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 public class SDFS {
+
+    private final Log _log = LogFactory.getLog(this.getClass());
+
+    private final Configuration _configuration;
 
     private WorkspacesAPI _workspaceAPI;
     private UsersAPI _userAPI;
     private EventsAPI _eventAPI;
 
-    public SDFS(Configuration configuration) {
+    private DataModel _dataModel;
+    private ChunkManager _chunkManager;
+
+    private ExecutorService _taskExecutor;
+
+    public SDFS(KeyPair userKeyPair, Configuration configuration) {
+        _configuration = configuration;
         _workspaceAPI = new BlockchainWorkspacesAPI(configuration);
         _userAPI = new BlockchainUsersAPI(configuration);
         _eventAPI = new DHTEventsAPI(configuration);
+
+        _taskExecutor = Executors.newSingleThreadExecutor();
     }
 
 
@@ -97,7 +152,7 @@ public class SDFS {
     }
 
     public Workspace getWorkspace(String workspaceID) {
-        return null ;
+        return null;
     }
 
     /**
@@ -261,6 +316,15 @@ public class SDFS {
 
     }
 
+
+    public List<File> getFilesInWorkspace(String workspaceGUID) {
+        return null;
+    }
+
+    public File getFile(String fileID) {
+        return null;
+    }
+
     /**
      * Adds a file to the specified workspace with the specified parent. If parentGUID is null or an empty string, then
      * the file is placed in the root of the workspace. It is an error to specify a non-existent workspace GUID, or a
@@ -291,8 +355,161 @@ public class SDFS {
      * @param folderGUID
      * @param fileToBeAdded
      */
-    public void addFile(String workspaceGUID, String folderGUID, File fileToBeAdded, AddFileCallback callback) {
+    public void addFile(final String workspaceGUID,
+                        final String folderGUID,
+                        final java.io.File fileToBeAdded,
+                        final AddFileCallback callback) {
+        try {
+            CurrentUser currentUser = _dataModel.getCurrentUser();
 
+            String fileGUID = UUID.randomUUID().toString();
+            String fileVersionGUID = UUID.randomUUID().toString();
+            List<FileChunk> fileChunks = new ArrayList<>();
+
+            // Create File object with the basic metadata.
+            File newFile = new File();
+            newFile.setEntryID(fileGUID);
+            newFile.setName(fileToBeAdded.getName());
+            newFile.setParentID(folderGUID);
+            newFile.setContainerID(workspaceGUID);
+            newFile.setFolder(false);
+            newFile.setMimeType(mimeTypeForFile(fileToBeAdded));
+
+            // Create the version object for the new file
+            FileVersion fileVersion = new FileVersion();
+            fileVersion.setEntryID(fileGUID);
+            fileVersion.setVersionID(fileVersionGUID);
+            fileVersion.setUploadDate(System.currentTimeMillis());
+            fileVersion.setDate(fileToBeAdded.lastModified());
+            fileVersion.setSize(fileToBeAdded.length());
+
+            // Chunk and Encrypt the Data, collecting all the necessary metadata along the way.
+            int chunkSize = _configuration.getConfigurationOption("chunk.size", 524288);
+            long chunkIndex = 0;
+            long bytesRemaining = fileToBeAdded.length();
+            SecretKey chunkKey;
+            IvParameterSpec iv;
+            byte[] clearChunk = new byte[chunkSize];
+            byte[] cipherChunk = null;
+            byte[] fileHash = null ;
+            MessageDigest sha256File = MessageDigest.getInstance("SHA-256") ;
+            FileInputStream fileInputStream = new FileInputStream(fileToBeAdded);
+                    int bytesRead = 0;
+            try {
+                while (bytesRemaining > 0 && bytesRead >= 0 ) {
+                    // Generate a new Chunk ID
+                    String chunkID = HashUtils.sha256String(UUID.randomUUID().toString() + System.currentTimeMillis());
+
+                    chunkKey = CryptoUtils.generateAESKey();
+                    iv = CryptoUtils.generateIV(chunkKey.getAlgorithm());
+
+                    // Read in on chunk's worth of data from the source file
+                    bytesRead = fileInputStream.read(clearChunk);
+                    if (bytesRead > 0) {
+                        // Update the file Hash digest with the current chunk.
+                        sha256File.update(clearChunk, 0, bytesRead);
+
+                        // Compress the clearChunk
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        GZIPOutputStream gzos = new GZIPOutputStream(baos);
+                        gzos.write(clearChunk, 0, bytesRead);
+                        gzos.close();
+                        byte[] compressedChunk = baos.toByteArray();
+
+                        // Encrypt the chunk
+                        cipherChunk = CryptoUtils.encryptWithSecretKey(compressedChunk, chunkKey, iv);
+                        bytesRemaining -= bytesRead;
+
+                        // Calculate sizes and hashes of the clear and cipher chunks.
+                        int clearSize = bytesRead;
+                        int cipherSize = cipherChunk.length;
+                        String clearHashStr = HashUtils.sha256String(clearChunk);
+                        String cipherHashStr = HashUtils.sha256String(cipherChunk);
+
+                        // Create the File Chunk Model object
+                        FileChunk fileChunk = new FileChunk();
+                        fileChunk.setIndex(chunkIndex);
+                        fileChunk.setChunkID(chunkID);
+                        fileChunk.setClearTextSize(clearSize);
+                        fileChunk.setCipherTextSize(cipherSize);
+                        fileChunk.setClearTextHash(clearHashStr);
+                        fileChunk.setCipherTextHash(cipherHashStr);
+                        fileChunk.setCompressionAlgorithm("GZIP");
+                        fileChunk.setChunkKey(chunkKey);
+                        fileChunk.setInitializationVector(iv.getIV());
+
+                        // Save the encrypted chunk in the chunk manager
+                        _chunkManager.addChunk(chunkID, cipherChunk);
+
+                        // Add the File Chunk to the Collection
+                        fileChunks.add(fileChunk);
+
+                        // Increment the Chunk Index Counter
+                        chunkIndex++;
+                    }
+
+                }
+
+                fileHash = sha256File.digest() ;
+            } finally {
+                fileInputStream.close();
+            }
+
+            // Set the calculated Information
+            String fileHashStr = sha256File.getAlgorithm() + ":" + Base64.encodeBase64String(fileHash); // TODO - Try to figure out how to do this using Hash Utils
+            fileVersion.setFileHash(fileHashStr);
+            fileVersion.setOwnerID(currentUser.getUserID());
+
+            newFile.setVersions(Collections.singletonList(fileVersion));
+
+            // Save all of the objects into the data model
+            _dataModel.addFileToWorkspace(workspaceGUID, newFile);
+            _dataModel.addFileVersion(fileGUID, fileVersion);
+            for (FileChunk fileChunk : fileChunks) {
+                _dataModel.addChunkForFile(fileGUID, fileVersionGUID, fileChunk);
+            }
+        } catch (NoSuchUserException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (NoSuchWorkspaceException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (FileAlreadyExistsException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (FileVersionAlreadyExistsException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (NoSuchFileVersionException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (FileChunkAlreadyExistsException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (CryptographicException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (IOException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (InsufficientSpaceException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (DuplicateChunkException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            // TODO - Implement this Exception Handler
+        } finally {
+
+        }
     }
 
     /**
@@ -313,6 +530,14 @@ public class SDFS {
      */
     public void removeFile(String workspaceGUID, String fileGUID, RemoveFileCallback callback) {
 
+    }
+
+    public List<String> getAvailableFileVersions(String fileID) {
+        return null;
+    }
+
+    public FileVersion getFileVersion(String fileGUID, String fileVersionGUID) {
+        return null;
     }
 
     /**
@@ -346,7 +571,7 @@ public class SDFS {
      * @param fileGUID
      * @param fileToBeAdded
      */
-    public void addFileVersion(String workspaceGUID, String fileGUID, File fileToBeAdded, AddFileVersionCallback callback) {
+    public void addFileVersion(String workspaceGUID, String fileGUID, java.io.File fileToBeAdded, AddFileVersionCallback callback) {
 
     }
 
@@ -443,9 +668,53 @@ public class SDFS {
      * @param workspaceGUID
      * @param fileGUID
      * @param fileVersionGUID
+     * @param callback
      */
-    public void downloadFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, DownloadFileVersionCallback callback) {
+    public void downloadFileVersion(final String workspaceGUID,
+                                    final String fileGUID,
+                                    final String fileVersionGUID,
+                                    final DownloadFileVersionCallback callback)
+            throws NoSuchWorkspaceException, NoSuchFileException, NoSuchFileVersionException {
 
+        try {
+            // Get userIDs of all workspace members
+            // - throws NoSuchWorkspaceException if the requested workspace does not exist.
+            List<Member> members = _dataModel.getMembersInWorkspace(workspaceGUID);
+
+            // Verify that the file version requested actually exists and is in the specified workspace.
+            File file = _dataModel.getFile(fileGUID);
+            if (!file.getContainerID().equals(workspaceGUID)) {
+                throw new NoSuchFileException("The requested file does not exist in the specified workspace");
+            }
+            FileVersion fileVersion = _dataModel.getFileVersion(fileGUID, fileVersionGUID);
+
+            // Get chunkIDs for the specified file.
+            List<FileChunk> fileChunks = fileVersion.getFileChunks();
+            List<String> chunkIDs = fileChunks.stream().map(FileChunk::getChunkID).collect(Collectors.toList());
+
+            // --Fetch the Member Nodes for each of the userIDs-- Handled by Chunk Manager currently.
+            // Ask the chunk manager to fetch all the chunks
+            _chunkManager.fetchChunks(chunkIDs, workspaceGUID, new ChunksFetchHandler() {
+                @Override
+                public void finishedFetchingChunks(List<String> successfulChunks, List<String> unsuccessfulChunks, Object state) {
+                    callback.didDownloadFileVersion(fileGUID, fileVersionGUID);
+                }
+
+                @Override
+                public void errorFetchingChunks(String message, Exception cause, Object state) {
+                    callback.failedToDownloadFileVersion(fileGUID, fileVersionGUID, message);
+                }
+            }, null);
+        } catch (NoSuchWorkspaceException e) {
+            _log.info("Attempt to download a file from a non-existent workspace.", e);
+            throw e;
+        } catch (NoSuchFileException e) {
+            _log.info("Attempt to download a file version from a non-existent file.", e);
+            throw e;
+        } catch (NoSuchFileVersionException e) {
+            _log.info("Attempt to download a non-existent file version.", e);
+            throw e;
+        }
     }
 
     /**
@@ -466,13 +735,81 @@ public class SDFS {
      * workspace ID of the saved file under the 'workspaceID' key, the version number under the 'versionNumber' key, and
      * the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param fileGUID
-     * @param fileVersionGUID
-     * @param targetDirectory
+     * @param workspaceGUID   The GUID of the workspace containing the file being saved.
+     * @param fileGUID        The GUID of the file whose version is being saved.
+     * @param fileVersionGUID The GUID of the version of the file being saved.
+     * @param targetDirectory The directory into which the file is to be saved.
+     *
+     * @throws NoSuchFileException        If the specified fileGUID does not exist in the specified workspace.
+     * @throws NoSuchFileVersionException If the specified file does not have a version with the specified
+     *                                    fileVersionGUID.
+     * @throws IOException                If there is an error accessing the target location, or decrypting the file
+     *                                    version's chunk data.
      */
-    public void saveFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, String targetDirectory, SaveFileVersionCallback callback) {
+    public void saveFileVersion(final String workspaceGUID,
+                                final String fileGUID,
+                                final String fileVersionGUID,
+                                final String targetDirectory,
+                                final SaveFileVersionCallback callback)
+            throws NoSuchFileException, NoSuchFileVersionException, IOException {
 
+        try {
+            // Verify that the file version requested actually exists and is in the specified workspace.
+            File file = _dataModel.getFile(fileGUID);
+            if (!file.getContainerID().equals(workspaceGUID)) {
+                throw new NoSuchFileException("The requested file does not exist in the specified workspace");
+            }
+            FileVersion fileVersion = _dataModel.getFileVersion(fileGUID, fileVersionGUID);
+
+            // Get chunkIDs for the specified file.
+            List<FileChunk> fileChunks = fileVersion.getFileChunks();
+
+            // Verify that the chunk Manager has all of the necessary chunks
+            for (FileChunk fileChunk : fileChunks) {
+                if (!_chunkManager.hasChunk(fileChunk.getChunkID())) {
+                    throw new NoSuchChunkException("Missing chunk required to save file");
+                }
+            }
+
+            // Create the File object for the decrypted file,
+            // de-duplicating the name if a file with the name already exists.
+            java.io.File candidateFile = new java.io.File(targetDirectory, file.getName());
+            int dedupIndex = 0;
+            while (candidateFile.exists()) {
+                candidateFile = new java.io.File(targetDirectory, file.getName() + "-" + ++dedupIndex);
+            }
+
+            // Capture the candidate file object in a final variable so we can reference it inside the Runnable below.
+            final java.io.File targetFile = candidateFile;
+
+            // Submit a Runnable (via Java 8 lambda) to the executor to save the file off in the background.
+            _taskExecutor.submit(() -> {
+                try {
+                    decryptAndSaveFileVersion(fileChunks, targetFile);
+                    if (callback != null) {
+                        callback.didSaveFile(fileGUID, fileVersionGUID, targetFile);
+                    }
+                } catch (CryptographicException e) {
+                    _log.info("Failed to decrypt required file chunk.", e);
+                    callback.failedToSaveFile(fileGUID, fileVersionGUID, "Error decrypting the file chunks");
+                } catch (IOException e) {
+                    _log.info("Exception while saving the file.", e);
+                    callback.failedToSaveFile(fileGUID, fileVersionGUID, "Error saving the file");
+                } catch (NoSuchChunkException e) {
+                    _log.info("Exception while saving the file.", e);
+                    callback.failedToSaveFile(fileGUID, fileVersionGUID, "Unable to find all of the required file chunks");
+                }
+            });
+        } catch (NoSuchFileException e) {
+            _log.info("Attempt to download a file version from a non-existent file.", e);
+            throw e;
+        } catch (NoSuchFileVersionException e) {
+            _log.info("Attempt to download a non-existent file version.", e);
+            throw e;
+        } catch (NoSuchChunkException e) {
+            _log.info("Failed to retrieve required file chunk.", e);
+            throw new IOException("Unable to retrieve required file chunk", e);
+        }
     }
 
     /**
@@ -594,4 +931,38 @@ public class SDFS {
     public void acknowledgeMessage(String workspaceGUID, String messageGUID, AcknowledgeMessageCallback callback) {
 
     }
+
+    // -------- Private Methods --------
+
+    /**
+     * <i>Note: This method is invoked asynchronously.</i>
+     */
+    private void decryptAndSaveFileVersion(List<FileChunk> fileChunks, java.io.File targetFile) throws NoSuchChunkException, CryptographicException, IOException {
+        FileOutputStream targetStream = new FileOutputStream(targetFile);
+
+        try {
+            // Iterate over the chunks copying the decrypted chunk data to the output file.
+            // -- This code assumes that the file chunks are returned in the proper order from the data model.
+            for (FileChunk fileChunk : fileChunks) {
+                SecretKey chunkKey = fileChunk.getChunkKey();
+                IvParameterSpec iv = new IvParameterSpec(fileChunk.getInitializationVector());
+
+                InputStream chunkStream = _chunkManager.getChunkDataAsStream(fileChunk.getChunkID());
+                try {
+                    CryptoUtils.decryptWithSecretKey(chunkStream, targetStream, chunkKey, iv);
+                } finally {
+                    chunkStream.close();
+                }
+            }
+        } finally {
+            targetStream.close();
+        }
+    }
+
+    private String mimeTypeForFile(java.io.File fileToBeAdded) {
+        // TODO - Make this method actually do something useful
+        return "application/octet-stream";
+    }
+
+
 }

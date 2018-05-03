@@ -3,6 +3,7 @@ package io.topiacoin.crypto;
 import io.topiacoin.crypto.impl.ECAsymmetricCryptoProvider;
 import io.topiacoin.crypto.impl.RSAAsymmetricCryptoProvider;
 import io.topiacoin.crypto.impl.SecrataAsymmetricCryptoProvider;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.util.encoders.Base64;
@@ -102,15 +103,15 @@ public class CryptoUtils {
     }
 
     public static KeyPair generateKeyPair(String algorithm) throws CryptographicException {
-        KeyPair keyPair = null ;
+        KeyPair keyPair = null;
         try {
             KeyPairGenerator keyPairGenerator = getKeyPairGenerator(algorithm);
-            keyPair = keyPairGenerator.generateKeyPair() ;
+            keyPair = keyPairGenerator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
-            throw new CryptographicException("Unrecognized Algorithm: " + algorithm) ;
+            throw new CryptographicException("Unrecognized Algorithm: " + algorithm);
         }
 
-        return keyPair ;
+        return keyPair;
     }
 
     public static KeyPair generateECKeyPair() throws CryptographicException {
@@ -118,26 +119,26 @@ public class CryptoUtils {
         try {
             KeyPairGenerator keyPairGenerator = getKeyPairGenerator("EC");
             keyPairGenerator.initialize(new ECGenParameterSpec("secp256r1"));
-            keyPair = keyPairGenerator.generateKeyPair() ;
+            keyPair = keyPairGenerator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
-            throw new CryptographicException("Unrecognized Algorithm: EC") ;
+            throw new CryptographicException("Unrecognized Algorithm: EC");
         } catch (InvalidAlgorithmParameterException e) {
-            throw new CryptographicException("Unrecognized Parameter Spec: secp256r1", e) ;
+            throw new CryptographicException("Unrecognized Parameter Spec: secp256r1", e);
         }
 
-        return keyPair ;
+        return keyPair;
     }
 
     public static KeyPair generateRSAKeyPair() throws CryptographicException {
-        return generateKeyPair("RSA") ;
+        return generateKeyPair("RSA");
     }
 
     public static KeyPair generateDSAKeyPair() throws CryptographicException {
-        return generateKeyPair("DSA") ;
+        return generateKeyPair("DSA");
     }
 
     public static KeyPair generateDHKeyPair() throws CryptographicException {
-        return generateKeyPair("DH") ;
+        return generateKeyPair("DH");
     }
 
     public static byte[] generateECDHSharedSecret(PrivateKey myPrivateKey, PublicKey theirPublicKey) throws CryptographicException {
@@ -149,15 +150,15 @@ public class CryptoUtils {
         } catch (InvalidKeyException e) {
             throw new CryptographicException("Could not use keys to generate secret");
         } catch (NoSuchAlgorithmException e) {
-            throw new CryptographicException("Unrecognized Algorithm: ECDH") ;
+            throw new CryptographicException("Unrecognized Algorithm: ECDH");
         }
     }
 
     public static PublicKey getPublicKeyFromEncodedBytes(String algorithm, byte[] publicKeyBytes) throws CryptographicException {
-        if(algorithm == null) {
+        if (algorithm == null) {
             throw new CryptographicException("Cannot get Public Key - algorithm null");
         }
-        if(publicKeyBytes == null) {
+        if (publicKeyBytes == null) {
             throw new CryptographicException("Cannot get Public Key - keydata null");
         }
         try {
@@ -165,7 +166,7 @@ public class CryptoUtils {
             X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKeyBytes);
             return kf.generatePublic(pkSpec);
         } catch (NoSuchAlgorithmException e) {
-            throw new CryptographicException("Unrecognized Algorithm: " + algorithm) ;
+            throw new CryptographicException("Unrecognized Algorithm: " + algorithm);
         } catch (InvalidKeySpecException e) {
             throw new CryptographicException("Could not parse bytes into Public Key");
         }
@@ -294,7 +295,7 @@ public class CryptoUtils {
      *
      * @throws CryptographicException If there is an error while attempting to encrypt the data.
      */
-    public static byte[] encryptWithSecretKey(byte[] inputData, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
+    public static byte[] encryptWithSecretKey(byte[] inputData, int length, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
         try {
             String algorithm = secretKey.getAlgorithm();
             Cipher cipher;
@@ -306,9 +307,8 @@ public class CryptoUtils {
                 cipher = Cipher.getInstance(algorithm);
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             }
-            byte[] encryptedData = cipher.doFinal(inputData);
 
-            return encryptedData;
+            return cipher.doFinal(inputData);
         } catch (NoSuchPaddingException e) {
             throw new CryptographicException("Failed to encrypt with secret key", e);
         } catch (NoSuchAlgorithmException e) {
@@ -324,6 +324,10 @@ public class CryptoUtils {
         }
     }
 
+    public static byte[] encryptWithSecretKey(byte[] inputData, SecretKey secretKey, IvParameterSpec ivParameterSpec) throws CryptographicException {
+        return encryptWithSecretKey(inputData, inputData.length, secretKey, ivParameterSpec);
+    }
+
     /**
      * Encrypts the input data using the specified secret key and initialization vector specification.
      * <p>
@@ -337,7 +341,7 @@ public class CryptoUtils {
      * @throws CryptographicException If there is an error while attempting to encrypt the data.
      */
     public static byte[] encryptWithSecretKey(byte[] inputData, SecretKey secretKey) throws CryptographicException {
-        return encryptWithSecretKey(inputData, secretKey, null);
+        return encryptWithSecretKey(inputData, inputData.length, secretKey, null);
     }
 
     /**
@@ -626,23 +630,38 @@ public class CryptoUtils {
     // -------- Private Methods --------
 
     private static KeyPairGenerator getKeyPairGenerator(String algorithm) throws NoSuchAlgorithmException {
-        KeyPairGenerator kpg = keyPairGenerators.get(algorithm) ;
-        if ( kpg == null ){
-            kpg = KeyPairGenerator.getInstance(algorithm) ;
+        KeyPairGenerator kpg = keyPairGenerators.get(algorithm);
+        if (kpg == null) {
+            kpg = KeyPairGenerator.getInstance(algorithm);
             keyPairGenerators.put(algorithm, kpg);
         }
 
-        return kpg ;
+        return kpg;
     }
 
 
-    private static void copyStreamToStream(InputStream inStream, OutputStream cos) throws IOException {
+    private static int copyStreamToStream(InputStream inStream, OutputStream cos) throws IOException {
         // Copy the bytes from the input stream to the output stream.
         byte[] buffer = new byte[8192];
+        int totalBytesCopied = 0;
         int bytesRead = 0;
         while ((bytesRead = inStream.read(buffer)) >= 0) {
             cos.write(buffer, 0, bytesRead);
+            totalBytesCopied += bytesRead;
         }
+        return totalBytesCopied;
     }
 
+    private static int copyStreamToStream(InputStream inStream, OutputStream cos, int length) throws IOException {
+        // Copy the bytes from the input stream to the output stream.
+        byte[] buffer = new byte[8192];
+        int totalBytesCopied = 0;
+        int bytesRead = 0;
+        while ((totalBytesCopied < length) && (bytesRead = inStream.read(buffer)) >= 0) {
+            cos.write(buffer, 0, bytesRead);
+            totalBytesCopied += bytesRead;
+        }
+
+        return totalBytesCopied;
+    }
 }

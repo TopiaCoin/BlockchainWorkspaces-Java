@@ -11,14 +11,14 @@ public class FileChunk {
     private long clearTextSize;
     private SecretKey chunkKey;
     private byte[] initializationVector;
-    private byte[] cipherTextHash;
-    private byte[] clearTextHash;
+    private String cipherTextHash;
+    private String clearTextHash;
     private String compressionAlgorithm;
 
     public FileChunk() {
     }
 
-    public FileChunk(String chunkID, long index, long cipherTextSize, long clearTextSize, SecretKey chunkKey, byte[] initializationVector, byte[] cipherTextHash, byte[] clearTextHash, String compressionAlgorithm) {
+    public FileChunk(String chunkID, long index, long cipherTextSize, long clearTextSize, SecretKey chunkKey, byte[] initializationVector, String cipherTextHash, String clearTextHash, String compressionAlgorithm) {
         this.chunkID = chunkID;
         this.index = index;
         this.cipherTextSize = cipherTextSize;
@@ -90,19 +90,19 @@ public class FileChunk {
         this.initializationVector = initializationVector;
     }
 
-    public byte[] getCipherTextHash() {
+    public String getCipherTextHash() {
         return cipherTextHash;
     }
 
-    public void setCipherTextHash(byte[] cipherTextHash) {
+    public void setCipherTextHash(String cipherTextHash) {
         this.cipherTextHash = cipherTextHash;
     }
 
-    public byte[] getClearTextHash() {
+    public String getClearTextHash() {
         return clearTextHash;
     }
 
-    public void setClearTextHash(byte[] clearTextHash) {
+    public void setClearTextHash(String clearTextHash) {
         this.clearTextHash = clearTextHash;
     }
 
@@ -127,8 +127,10 @@ public class FileChunk {
         if (chunkID != null ? !chunkID.equals(fileChunk.chunkID) : fileChunk.chunkID != null) return false;
         if (chunkKey != null ? !chunkKey.equals(fileChunk.chunkKey) : fileChunk.chunkKey != null) return false;
         if (!Arrays.equals(initializationVector, fileChunk.initializationVector)) return false;
-        if (!Arrays.equals(cipherTextHash, fileChunk.cipherTextHash)) return false;
-        if (!Arrays.equals(clearTextHash, fileChunk.clearTextHash)) return false;
+        if (cipherTextHash != null ? !cipherTextHash.equals(fileChunk.cipherTextHash) : fileChunk.cipherTextHash != null)
+            return false;
+        if (clearTextHash != null ? !clearTextHash.equals(fileChunk.clearTextHash) : fileChunk.clearTextHash != null)
+            return false;
         return compressionAlgorithm != null ? compressionAlgorithm.equals(fileChunk.compressionAlgorithm) : fileChunk.compressionAlgorithm == null;
     }
 
@@ -140,8 +142,8 @@ public class FileChunk {
         result = 31 * result + (int) (clearTextSize ^ (clearTextSize >>> 32));
         result = 31 * result + (chunkKey != null ? chunkKey.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(initializationVector);
-        result = 31 * result + Arrays.hashCode(cipherTextHash);
-        result = 31 * result + Arrays.hashCode(clearTextHash);
+        result = 31 * result + (cipherTextHash != null ? cipherTextHash.hashCode() : 0);
+        result = 31 * result + (clearTextHash != null ? clearTextHash.hashCode() : 0);
         result = 31 * result + (compressionAlgorithm != null ? compressionAlgorithm.hashCode() : 0);
         return result;
     }
@@ -155,8 +157,8 @@ public class FileChunk {
                 ", clearTextSize=" + clearTextSize +
                 ", chunkKey=" + chunkKey +
                 ", initializationVector=" + Arrays.toString(initializationVector) +
-                ", cipherTextHash=" + Arrays.toString(cipherTextHash) +
-                ", clearTextHash=" + Arrays.toString(clearTextHash) +
+                ", cipherTextHash=" + cipherTextHash +
+                ", clearTextHash=" + clearTextHash +
                 ", compressionAlgorithm='" + compressionAlgorithm + '\'' +
                 '}';
     }

@@ -4,7 +4,6 @@ import io.topiacoin.core.Configuration;
 import io.topiacoin.core.EventsAPI;
 import io.topiacoin.dht.DHT;
 import io.topiacoin.dht.config.DHTConfiguration;
-import io.topiacoin.dht.config.DefaultDHTConfiguration;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;

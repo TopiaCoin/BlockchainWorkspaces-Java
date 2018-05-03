@@ -1,5 +1,6 @@
 package io.topiacoin.crypto;
 
+import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -17,17 +18,22 @@ public class HashUtilsTest {
                 (byte)0xe8, (byte)0xc3, (byte)0xd1, (byte)0x96, (byte)0x70, (byte)0x5e, (byte)0x3c, (byte)0xec,
                 (byte)0x74, (byte)0x27, (byte)0x09, (byte)0x6f, (byte)0xbe, (byte)0xfe, (byte)0x5e, (byte)0x8f,
                 (byte)0x07, (byte)0x38, (byte)0xf7, (byte)0x65 } ;
-        String expectedHashString = Hex.toHexString(expectedHash) ;
+        String expectedHashString = "SHA-1:" + Base64.encodeBase64String(expectedHash) ;
+        String expectedHashHexString = Hex.toHexString(expectedHash) ;
 
         byte[] bytesHashBytes = HashUtils.sha1(inputBytes) ;
         byte[] stringHashBytes = HashUtils.sha1(inputString) ;
         String bytesHashString = HashUtils.sha1String(inputBytes) ;
         String stringHashString = HashUtils.sha1String(inputString) ;
+        String bytesHashHexString = HashUtils.sha1HexString(inputBytes) ;
+        String stringHashHexString = HashUtils.sha1HexString(inputString) ;
 
         assertArrayEquals ( expectedHash, bytesHashBytes) ;
         assertArrayEquals(expectedHash, stringHashBytes);
         assertEquals ( expectedHashString, bytesHashString) ;
         assertEquals(expectedHashString, stringHashString);
+        assertEquals ( expectedHashHexString, bytesHashHexString) ;
+        assertEquals(expectedHashHexString, stringHashHexString);
     }
 
     @Test
@@ -41,19 +47,24 @@ public class HashUtilsTest {
                 (byte)0xd4, (byte)0x97, (byte)0x2a, (byte)0x07, (byte)0xe0, (byte)0x76, (byte)0xf5, (byte)0xbf,
                 (byte)0x78, (byte)0x0a, (byte)0xd3, (byte)0x49, (byte)0x2c, (byte)0x7d, (byte)0xf0, (byte)0xf8,
                 (byte)0xaa, (byte)0x22, (byte)0xf2, (byte)0x10, (byte)0xee, (byte)0x7b, (byte)0x5b, (byte)0x91 } ;
-        String expectedHashString = Hex.toHexString(expectedHash) ;
+        String expectedHashString = "SHA-256:" + Base64.encodeBase64String(expectedHash) ;
+        String expectedHashHexString = Hex.toHexString(expectedHash) ;
 
         byte[] bytesHashBytes = HashUtils.sha256(inputBytes) ;
         byte[] splitBytesHashBytes = HashUtils.sha256(firstHalfInputBytes, secondHalfInputBytes);
         byte[] stringHashBytes = HashUtils.sha256(inputString) ;
         String bytesHashString = HashUtils.sha256String(inputBytes) ;
         String stringHashString = HashUtils.sha256String(inputString) ;
+        String bytesHashHexString = HashUtils.sha256HexString(inputBytes) ;
+        String stringHashHexString = HashUtils.sha256HexString(inputString) ;
 
         assertArrayEquals ( expectedHash, bytesHashBytes) ;
         assertArrayEquals ( expectedHash, splitBytesHashBytes) ;
         assertArrayEquals(expectedHash, stringHashBytes);
         assertEquals ( expectedHashString, bytesHashString) ;
         assertEquals(expectedHashString, stringHashString);
+        assertEquals ( expectedHashHexString, bytesHashHexString) ;
+        assertEquals(expectedHashHexString, stringHashHexString);
     }
 
 
@@ -68,16 +79,21 @@ public class HashUtilsTest {
                 (byte)0x65, (byte)0x01, (byte)0x43, (byte)0xb5, (byte)0x82, (byte)0x52, (byte)0x9b, (byte)0x45,
                 (byte)0x7d, (byte)0xf4, (byte)0x28, (byte)0xed, (byte)0x34, (byte)0xc8, (byte)0x62, (byte)0x03,
                 (byte)0xc0, (byte)0x25, (byte)0x19, (byte)0x2e, (byte)0xf2, (byte)0x04, (byte)0x5b, (byte)0x2e } ;
-        String expectedHashString = Hex.toHexString(expectedHash) ;
+        String expectedHashString = "SHA-3:" + Base64.encodeBase64String(expectedHash) ;
+        String expectedHashHexString = Hex.toHexString(expectedHash) ;
 
         byte[] bytesHashBytes = HashUtils.sha3(inputBytes) ;
         byte[] stringHashBytes = HashUtils.sha3(inputString) ;
         String bytesHashString = HashUtils.sha3String(inputBytes) ;
         String stringHashString = HashUtils.sha3String(inputString) ;
+        String bytesHashHexString = HashUtils.sha3HexString(inputBytes) ;
+        String stringHashHexString = HashUtils.sha3HexString(inputString) ;
 
         assertArrayEquals ( expectedHash, bytesHashBytes) ;
         assertArrayEquals(expectedHash, stringHashBytes);
         assertEquals ( expectedHashString, bytesHashString) ;
         assertEquals(expectedHashString, stringHashString);
+        assertEquals ( expectedHashHexString, bytesHashHexString) ;
+        assertEquals(expectedHashHexString, stringHashHexString);
     }
 }
