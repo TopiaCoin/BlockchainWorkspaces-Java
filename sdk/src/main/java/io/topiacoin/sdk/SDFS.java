@@ -562,9 +562,12 @@ public class SDFS {
                         callback.failedToAddFile(fileToBeAdded);
                 } catch (FileChunkAlreadyExistsException e) {
                     e.printStackTrace();
-                    _log.warn ( "Failure Adding File to Workspace",e);
-                    if ( callback != null )
+                    _log.warn("Failure Adding File to Workspace", e);
+                    if (callback != null)
                         callback.failedToAddFile(fileToBeAdded);
+                } catch ( Exception e) {
+                    e.printStackTrace();
+                    // TODO - Remove this catch all
                 } finally {
 
                 }
@@ -574,6 +577,9 @@ public class SDFS {
             e.printStackTrace();
             _log.info ( "User Not Logged In",e);
             throw new RuntimeException("No current user logged in", e);
+        } catch ( Exception e) {
+            e.printStackTrace();
+            // TODO - Remove this catch all
         } finally {
 
         }
@@ -1057,5 +1063,9 @@ public class SDFS {
 
     public void setChunkManager(ChunkManager chunkManager) {
         _chunkManager = chunkManager;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        _configuration = configuration;
     }
 }

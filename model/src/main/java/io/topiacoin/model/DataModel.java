@@ -238,7 +238,7 @@ public class DataModel {
     public FileChunk getFileChunkWithClearHash(String clearChunkHash) {
         return null ;
     }
-    
+
     public void addChunkForFile(String fileID, String versionID, FileChunk chunk)
             throws NoSuchFileException, NoSuchFileVersionException, FileChunkAlreadyExistsException {
         _provider.addChunkForFile(fileID, versionID, chunk);

@@ -1,13 +1,15 @@
 package io.topiacoin.sdk;
 
 import io.topiacoin.chunks.ChunkManager;
-import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 import io.topiacoin.chunks.intf.ChunksFetchHandler;
 import io.topiacoin.core.Configuration;
+import io.topiacoin.core.WorkspacesAPI;
+import io.topiacoin.core.callbacks.AddFileCallback;
 import io.topiacoin.core.callbacks.DownloadFileVersionCallback;
 import io.topiacoin.core.callbacks.SaveFileVersionCallback;
 import io.topiacoin.core.impl.DefaultConfiguration;
 import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.File;
 import io.topiacoin.model.FileChunk;
@@ -26,11 +28,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -259,8 +261,8 @@ public class SDFSTest {
 
         try {
             sdfs.downloadFileVersion(otherWorkspaceID, fileID, versionID, null);
-            fail ( "Expected NoSuchFileException Not Thrown");
-        } catch ( NoSuchFileException e ){
+            fail("Expected NoSuchFileException Not Thrown");
+        } catch (NoSuchFileException e) {
             // Expected Exception
         }
     }
@@ -317,8 +319,8 @@ public class SDFSTest {
 
         try {
             sdfs.downloadFileVersion(nonExistentWorkspaceID, fileID, versionID, null);
-            fail ( "Expected NoSuchWorkspaceException Not Thrown");
-        } catch ( NoSuchWorkspaceException e ){
+            fail("Expected NoSuchWorkspaceException Not Thrown");
+        } catch (NoSuchWorkspaceException e) {
             // Expected Exception
         }
     }
@@ -375,8 +377,8 @@ public class SDFSTest {
 
         try {
             sdfs.downloadFileVersion(workspaceID, fileID, nonExistentVersionID, null);
-            fail ( "Expected NoSuchFileVersionException Not Thrown");
-        } catch ( NoSuchFileVersionException e ){
+            fail("Expected NoSuchFileVersionException Not Thrown");
+        } catch (NoSuchFileVersionException e) {
             // Expected Exception
         }
     }
@@ -433,7 +435,7 @@ public class SDFSTest {
             @Override
             public Object answer() throws Throwable {
                 // Report that the chunk fetch was successful.
-                callbackCapture.getValue().errorFetchingChunks("Failure",null, null);
+                callbackCapture.getValue().errorFetchingChunks("Failure", null, null);
                 return null;
             }
         });
@@ -676,7 +678,7 @@ public class SDFSTest {
         assertTrue(success);
         EasyMock.verify(chunkManager);
 
-        byte[] expectedData = new byte[chunkData1.length + chunkData2.length] ;
+        byte[] expectedData = new byte[chunkData1.length + chunkData2.length];
         System.arraycopy(chunkData1, 0, expectedData, 0, chunkData1.length);
         System.arraycopy(chunkData2, 0, expectedData, chunkData1.length, chunkData2.length);
         FileInputStream fis = new FileInputStream("./target/" + testFile.getName());
@@ -755,8 +757,8 @@ public class SDFSTest {
 
         try {
             sdfs.saveFileVersion(workspaceID, fileID, versionID, targetDirectory, null);
-            fail ( "Expected IOException was not thrown");
-        } catch ( IOException e ) {
+            fail("Expected IOException was not thrown");
+        } catch (IOException e) {
             // NOOP - Expected Exception
         }
     }
@@ -818,8 +820,8 @@ public class SDFSTest {
 
         try {
             sdfs.saveFileVersion(workspaceID, fileID, versionID, targetDirectory, null);
-            fail ( "Expected NoSuchFileVersionException was not thrown");
-        } catch ( NoSuchFileVersionException e ) {
+            fail("Expected NoSuchFileVersionException was not thrown");
+        } catch (NoSuchFileVersionException e) {
             // NOOP - Expected Exception
         }
     }
@@ -886,8 +888,8 @@ public class SDFSTest {
 
         try {
             sdfs.saveFileVersion(otherWorkspaceID, fileID, versionID, targetDirectory, null);
-            fail ( "Expected NoSuchFileException was not thrown");
-        } catch ( NoSuchFileException e ) {
+            fail("Expected NoSuchFileException was not thrown");
+        } catch (NoSuchFileException e) {
             // NOOP - Expected Exception
         }
     }
@@ -943,10 +945,94 @@ public class SDFSTest {
 
         try {
             sdfs.saveFileVersion(workspaceID, fileID, versionID, targetDirectory, null);
-            fail ( "Expected NoSuchFileException was not thrown");
-        } catch ( NoSuchFileException e ) {
+            fail("Expected NoSuchFileException was not thrown");
+        } catch (NoSuchFileException e) {
             // NOOP - Expected Exception
         }
     }
 
+    @Test
+    public void testAddFile() throws Exception {
+
+        String workspaceID = "workspace-id";
+        String parentID = null ;
+        String userID = "user-id" ;
+        String fileContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus ullamcorper interdum dolor, in rhoncus orci sagittis id. Proin commodo eros quis nulla iaculis, nec commodo tellus rutrum. Fusce convallis et turpis consectetur maximus. Proin quis vestibulum ante, sit amet venenatis eros. Fusce finibus elit commodo sodales laoreet. Nulla lacus mauris, lacinia at commodo nec, ultricies at ipsum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc rhoncus suscipit neque, a imperdiet massa scelerisque lobortis. Praesent tempor massa magna.";
+        java.io.File fileToAdd = new java.io.File("./target/addFile.txt");
+
+        // Create the Test File
+        FileWriter writer = new FileWriter(fileToAdd) ;
+        writer.write(fileContent);
+        writer.close();
+
+        Configuration configuration = new DefaultConfiguration();
+
+        // Create the Concrete Test objects
+        DataModel dataModel = new DataModel() {
+            // This anonymous subclass exists so that we can bypass the singleton instance for testing.
+        };
+
+        Workspace workspace = new Workspace();
+        workspace.setGuid(workspaceID);
+        dataModel.addWorkspace(workspace);
+
+        CurrentUser currentUser = new CurrentUser();
+        currentUser.setUserID(userID);
+        dataModel.setCurrentUser(currentUser);
+
+        // Setup the Mock Objects for the test
+        ChunkManager chunkManager = EasyMock.createMock(ChunkManager.class);
+        WorkspacesAPI workspaceAPI = EasyMock.createMock(WorkspacesAPI.class);
+
+        // Create the Test Object
+        SDFS sdfs = new SDFS();
+
+        // Setup the dependencies
+        sdfs.setDataModel(dataModel);
+        sdfs.setWorkspaceAPI(workspaceAPI);
+        sdfs.setChunkManager(chunkManager);
+        sdfs.setConfiguration(configuration);
+
+        // Establish the Mock Object Expectations
+        EasyMock.reset(chunkManager, workspaceAPI);
+
+        Capture<String> chunkIDCapture = EasyMock.newCapture();
+        chunkManager.addChunk(capture(chunkIDCapture),(byte[])EasyMock.anyObject());
+        EasyMock.expectLastCall();
+
+        Capture<File> fileCapture = EasyMock.newCapture();
+        Capture<AddFileCallback> addFileCallbackCapture = EasyMock.newCapture();
+        workspaceAPI.addFile(capture(fileCapture), capture(addFileCallbackCapture));
+        EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+            @Override
+            public Object answer() throws Throwable {
+                addFileCallbackCapture.getValue().didAddFile(fileToAdd);
+                return null;
+            }
+        });
+
+        EasyMock.replay(chunkManager, workspaceAPI);
+
+        success = false;
+
+        sdfs.addFile(workspaceID, parentID, fileToAdd, new AddFileCallback() {
+            @Override
+            public void didAddFile(java.io.File addFile) {
+                success = true;
+            }
+
+            @Override
+            public void failedToAddFile(java.io.File file) {
+                fail ( "Failed to Add File");
+            }
+        });
+
+        Thread.sleep ( 1000 );
+
+        assertTrue ( success ) ;
+        EasyMock.verify(chunkManager, workspaceAPI);
+
+        String chunkID = fileCapture.getValue().getVersions().get(0).getFileChunks().get(0).getChunkID();
+        assertEquals(chunkIDCapture.getValue(), chunkID);
+    }
 }
