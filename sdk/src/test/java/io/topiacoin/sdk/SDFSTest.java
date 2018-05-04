@@ -1035,4 +1035,89 @@ public class SDFSTest {
         String chunkID = fileCapture.getValue().getVersions().get(0).getFileChunks().get(0).getChunkID();
         assertEquals(chunkIDCapture.getValue(), chunkID);
     }
+
+    @Test
+    public void testAddFileWhenAddFails() throws Exception {
+
+        String workspaceID = "workspace-id";
+        String parentID = null ;
+        String userID = "user-id" ;
+        String fileContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus ullamcorper interdum dolor, in rhoncus orci sagittis id. Proin commodo eros quis nulla iaculis, nec commodo tellus rutrum. Fusce convallis et turpis consectetur maximus. Proin quis vestibulum ante, sit amet venenatis eros. Fusce finibus elit commodo sodales laoreet. Nulla lacus mauris, lacinia at commodo nec, ultricies at ipsum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc rhoncus suscipit neque, a imperdiet massa scelerisque lobortis. Praesent tempor massa magna.";
+        java.io.File fileToAdd = new java.io.File("./target/addFile.txt");
+
+        // Create the Test File
+        FileWriter writer = new FileWriter(fileToAdd) ;
+        writer.write(fileContent);
+        writer.close();
+
+        Configuration configuration = new DefaultConfiguration();
+
+        // Create the Concrete Test objects
+        DataModel dataModel = new DataModel() {
+            // This anonymous subclass exists so that we can bypass the singleton instance for testing.
+        };
+
+        Workspace workspace = new Workspace();
+        workspace.setGuid(workspaceID);
+        dataModel.addWorkspace(workspace);
+
+        CurrentUser currentUser = new CurrentUser();
+        currentUser.setUserID(userID);
+        dataModel.setCurrentUser(currentUser);
+
+        // Setup the Mock Objects for the test
+        ChunkManager chunkManager = EasyMock.createMock(ChunkManager.class);
+        WorkspacesAPI workspaceAPI = EasyMock.createMock(WorkspacesAPI.class);
+
+        // Create the Test Object
+        SDFS sdfs = new SDFS();
+
+        // Setup the dependencies
+        sdfs.setDataModel(dataModel);
+        sdfs.setWorkspaceAPI(workspaceAPI);
+        sdfs.setChunkManager(chunkManager);
+        sdfs.setConfiguration(configuration);
+
+        // Establish the Mock Object Expectations
+        EasyMock.reset(chunkManager, workspaceAPI);
+
+        Capture<String> chunkIDCapture = EasyMock.newCapture();
+        chunkManager.addChunk(capture(chunkIDCapture),(byte[])EasyMock.anyObject());
+        EasyMock.expectLastCall();
+
+        Capture<File> fileCapture = EasyMock.newCapture();
+        Capture<AddFileCallback> addFileCallbackCapture = EasyMock.newCapture();
+        workspaceAPI.addFile(capture(fileCapture), capture(addFileCallbackCapture));
+        EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+            @Override
+            public Object answer() throws Throwable {
+                addFileCallbackCapture.getValue().failedToAddFile(fileToAdd);
+                return null;
+            }
+        });
+
+        EasyMock.replay(chunkManager, workspaceAPI);
+
+        success = false;
+
+        sdfs.addFile(workspaceID, parentID, fileToAdd, new AddFileCallback() {
+            @Override
+            public void didAddFile(java.io.File addFile) {
+                fail("did not expect to successfully add file");
+            }
+
+            @Override
+            public void failedToAddFile(java.io.File file) {
+                success = true;
+            }
+        });
+
+        Thread.sleep ( 1000 );
+
+        assertTrue ( success ) ;
+        EasyMock.verify(chunkManager, workspaceAPI);
+
+        String chunkID = fileCapture.getValue().getVersions().get(0).getFileChunks().get(0).getChunkID();
+        assertEquals(chunkIDCapture.getValue(), chunkID);
+    }
 }
