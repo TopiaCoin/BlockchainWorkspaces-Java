@@ -1,5 +1,6 @@
 package io.topiacoin.chunks.model;
 
+import io.topiacoin.model.Member;
 import io.topiacoin.model.MemberNode;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;

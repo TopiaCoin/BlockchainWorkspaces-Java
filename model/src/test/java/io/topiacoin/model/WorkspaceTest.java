@@ -142,6 +142,7 @@ public class WorkspaceTest {
         int status = 56;
         String guid = "oogabooga";
         String userID = "NeahWingfeather";
+        String authToken = "NeahAuthToken";
         long date = 12346723435L;
         String inviterID = "JannerWingfeather" ;
         String mimeType = "text/book";
@@ -159,7 +160,7 @@ public class WorkspaceTest {
         List<File> files = new ArrayList<File>();
         List<Message> messages = new ArrayList<Message>();
 
-        members.add(new Member(userID, status, date, inviterID)) ;
+        members.add(new Member(userID, status, date, inviterID, authToken)) ;
 
         files.add(new File(name, mimeType, entryID,guid, parentID, isFolder, status, lockOwner, versions)) ;
 

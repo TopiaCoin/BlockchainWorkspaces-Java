@@ -6,16 +6,18 @@ public class Member {
     private int status;
     private long inviteDate;
     private String inviterID;
+    private String authToken;
 
 
     public Member() {
     }
 
-    public Member(String userID, int status, long inviteDate, String inviterID) {
+    public Member(String userID, int status, long inviteDate, String inviterID, String authToken) {
         this.userID = userID;
         this.status = status;
         this.inviteDate = inviteDate;
         this.inviterID = inviterID;
+        this.authToken = authToken;
     }
 
     public Member(Member member) {
@@ -23,6 +25,7 @@ public class Member {
         this.status = member.status;
         this.inviteDate = member.inviteDate;
         this.inviterID = member.inviterID;
+        this.authToken = member.authToken;
     }
 
     public String getUserID() {
@@ -88,4 +91,12 @@ public class Member {
                 ", inviterID='" + inviterID + '\'' +
                 '}';
     }
+
+    public String getAuthToken() {
+        return this.authToken;
+    }
+
+	public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+	}
 }

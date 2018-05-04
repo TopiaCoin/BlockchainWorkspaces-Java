@@ -3,6 +3,7 @@ package io.topiacoin.chunks.impl.retrievalStrategies;
 import io.topiacoin.chunks.intf.ChunkRetrievalStrategy;
 import io.topiacoin.chunks.model.ChunkRetrievalPlan;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
+import io.topiacoin.model.Member;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import org.apache.commons.logging.Log;

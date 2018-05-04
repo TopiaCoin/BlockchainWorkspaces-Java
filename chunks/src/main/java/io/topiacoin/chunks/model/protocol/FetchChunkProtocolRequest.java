@@ -1,7 +1,7 @@
 package io.topiacoin.chunks.model.protocol;
 
 import io.topiacoin.model.CurrentUser;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.Member;
 
 public class FetchChunkProtocolRequest extends ChunksProtocolMessage {
 	private static final String MESSAGE_TYPE = "REQUEST_CHUNK";
@@ -10,8 +10,8 @@ public class FetchChunkProtocolRequest extends ChunksProtocolMessage {
 		super(new String[] { chunkID }, userID, authToken, true, MESSAGE_TYPE);
 	}
 
-	public FetchChunkProtocolRequest(String chunkID, CurrentUser me, MemberNode targetNode) {
-		super(new String[] { chunkID }, me.getUserID(), targetNode.getAuthToken(), true, MESSAGE_TYPE);
+	public FetchChunkProtocolRequest(String chunkID, CurrentUser me, Member targetMember) {
+		super(new String[] { chunkID }, me.getUserID(), targetMember.getAuthToken(), true, MESSAGE_TYPE);
 	}
 
 	public FetchChunkProtocolRequest() {

@@ -1,20 +1,28 @@
 package io.topiacoin.chunks;
 
 import io.topiacoin.chunks.exceptions.DuplicateChunkException;
+import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InsufficientSpaceException;
 import io.topiacoin.chunks.exceptions.InvalidReservationException;
 import io.topiacoin.chunks.exceptions.NoSuchChunkException;
-import io.topiacoin.chunks.intf.ChunkStorage;
+import io.topiacoin.chunks.impl.FileSystemChunkStorage;
+import io.topiacoin.chunks.impl.InMemoryChunkInfoManager;
+import io.topiacoin.chunks.impl.SDFSChunkTransferer;
 import io.topiacoin.chunks.intf.ChunkTransferer;
 import io.topiacoin.chunks.intf.ChunksFetchHandler;
 import io.topiacoin.chunks.intf.ChunksTransferHandler;
+import io.topiacoin.core.Configuration;
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.exceptions.NoSuchUserException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyPair;
@@ -23,8 +31,33 @@ import java.util.List;
 
 public class ChunkManager {
 	private static final Log _log = LogFactory.getLog(ChunkManager.class);
-	ChunkTransferer _chunkTransferer;
-	ChunkStorage _chunkStorage;
+	private ChunkTransferer _chunkTransferer;
+	private FileSystemChunkStorage _chunkStorage;
+	private KeyPair _myChunkTransferPair;
+	private int _listenPort;
+	private String _listenAddress;
+	private DataModel _model;
+
+	public ChunkManager(Configuration config, DataModel model) throws NoSuchUserException, IOException, FailedToStartCommsListenerException, CryptographicException {
+		_model = model;
+		InMemoryChunkInfoManager infomgr = new InMemoryChunkInfoManager();
+		infomgr.init();
+
+		File _chunkDir = new File(config.getConfigurationOption("chunkStorageLoc"));
+		_chunkStorage = new FileSystemChunkStorage();
+		_chunkStorage.setChunkStorageDirectory(_chunkDir);
+		_chunkStorage.setStorageQuota(config.getConfigurationOption("chunkStorageQuota", Long.class));
+		_chunkStorage.setReservationInactivityTimeout(30000);
+		_chunkStorage.setChunkInfoManager(infomgr);
+		_chunkStorage.init();
+
+		_myChunkTransferPair = CryptoUtils.generateECKeyPair();
+		_chunkTransferer = new SDFSChunkTransferer(_myChunkTransferPair, config.getConfigurationOption("chunkListenerPort", 0));
+		_listenPort = _chunkTransferer.getListenPort();
+		_listenAddress = "127.0.0.1";
+		_chunkTransferer.setDataModel(_model);
+		_chunkTransferer.setMyMemberNode(getMyMemberNode());
+	}
 
 	/**
 	 * Adds a chunk to the Chunk Manager.  The given chunkData is stored in the Chunk Manager under the specified
@@ -104,7 +137,6 @@ public class ChunkManager {
 	 * @throws NoSuchChunkException If the Chunk Manager does not have data for the requested chunk.
 	 */
 	public InputStream getChunkDataAsStream(final String chunkID) throws NoSuchChunkException {
-		// TODO - Implement this method
 		return _chunkStorage.getChunkDataStream(chunkID);
 	}
 
@@ -182,5 +214,9 @@ public class ChunkManager {
 			}
 		};
 		_chunkTransferer.fetchChunksRemotely(unfetchedChunks, containerID, chunkFetchHandler, state);
+	}
+
+	public MemberNode getMyMemberNode() throws NoSuchUserException {
+		return new MemberNode(_model.getCurrentUser().getUserID(), _listenAddress, _listenPort, _myChunkTransferPair.getPublic().getEncoded());
 	}
 }

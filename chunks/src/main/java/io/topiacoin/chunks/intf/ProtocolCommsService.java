@@ -64,8 +64,9 @@ public interface ProtocolCommsService {
 	/**
 	 * Starts the Listener, which listens to and serves incoming requests and responses from other SDFS clients
 	 * @throws FailedToStartCommsListenerException If the parameters specified at construction (such as a port number to listen on) are invalid or unusable (e.g. bind exception)
+	 * @return The port number the listener is listening on
 	 */
-	public void startListener() throws FailedToStartCommsListenerException;
+	public int startListener() throws FailedToStartCommsListenerException;
 
 	/**
 	 * Stops the Listener. This should be called on shutdown.

@@ -24,14 +24,16 @@ import io.topiacoin.chunks.model.protocol.GiveChunkProtocolResponse;
 import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
-import io.topiacoin.core.Configuration;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.Member;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.BadAuthTokenException;
+import io.topiacoin.model.exceptions.NoSuchMemberException;
 import io.topiacoin.model.exceptions.NoSuchUserException;
+import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -41,6 +43,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,12 +55,16 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	private ChunkStorage _chunkStorage;
 	private DataModel _model;
 	private MemberNode _myMemberNode;
+	private int _listenPort;
 
-	public SDFSChunkTransferer(MemberNode myMemberNode, KeyPair chunkTransferPair) throws IOException, FailedToStartCommsListenerException {
-		_myMemberNode = myMemberNode;
-		_comms = new TCPProtocolCommsService(myMemberNode.getPort(), chunkTransferPair);
+	public SDFSChunkTransferer(KeyPair chunkTransferPair, int defaultPort) throws IOException, FailedToStartCommsListenerException {
+		_comms = new TCPProtocolCommsService(defaultPort, chunkTransferPair);
 		_comms.setHandler(new StandardProtocolCommsResponder());
-		_comms.startListener();
+		_listenPort = _comms.startListener();
+	}
+
+	public int getListenPort() {
+		return _listenPort;
 	}
 
 	/**
@@ -131,7 +138,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				if (strategy.isCompletePlan()) {
 					if (!isExecuting) {
 						isExecuting = true;
-						executeStrategy(strategy, chunksHandler, state, me);
+						executeStrategy(strategy, chunksHandler, state, me, containerID);
 					}
 				} else if (allMessagesFetched) {
 					chunksHandler.failedToBuildFetchPlan();
@@ -140,13 +147,14 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		};
 		QueryChunksProtocolRequest request;
 		for (MemberNode memberNode : memberNodes) {
-			request = new QueryChunksProtocolRequest(chunkIDs.toArray(new String[chunkIDs.size()]), me, memberNode);
 			try {
+				Member m = _model.getMemberInWorkspace(containerID, memberNode.getUserID());
+				request = new QueryChunksProtocolRequest(chunkIDs.toArray(new String[chunkIDs.size()]), me, m);
 				request.sign(me.getPrivateKey());
 				MessageID messageId = _comms.sendMessage(memberNode, request, handler);
 				memberMessages.put(messageId, memberNode);
-			} catch (InvalidKeyException | CommsListenerNotStartedException | InvalidMessageException | IOException e) {
-				e.printStackTrace();
+			} catch (InvalidKeyException | CommsListenerNotStartedException | InvalidMessageException | IOException | NoSuchMemberException | NoSuchWorkspaceException e) {
+				_log.error("", e);
 			}
 		}
 	}
@@ -173,7 +181,11 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		_comms.stop();
 	}
 
-	private void executeStrategy(ChunkRetrievalStrategy strategy, ChunksTransferHandler chunksHandler, Object state, CurrentUser me) {
+	@Override public void setMyMemberNode(MemberNode myMemberNode) {
+		_myMemberNode = myMemberNode;
+	}
+
+	private void executeStrategy(ChunkRetrievalStrategy strategy, ChunksTransferHandler chunksHandler, Object state, CurrentUser me, String containerID) {
 		final ChunkRetrievalPlan plan = strategy.getPlan();
 		final Map<MessageID, String> chunkRequests = new HashMap<>();
 		ChunkRetrievalPlan.PlanTask task;
@@ -182,12 +194,13 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			private void executeNextTask() {
 				ChunkRetrievalPlan.PlanTask task;
 				while ((task = plan.getNextTask()) != null) {
-					FetchChunkProtocolRequest request = new FetchChunkProtocolRequest(task.chunkID, me, task.source);
 					try {
+						Member targetMember = _model.getMemberInWorkspace(containerID, task.source.getUserID());
+						FetchChunkProtocolRequest request = new FetchChunkProtocolRequest(task.chunkID, me, targetMember);
 						request.sign(me.getPrivateKey());
 						MessageID messageID = _comms.sendMessage(task.source, request, this);
 						chunkRequests.put(messageID, task.chunkID);
-					} catch (InvalidKeyException | IOException | InvalidMessageException | CommsListenerNotStartedException e) {
+					} catch (InvalidKeyException | IOException | InvalidMessageException | CommsListenerNotStartedException | NoSuchWorkspaceException | NoSuchMemberException e) {
 						_log.warn("Failed to fetch chunk", e);
 						plan.markChunkAsFailed(task.chunkID);
 					}
@@ -255,12 +268,13 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			}
 		};
 		while ((task = plan.getNextTask()) != null) {
-			request = new FetchChunkProtocolRequest(task.chunkID, me, task.source);
 			try {
+				Member targetMember = _model.getMemberInWorkspace(containerID, task.source.getUserID());
+				request = new FetchChunkProtocolRequest(task.chunkID, me, targetMember);
 				request.sign(me.getPrivateKey());
 				MessageID messageID = _comms.sendMessage(task.source, request, handler);
 				chunkRequests.put(messageID, task.chunkID);
-			} catch (InvalidKeyException | IOException | InvalidMessageException | CommsListenerNotStartedException e) {
+			} catch (InvalidKeyException | IOException | InvalidMessageException | CommsListenerNotStartedException | NoSuchWorkspaceException | NoSuchMemberException e) {
 				_log.warn("Failed to fetch chunk", e);
 				plan.markChunkAsFailed(task.chunkID);
 			}
@@ -284,28 +298,24 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 						_log.error(
 								"Model info for " + requestImpl.getUserID() + " contains an invalid Public Key, cannot validate signature - ignoring message");
 					}
-					if(userIsAllowedToAskMeForChunks(sender)) {
-						if (sigIsValid) {
-							if (requestImpl.getAuthToken().equals(_myMemberNode.getAuthToken())) {
-								if (_chunkStorage.hasChunk(requestImpl.getChunkID())) {
-									try {
-										byte[] data = _chunkStorage.getChunkData(requestImpl.getChunkID());
-										response = new GiveChunkProtocolResponse(requestImpl.getChunkID(), data, me.getUserID());
-									} catch (NoSuchChunkException | IOException e) {
-										_log.error("Unexpected internal issue", e);
-										response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
-									}
-								} else {
+					if (sigIsValid) {
+						if (requestorCanHaveChunk(requestImpl.getUserID(), requestImpl.getAuthToken(), requestImpl.getChunkID())) {
+							if (_chunkStorage.hasChunk(requestImpl.getChunkID())) {
+								try {
+									byte[] data = _chunkStorage.getChunkData(requestImpl.getChunkID());
+									response = new GiveChunkProtocolResponse(requestImpl.getChunkID(), data, me.getUserID());
+								} catch (NoSuchChunkException | IOException e) {
+									_log.error("Unexpected internal issue", e);
 									response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
 								}
 							} else {
-								response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
+								response = new ErrorProtocolResponse("I don't have that chunk", me.getUserID());
 							}
 						} else {
-							response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
+							response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 						}
 					} else {
-						response = new ErrorProtocolResponse("I don't know you", me.getUserID());
+						response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
 					}
 				} else if (request instanceof QueryChunksProtocolRequest) {
 					QueryChunksProtocolRequest requestImpl = (QueryChunksProtocolRequest) request;
@@ -316,21 +326,19 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 					} catch (SignatureException e) {
 						_log.warn("Request from " + requestImpl.getUserID() + " had an malformed signature - ignoring message");
 					} catch (InvalidKeyException e) {
-						_log.error("Model info for " + requestImpl.getUserID() + " contains an invalid Public Key, cannot validate signature - ignoring message");
+						_log.error(
+								"Model info for " + requestImpl.getUserID() + " contains an invalid Public Key, cannot validate signature - ignoring message");
 					}
-					if(userIsAllowedToAskMeForChunks(sender)) {
+					List<String> allowedChunks = chunksRequestorCanHave(requestImpl.getUserID(), requestImpl.getAuthToken(), Arrays.asList(requestImpl.getChunksRequired()));
+					if (!allowedChunks.isEmpty()) {
 						if (sigIsValid) {
-							if (requestImpl.getAuthToken().equals(_myMemberNode.getAuthToken())) {
-								List<String> chunksIHave = new ArrayList<>();
-								for (String chunkID : requestImpl.getChunksRequired()) {
-									if (_chunkStorage.hasChunk(chunkID)) {
-										chunksIHave.add(chunkID);
-									}
+							List<String> chunksIHave = new ArrayList<>();
+							for (String chunkID : allowedChunks) {
+								if (_chunkStorage.hasChunk(chunkID)) {
+									chunksIHave.add(chunkID);
 								}
-								response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[chunksIHave.size()]), me.getUserID());
-							} else {
-								response = new ErrorProtocolResponse("That's not my auth token", me.getUserID());
 							}
+							response = new HaveChunksProtocolResponse(chunksIHave.toArray(new String[chunksIHave.size()]), me.getUserID());
 						} else {
 							response = new ErrorProtocolResponse("That's an invalid signature", me.getUserID());
 						}
@@ -352,6 +360,36 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			} catch (InvalidKeyException e) {
 				_log.error("Could not sign a message with my private key. That's very bad");
 			}
+		}
+
+		private List<String> chunksRequestorCanHave(String memberID, String authToken, List<String> chunkIDs) {
+			try {
+				Workspace w = _model.getWorkspaceByMyAuthToken(authToken);
+				_model.getMemberInWorkspace(w.getGuid(), memberID); //Don't care about the return value - just care if it throws
+				return _model.hasChunksInWorkspace(chunkIDs, w.getGuid());
+			} catch (NoSuchMemberException e) {
+				_log.warn("Will not give chunks - " + memberID + " is not a member of the workspace", e);
+			} catch (BadAuthTokenException e) {
+				_log.warn("Will not give chunks - Incorrect Auth Token", e);
+			} catch (NoSuchWorkspaceException e) {
+				_log.error("Internal Consistency error", e);
+			}
+			return new ArrayList<String>();
+		}
+
+		private boolean requestorCanHaveChunk(String memberID, String authToken, String chunkID) {
+			try {
+				Workspace w = _model.getWorkspaceByMyAuthToken(authToken);
+				_model.getMemberInWorkspace(w.getGuid(), memberID); //Don't care about the return value - just care if it throws
+				return _model.hasChunkInWorkspace(chunkID, w.getGuid());
+			} catch (NoSuchMemberException e) {
+				_log.warn("Will not give chunks - " + memberID + " is not a member of the workspace", e);
+			} catch (BadAuthTokenException e) {
+				_log.warn("Will not give chunks - Incorrect Auth Token", e);
+			} catch (NoSuchWorkspaceException e) {
+				_log.error("Internal Consistency error", e);
+			}
+			return false;
 		}
 
 		@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
@@ -379,16 +417,5 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				_log.error("Could not sign a message with my private key. That's very bad");
 			}
 		}
-	}
-
-	private boolean userIsAllowedToAskMeForChunks(User user) {
-		for(Workspace workspace : _model.getWorkspaces()) {
-			for(Member m : workspace.getMembers()) {
-				if(m.getUserID().equals(user.getUserID())) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 }

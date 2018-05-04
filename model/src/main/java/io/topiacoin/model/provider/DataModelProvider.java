@@ -11,6 +11,7 @@ import io.topiacoin.model.MemberNode;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.BadAuthTokenException;
 import io.topiacoin.model.exceptions.FileAlreadyExistsException;
 import io.topiacoin.model.exceptions.FileChunkAlreadyExistsException;
 import io.topiacoin.model.exceptions.FileTagAlreadyExistsException;
@@ -219,4 +220,10 @@ public interface DataModelProvider {
     void removeMemberNode(String containerID, MemberNode memberNode);
 
     List<MemberNode> getMemberNodesForContainer(String containerID);
+
+    Workspace getWorkspaceByMyAuthToken(String authToken) throws BadAuthTokenException;
+
+    boolean hasChunkInWorkspace(String chunkID, String workspaceGuid);
+
+    List<String> hasChunksInWorkspace(List<String> chunkIDs, String workspaceGuid);
 }

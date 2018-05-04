@@ -2,6 +2,7 @@ package io.topiacoin.chunks.intf;
 
 import io.topiacoin.core.Configuration;
 import io.topiacoin.model.DataModel;
+import io.topiacoin.model.MemberNode;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public interface ChunkTransferer {
 	 */
 	public void fetchChunksRemotely(final List<String> chunkIDs, final String containerID, final ChunksTransferHandler handler, final Object state);
 
+	public int getListenPort();
+
 	void setChunkRetrievalStrategyFactory(ChunkRetrievalStrategyFactory stratFac);
 
 	void setChunkStorage(ChunkStorage storage);
@@ -25,4 +28,6 @@ public interface ChunkTransferer {
 	void setDataModel(DataModel model);
 
 	void stop();
+
+	void setMyMemberNode(MemberNode myMemberNode);
 }

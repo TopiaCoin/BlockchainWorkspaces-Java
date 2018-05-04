@@ -23,13 +23,15 @@ public class MemberTest {
         String inviterID = "JannerWingfeather";
         int status = 34;
         long date = 1234567698L;
+        String authToken = "aToken";
 
-        Member member = new Member(userID, status, date, inviterID) ;
+        Member member = new Member(userID, status, date, inviterID, authToken) ;
 
         assertEquals(userID, member.getUserID());
         assertEquals(inviterID, member.getInviterID());
         assertEquals(status, member.getStatus());
         assertEquals(date, member.getInviteDate());
+        assertEquals(authToken, member.getAuthToken());
     }
 
     @Test
@@ -74,9 +76,10 @@ public class MemberTest {
         String inviterID = "JannerWingfeather";
         int status = 34;
         long date = 1234567698L;
+        String authToken = "anotherAuthToken";
 
-        Member member1 = new Member(userID, status, date, inviterID) ;
-        Member member2 = new Member(userID, status, date, inviterID) ;
+        Member member1 = new Member(userID, status, date, inviterID, authToken) ;
+        Member member2 = new Member(userID, status, date, inviterID, authToken) ;
 
         assertEquals(member1, member1);
         assertEquals(member2, member2);

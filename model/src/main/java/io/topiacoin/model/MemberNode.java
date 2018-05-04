@@ -7,14 +7,12 @@ public class MemberNode implements Comparable<MemberNode> {
 	private String hostname;
 	private int port;
 	private byte[] publicKey;
-	private String authToken;
 
-	public MemberNode(String userId, String hostname, int port, byte[] transferPublicKey, String authToken) {
+	public MemberNode(String userId, String hostname, int port, byte[] transferPublicKey) {
 		this.userId = userId;
 		this.hostname = hostname;
 		this.port = port;
 		this.publicKey = transferPublicKey;
-		this.authToken = authToken;
 	}
 
 	public String getUserID() {
@@ -31,10 +29,6 @@ public class MemberNode implements Comparable<MemberNode> {
 
 	public byte[] getPublicKey() {
 		return publicKey;
-	}
-
-	public String getAuthToken() {
-		return authToken;
 	}
 
 	@Override public boolean equals(Object o) {
