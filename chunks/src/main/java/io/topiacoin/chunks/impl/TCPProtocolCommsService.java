@@ -236,7 +236,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_listenerRunnableThrowable = t;
 	}
 
-	public void startListener() throws FailedToStartCommsListenerException {
+	public int startListener() throws FailedToStartCommsListenerException {
 		if (_handler == null) {
 			throw new IllegalStateException("Cannot startListener without a message handler");
 		}
@@ -263,6 +263,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			stop();
 			throw new FailedToStartCommsListenerException("Comms listener failed to startListener", t);
 		}
+		return _listenerRunnable.getListenPort();
 	}
 
 	public void stop() {
@@ -311,9 +312,10 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		Selector _selector;
 		ServerSocketChannel _serverSocket;
 		private boolean isRunning;
+		private int _listenPort = -1;
 
 		TCPListenerRunnable(int port) throws IOException {
-			_hostAddress = new InetSocketAddress("127.0.0.1", port);
+			_hostAddress = new InetSocketAddress("0.0.0.0", port);
 		}
 
 		void wakeup() {
@@ -324,12 +326,17 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 			}
 		}
 
+		int getListenPort() {
+			return _listenPort;
+		}
+
 		@Override public void run() {
 			try {
 				isRunning = true;
 				_selector = Selector.open();
 				_serverSocket = ServerSocketChannel.open();
 				_serverSocket.bind(_hostAddress);
+				_listenPort = ((InetSocketAddress)_serverSocket.getLocalAddress()).getPort();
 				_serverSocket.configureBlocking(false);
 				_serverSocket.register(_selector, _serverSocket.validOps(), null);
 				ByteBuffer readBuffer = ByteBuffer.allocate(1024);

@@ -11,6 +11,6 @@ import java.security.KeyPair;
 public class SDFSChunkTransfererTestImpl extends AbstractChunkTransfererTest {
 
 	@Override public ChunkTransferer getChunkTransferer(MemberNode myMemberNode, KeyPair chunkTransferPair) throws IOException, FailedToStartCommsListenerException {
-		return new SDFSChunkTransferer(myMemberNode, chunkTransferPair);
+		return new SDFSChunkTransferer(chunkTransferPair, myMemberNode.getPort());
 	}
 }

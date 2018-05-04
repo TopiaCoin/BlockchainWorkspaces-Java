@@ -62,7 +62,7 @@ public abstract class AbstractProtocolTest {
 			final CountDownLatch lock = new CountDownLatch(2);
 
 			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
@@ -180,7 +180,7 @@ public abstract class AbstractProtocolTest {
 			final CountDownLatch lock = new CountDownLatch(2);
 
 			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 			ProtocolCommsHandler failHandler = new ProtocolCommsHandler() {
 
@@ -330,7 +330,7 @@ public abstract class AbstractProtocolTest {
 
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		final String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
@@ -475,7 +475,7 @@ public abstract class AbstractProtocolTest {
 		final KeyPair userASigningKeyPair = CryptoUtils.generateECKeyPair();
 		final KeyPair userBSigningKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
@@ -606,7 +606,7 @@ public abstract class AbstractProtocolTest {
 
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, userBChunkTransferKeyPair);
@@ -869,7 +869,7 @@ public abstract class AbstractProtocolTest {
 
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 		final ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		final ProtocolCommsService userBservice = getProtocolCommsService(7778, null);
@@ -942,7 +942,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		try {
 			service.setHandler(new ProtocolCommsHandler() {
@@ -979,7 +979,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "The password is password";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		ProtocolMessage testMessage = new QueryChunksProtocolRequest(testChunks, "userA", userBAuthToken);
 		try {
@@ -1002,7 +1002,7 @@ public abstract class AbstractProtocolTest {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 		String userBAuthToken = "The password is password";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 		ProtocolCommsService service = getProtocolCommsService(7777, null);
 		try {
 			service.setHandler(new ProtocolCommsHandler() {
@@ -1059,7 +1059,7 @@ public abstract class AbstractProtocolTest {
 	public void testSendQueryChunksRequestWithNoPublicKey() throws Exception {
 		final String[] testChunks = new String[] { "foo", "bar", "baz" };
 		String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, null, userBAuthToken);
+		MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, null);
 		ProtocolCommsService userAservice = getProtocolCommsService(7777, null);
 		ProtocolCommsService userBservice = getProtocolCommsService(7778, null);
 		try {
@@ -1123,7 +1123,7 @@ public abstract class AbstractProtocolTest {
 			final CountDownLatch lock = new CountDownLatch(1);
 
 			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
@@ -1191,8 +1191,8 @@ public abstract class AbstractProtocolTest {
 
 			String userAAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
 			String userBAuthToken = "<('.'<) (>'.')>";
-			MemberNode userANode = new MemberNode("userA", "127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded(), userAAuthToken);
-			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			MemberNode userANode = new MemberNode("userA", "127.0.0.1", 7777, userAChunkTransferKeyPair.getPublic().getEncoded());
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID messageID) {
@@ -1497,7 +1497,7 @@ public abstract class AbstractProtocolTest {
 			final CountDownLatch lock = new CountDownLatch(2);
 
 			String userBAuthToken = "If this test doesn't pass within 15 minutes, I'm legally allowed to leave";
-			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded(), userBAuthToken);
+			MemberNode userBNode = new MemberNode("userB", "127.0.0.1", 7778, userBChunkTransferKeyPair.getPublic().getEncoded());
 
 			ProtocolCommsHandler handlerA = new ProtocolCommsHandler() {
 				@Override public void requestReceived(ProtocolMessage request, MessageID i) {
