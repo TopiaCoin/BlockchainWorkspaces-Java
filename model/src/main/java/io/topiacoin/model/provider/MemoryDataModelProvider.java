@@ -7,7 +7,7 @@ import io.topiacoin.model.FileTag;
 import io.topiacoin.model.FileVersion;
 import io.topiacoin.model.FileVersionReceipt;
 import io.topiacoin.model.Member;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
@@ -50,7 +50,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 	private Map<String, List<FileVersionReceipt>> _fileVersionsReceiptMap;
 	private Map<String, List<FileChunk>> _fileChunkMap;
 	private Map<String, List<FileTag>> _fileVersionsTagMap;
-	private Map<String, List<MemberNode>> _containerMemberNodeMap;
+	private Map<String, List<UserNode>> _userIDtoUserNodeMap;
 
 	private Map<String, User> _userMap;
 	private CurrentUser _currentUser = null;
@@ -66,7 +66,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		_fileVersionsReceiptMap = new HashMap<String, List<FileVersionReceipt>>();
 		_fileChunkMap = new HashMap<String, List<FileChunk>>();
 		_fileVersionsTagMap = new HashMap<String, List<FileTag>>();
-		_containerMemberNodeMap = new HashMap<>();
+		_userIDtoUserNodeMap = new HashMap<>();
 
 		_userMap = new HashMap<String, User>();
 	}
@@ -1102,24 +1102,24 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		_currentUser = null;
 	}
 
-	@Override public void addMemberNode(String containerID, MemberNode memberNode) {
-		List<MemberNode> memberNodes = _containerMemberNodeMap.get(containerID);
+	@Override public void addUserNode(UserNode userNode) {
+		List<UserNode> memberNodes = _userIDtoUserNodeMap.get(userNode.getUserID());
 		if (memberNodes == null) {
-			memberNodes = new ArrayList<MemberNode>();
+			memberNodes = new ArrayList<UserNode>();
 		}
-		memberNodes.add(memberNode);
-		_containerMemberNodeMap.put(containerID, memberNodes);
+		memberNodes.add(userNode);
+		_userIDtoUserNodeMap.put(userNode.getUserID(), memberNodes);
 	}
 
-	@Override public void removeMemberNode(String containerID, MemberNode memberNode) {
-		List<MemberNode> memberNodes = _containerMemberNodeMap.get(containerID);
+	@Override public void removeUserNode(String userID, UserNode userNode) {
+		List<UserNode> memberNodes = _userIDtoUserNodeMap.get(userID);
 		if (memberNodes != null) {
-			memberNodes.remove(memberNode);
+			memberNodes.remove(userNode);
 		}
 	}
 
-	public List<MemberNode> getMemberNodesForContainer(String containerID) {
-		return _containerMemberNodeMap.get(containerID);
+	public List<UserNode> getUserNodesForUserID(String userID) {
+		return _userIDtoUserNodeMap.get(userID);
 	}
 
 	@Override public Workspace getWorkspaceByMyAuthToken(String authToken) throws BadAuthTokenException {

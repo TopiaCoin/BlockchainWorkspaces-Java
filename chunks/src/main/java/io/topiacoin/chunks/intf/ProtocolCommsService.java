@@ -4,7 +4,7 @@ import io.topiacoin.chunks.exceptions.CommsListenerNotStartedException;
 import io.topiacoin.chunks.exceptions.FailedToStartCommsListenerException;
 import io.topiacoin.chunks.exceptions.InvalidMessageException;
 import io.topiacoin.chunks.exceptions.InvalidMessageIDException;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import io.topiacoin.chunks.model.MessageID;
 import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 
@@ -36,7 +36,7 @@ public interface ProtocolCommsService {
 	 * @throws InvalidMessageException If the message passed in is not properly formed, or if you pass a Response-type message in
 	 * @throws CommsListenerNotStartedException If you try to send a message without first starting the listener
 	 */
-	public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler) throws InvalidKeyException, IOException, InvalidMessageException, CommsListenerNotStartedException;
+	public MessageID sendMessage(UserNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler) throws InvalidKeyException, IOException, InvalidMessageException, CommsListenerNotStartedException;
 
 	/**
 	 * Replies to a received message - since this is a connection-based protocol, every received message is expected to be replied to, even if the reply indicates some failure.

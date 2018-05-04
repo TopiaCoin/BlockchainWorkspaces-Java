@@ -8,6 +8,7 @@ import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 import io.topiacoin.chunks.impl.FileSystemChunkStorage;
 import io.topiacoin.chunks.impl.InMemoryChunkInfoManager;
 import io.topiacoin.chunks.impl.SDFSChunkTransferer;
+import io.topiacoin.chunks.impl.SimpleChunkRetrievalStrategyFactory;
 import io.topiacoin.chunks.intf.ChunkTransferer;
 import io.topiacoin.chunks.intf.ChunksFetchHandler;
 import io.topiacoin.chunks.intf.ChunksTransferHandler;
@@ -15,7 +16,7 @@ import io.topiacoin.core.Configuration;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.model.DataModel;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,7 +34,7 @@ public class ChunkManager {
 	private static final Log _log = LogFactory.getLog(ChunkManager.class);
 	private ChunkTransferer _chunkTransferer;
 	private FileSystemChunkStorage _chunkStorage;
-	private KeyPair _myChunkTransferPair;
+	KeyPair _myChunkTransferPair;
 	private int _listenPort;
 	private String _listenAddress;
 	private DataModel _model;
@@ -52,11 +53,15 @@ public class ChunkManager {
 		_chunkStorage.init();
 
 		_myChunkTransferPair = CryptoUtils.generateECKeyPair();
+		String myUserID = _model.getCurrentUser().getUserID();
 		_chunkTransferer = new SDFSChunkTransferer(_myChunkTransferPair, config.getConfigurationOption("chunkListenerPort", 0));
 		_listenPort = _chunkTransferer.getListenPort();
 		_listenAddress = "127.0.0.1";
+		UserNode thisNode = new UserNode(myUserID, _listenAddress, _listenPort, _myChunkTransferPair.getPublic().getEncoded());
+		_model.addUserNode(thisNode);
 		_chunkTransferer.setDataModel(_model);
-		_chunkTransferer.setMyMemberNode(getMyMemberNode());
+		_chunkTransferer.setChunkRetrievalStrategyFactory(new SimpleChunkRetrievalStrategyFactory());
+		_chunkTransferer.setChunkStorage(_chunkStorage);
 	}
 
 	/**
@@ -216,7 +221,11 @@ public class ChunkManager {
 		_chunkTransferer.fetchChunksRemotely(unfetchedChunks, containerID, chunkFetchHandler, state);
 	}
 
-	public MemberNode getMyMemberNode() throws NoSuchUserException {
-		return new MemberNode(_model.getCurrentUser().getUserID(), _listenAddress, _listenPort, _myChunkTransferPair.getPublic().getEncoded());
+	public UserNode getMyUserNode() throws NoSuchUserException {
+		return new UserNode(_model.getCurrentUser().getUserID(), _listenAddress, _listenPort, _myChunkTransferPair.getPublic().getEncoded());
+	}
+
+	public void stop() {
+		_chunkTransferer.stop();
 	}
 }

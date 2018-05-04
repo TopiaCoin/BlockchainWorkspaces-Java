@@ -317,16 +317,16 @@ public class DataModel {
         _provider.removeCurrentUser();
     }
 
-    public void addMemberNode(String containerID, MemberNode memberNode) {
-        _provider.addMemberNode(containerID, memberNode);
+    public void addUserNode(UserNode userNode) {
+        _provider.addUserNode(userNode);
     }
 
-    public void removeMemberNode(String containerID, MemberNode memberNode) {
-        _provider.removeMemberNode(containerID, memberNode);
+    public void removeUserNode(String containerID, UserNode userNode) {
+        _provider.removeUserNode(containerID, userNode);
     }
 
-    public List<MemberNode> getMemberNodesForContainer(String containerID) {
-        return _provider.getMemberNodesForContainer(containerID);
+    public List<UserNode> getUserNodesForUserID(String userID) {
+        return _provider.getUserNodesForUserID(userID);
     }
 
     public Workspace getWorkspaceByMyAuthToken(String authToken) throws BadAuthTokenException {

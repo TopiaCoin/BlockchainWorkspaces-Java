@@ -14,7 +14,7 @@ import io.topiacoin.chunks.model.protocol.ProtocolMessage;
 import io.topiacoin.chunks.model.protocol.ProtocolMessageFactory;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -33,6 +33,7 @@ import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -67,7 +68,7 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 		_messageFactory = new ProtocolMessageFactory();
 	}
 
-	@Override public MessageID sendMessage(MemberNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler)
+	@Override public MessageID sendMessage(UserNode targetNode, ProtocolMessage message, ProtocolCommsResponseHandler handler)
 			throws InvalidKeyException, IOException, InvalidMessageException, CommsListenerNotStartedException {
 		if (message.isRequest()) {
 			if (message.isValid()) {
@@ -144,7 +145,8 @@ public class TCPProtocolCommsService implements ProtocolCommsService {
 				}
 				toReturn.putInt(ivSpec.getIV().length);
 				toReturn.put(ivSpec.getIV());
-				toReturn.putInt(encrypted.length).put(encrypted);
+				toReturn.putInt(encrypted.length);
+				toReturn.put(encrypted);
 				_log.debug("Encrypted: " + (encrypted.length > 5000 ? "<a lot of data>" : DatatypeConverter.printHexBinary(encrypted)));
 				toReturn.flip();
 				return toReturn;

@@ -2,13 +2,13 @@ package io.topiacoin.model;
 
 import java.util.Objects;
 
-public class MemberNode implements Comparable<MemberNode> {
+public class UserNode implements Comparable<UserNode> {
 	private String userId;
 	private String hostname;
 	private int port;
 	private byte[] publicKey;
 
-	public MemberNode(String userId, String hostname, int port, byte[] transferPublicKey) {
+	public UserNode(String userId, String hostname, int port, byte[] transferPublicKey) {
 		this.userId = userId;
 		this.hostname = hostname;
 		this.port = port;
@@ -36,7 +36,7 @@ public class MemberNode implements Comparable<MemberNode> {
 			return true;
 		if (o == null || getClass() != o.getClass())
 			return false;
-		MemberNode that = (MemberNode) o;
+		UserNode that = (UserNode) o;
 		return port == that.port &&
 				Objects.equals(userId, that.userId) &&
 				Objects.equals(hostname, that.hostname);
@@ -46,7 +46,7 @@ public class MemberNode implements Comparable<MemberNode> {
 		return Objects.hash(userId, hostname, port);
 	}
 
-	@Override public int compareTo(MemberNode o) {
+	@Override public int compareTo(UserNode o) {
 		if(o == null) {
 			return 1;
 		} else {

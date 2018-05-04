@@ -1,7 +1,6 @@
 package io.topiacoin.chunks.model;
 
-import io.topiacoin.model.Member;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 
@@ -15,16 +14,16 @@ import java.util.Set;
 public class ChunkRetrievalPlan {
 	private List<String> _plannedChunkIDs;
 	private Set<String> _retrievableChunkIDs = new HashSet<String>();
-	private Set<MemberNode> _sources = new HashSet<>();
-	private Map<MemberNode, Set<String>> _nodeChunks = new HashMap<>();
-	private BidiMap<String, MemberNode> _chunksAndSourcesInUse = new DualTreeBidiMap<>();
+	private Set<UserNode> _sources = new HashSet<>();
+	private Map<UserNode, Set<String>> _nodeChunks = new HashMap<>();
+	private BidiMap<String, UserNode> _chunksAndSourcesInUse = new DualTreeBidiMap<>();
 	private Set<String> _fetchedChunks = new HashSet<>();
 
 	public ChunkRetrievalPlan(List<String> chunkIDs) {
 		this._plannedChunkIDs = chunkIDs;
 	}
 
-	public void addChunk(String chunkID, MemberNode chunkSource) {
+	public void addChunk(String chunkID, UserNode chunkSource) {
 		if (_plannedChunkIDs.contains(chunkID)) {
 			_sources.add(chunkSource);
 			Set<String> nodeChunkSet = _nodeChunks.get(chunkSource);
@@ -44,14 +43,14 @@ public class ChunkRetrievalPlan {
 	public PlanTask getNextTask() {
 		PlanTask tr = null;
 		//Remove the set of sources in use from the list of all sources
-		Set<MemberNode> unusedNodes = new HashSet<>(_sources);
+		Set<UserNode> unusedNodes = new HashSet<>(_sources);
 		unusedNodes.removeAll(_chunksAndSourcesInUse.values());
 		//If there are any sources that are not currently in use...
 		if(!unusedNodes.isEmpty()) {
 			//Iterate over the set of unused nodes
-			Iterator<MemberNode> nodeIterator = unusedNodes.iterator();
+			Iterator<UserNode> nodeIterator = unusedNodes.iterator();
 			while(tr == null && nodeIterator.hasNext()) {
-				MemberNode unusedNode = nodeIterator.next();
+				UserNode unusedNode = nodeIterator.next();
 				//Grab the full chunk list for the node
 				Set<String> nodeChunkSet = _nodeChunks.get(unusedNode);
 				//Remove the set of chunks we've already fetched
@@ -77,14 +76,14 @@ public class ChunkRetrievalPlan {
 	}
 
 	public void markChunkAsFetched(String chunkID) {
-		MemberNode node = _chunksAndSourcesInUse.remove(chunkID);
+		UserNode node = _chunksAndSourcesInUse.remove(chunkID);
 		_fetchedChunks.add(chunkID);
 		Set<String> chunks = _nodeChunks.get(node);
 		chunks.remove(chunkID);
 	}
 
 	public void markChunkAsFailed(String chunkID) {
-		MemberNode node = _chunksAndSourcesInUse.remove(chunkID);
+		UserNode node = _chunksAndSourcesInUse.remove(chunkID);
 		Set<String> chunks = _nodeChunks.get(node);
 		chunks.remove(chunkID);
 	}
@@ -101,9 +100,9 @@ public class ChunkRetrievalPlan {
 
 	public class PlanTask {
 		public String chunkID;
-		public MemberNode source;
+		public UserNode source;
 
-		PlanTask(String chunkID, MemberNode source) {
+		PlanTask(String chunkID, UserNode source) {
 			this.chunkID = chunkID;
 			this.source = source;
 		}

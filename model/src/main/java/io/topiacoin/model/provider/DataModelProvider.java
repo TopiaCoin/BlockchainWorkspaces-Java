@@ -7,7 +7,7 @@ import io.topiacoin.model.FileTag;
 import io.topiacoin.model.FileVersion;
 import io.topiacoin.model.FileVersionReceipt;
 import io.topiacoin.model.Member;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
@@ -215,11 +215,11 @@ public interface DataModelProvider {
 
     void removeCurrentUser();
 
-    void addMemberNode(String containerID, MemberNode memberNode);
+    void addUserNode(UserNode memberNode);
 
-    void removeMemberNode(String containerID, MemberNode memberNode);
+    void removeUserNode(String userID, UserNode memberNode);
 
-    List<MemberNode> getMemberNodesForContainer(String containerID);
+    List<UserNode> getUserNodesForUserID(String userID);
 
     Workspace getWorkspaceByMyAuthToken(String authToken) throws BadAuthTokenException;
 

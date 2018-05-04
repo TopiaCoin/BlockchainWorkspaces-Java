@@ -27,7 +27,7 @@ import io.topiacoin.chunks.model.protocol.QueryChunksProtocolRequest;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.Member;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import io.topiacoin.model.User;
 import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.BadAuthTokenException;
@@ -54,7 +54,6 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	private ProtocolCommsService _comms;
 	private ChunkStorage _chunkStorage;
 	private DataModel _model;
-	private MemberNode _myMemberNode;
 	private int _listenPort;
 
 	public SDFSChunkTransferer(KeyPair chunkTransferPair, int defaultPort) throws IOException, FailedToStartCommsListenerException {
@@ -82,17 +81,17 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		} catch (NoSuchUserException e) {
 			throw new IllegalStateException("Cannot fetch chunks - cannot determine current logged in user", e);
 		}
-		List<MemberNode> memberNodes = fetchMemberNodes(containerID);
+		List<UserNode> memberNodes = fetchMemberUserNodes(containerID, me.getUserID());
 		if (memberNodes == null || memberNodes.isEmpty()) {
 			throw new IllegalStateException("MemberNodes cannot be null or blank");
 		}
-		final Map<MessageID, MemberNode> memberMessages = new HashMap<>();
+		final Map<MessageID, UserNode> memberMessages = new HashMap<>();
 		final ChunkRetrievalStrategy strategy = _chunkRetrievalStrategyFactory.createStrategy(chunkIDs);
 		ProtocolCommsResponseHandler handler = new ProtocolCommsResponseHandler() {
 			boolean isExecuting = false;
 
 			@Override public void responseReceived(ProtocolMessage response, MessageID messageID) {
-				MemberNode memNode = memberMessages.remove(messageID);
+				UserNode memNode = memberMessages.remove(messageID);
 				if (response instanceof HaveChunksProtocolResponse) {
 					HaveChunksProtocolResponse responseImpl = (HaveChunksProtocolResponse) response;
 					try {
@@ -146,7 +145,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 			}
 		};
 		QueryChunksProtocolRequest request;
-		for (MemberNode memberNode : memberNodes) {
+		for (UserNode memberNode : memberNodes) {
 			try {
 				Member m = _model.getMemberInWorkspace(containerID, memberNode.getUserID());
 				request = new QueryChunksProtocolRequest(chunkIDs.toArray(new String[chunkIDs.size()]), me, m);
@@ -159,9 +158,21 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		}
 	}
 
-	private List<MemberNode> fetchMemberNodes(String containerID) {
-		List<MemberNode> toReturn = _model.getMemberNodesForContainer(containerID);
-		toReturn.remove(_myMemberNode);
+	private List<UserNode> fetchMemberUserNodes(String containerID, String currentUserID) {
+		List<UserNode> toReturn = new ArrayList<UserNode>();
+		try {
+			List<Member> members = _model.getMembersInWorkspace(containerID);
+			for (Member member : members) {
+				if (!member.getUserID().equals(currentUserID)) {
+					List<UserNode> nodes = _model.getUserNodesForUserID(member.getUserID());
+					if(nodes != null) {
+						toReturn.addAll(nodes);
+					}
+				}
+			}
+		} catch (NoSuchWorkspaceException e) {
+			_log.error("", e);
+		}
 		return toReturn;
 	}
 
@@ -179,10 +190,6 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 
 	@Override public void stop() {
 		_comms.stop();
-	}
-
-	@Override public void setMyMemberNode(MemberNode myMemberNode) {
-		_myMemberNode = myMemberNode;
 	}
 
 	private void executeStrategy(ChunkRetrievalStrategy strategy, ChunksTransferHandler chunksHandler, Object state, CurrentUser me, String containerID) {

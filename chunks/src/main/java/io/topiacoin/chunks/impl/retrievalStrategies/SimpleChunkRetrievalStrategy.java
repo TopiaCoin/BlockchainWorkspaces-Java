@@ -3,8 +3,7 @@ package io.topiacoin.chunks.impl.retrievalStrategies;
 import io.topiacoin.chunks.intf.ChunkRetrievalStrategy;
 import io.topiacoin.chunks.model.ChunkRetrievalPlan;
 import io.topiacoin.chunks.model.protocol.ErrorProtocolResponse;
-import io.topiacoin.model.Member;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 import io.topiacoin.chunks.model.protocol.HaveChunksProtocolResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,13 +19,13 @@ public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 		_plan = new ChunkRetrievalPlan(chunkIDs);
 	}
 
-	@Override public void submitLocationResponse(HaveChunksProtocolResponse response, MemberNode memberNode) {
+	@Override public void submitLocationResponse(HaveChunksProtocolResponse response, UserNode memberNode) {
 		for(String chunkID : response.getChunkIDs()) {
 			_plan.addChunk(chunkID, memberNode);
 		}
 	}
 
-	@Override public void submitLocationResponse(ErrorProtocolResponse response, MemberNode memberNode) {
+	@Override public void submitLocationResponse(ErrorProtocolResponse response, UserNode memberNode) {
 		//Not really sure what to do here.
 	}
 

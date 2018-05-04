@@ -1,8 +1,7 @@
 package io.topiacoin.chunks.intf;
 
-import io.topiacoin.core.Configuration;
 import io.topiacoin.model.DataModel;
-import io.topiacoin.model.MemberNode;
+import io.topiacoin.model.UserNode;
 
 import java.util.List;
 
@@ -28,6 +27,4 @@ public interface ChunkTransferer {
 	void setDataModel(DataModel model);
 
 	void stop();
-
-	void setMyMemberNode(MemberNode myMemberNode);
 }
