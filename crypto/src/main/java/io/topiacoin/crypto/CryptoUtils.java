@@ -501,6 +501,7 @@ public class CryptoUtils {
 
             CipherInputStream cipherInStream = new CipherInputStream(inStream, cipher);
             copyStreamToStream(cipherInStream, outStream);
+            cipherInStream.close();
         } catch (NoSuchPaddingException e) {
             throw new CryptographicException("Failed to encrypt with secret key", e);
         } catch (InvalidAlgorithmParameterException e) {
