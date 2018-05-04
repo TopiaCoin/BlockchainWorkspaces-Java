@@ -192,7 +192,7 @@ public class FileVersionTest {
         systemTags.add (new FileTag("system", "value2")) ;
 
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
-        fileChunks.add(new FileChunk("1", 0, 12, 10, key, new byte[16], new byte[32], new byte[32], "ZIP"));
+        fileChunks.add(new FileChunk("1", 0, 12, 10, key, new byte[16], "SHA-256:AAAAAAAAAAAAAAAA", "SHA-256:AAAAAAAAAAAAAAAA", "ZIP"));
 
         receipts.add(new FileVersionReceipt(entryID, versionID, ownerID, date)) ;
 
@@ -261,7 +261,7 @@ public class FileVersionTest {
         systemTags.add (new FileTag("system", "value2")) ;
 
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
-        fileChunks.add(new FileChunk("1", 0, 12, 10, key, new byte[16], new byte[32], new byte[32], "ZIP"));
+        fileChunks.add(new FileChunk("1", 0, 12, 10, key, new byte[16], "SHA-256:AAAAAAAAAAAAAAAA", "SHA-256:AAAAAAAAAAAAAAAA", "ZIP"));
 
         receipts.add(new FileVersionReceipt(entryID, versionID, ownerID, date)) ;
 

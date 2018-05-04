@@ -36,8 +36,8 @@ public class FileChunkTest {
         long clearTextSize = 1234567;
         SecretKey chunkKey = new SecretKeySpec(keyBytes, "AES");
         byte[] iv = new byte[16];
-        byte[] cipherTextHash = new byte[32];
-        byte[] clearTextHash = new byte[32];
+        String cipherTextHash = "SHA-256:AAAAAAAAAAAAAAAA";
+        String clearTextHash = "SHA-256:AAAAAAAAAAAAAAAA";
         String compressionAlgorithm = "GZIP";
 
         FileChunk fileChunk = new FileChunk(chunkID, index, cipherTextSize, clearTextSize, chunkKey, iv, cipherTextHash, clearTextHash, compressionAlgorithm);
@@ -65,8 +65,8 @@ public class FileChunkTest {
         long clearTextSize = 1234567;
         SecretKey chunkKey = new SecretKeySpec(keyBytes, "AES");
         byte[] iv = new byte[16];
-        byte[] cipherTextHash = new byte[32];
-        byte[] clearTextHash = new byte[32];
+        String cipherTextHash = "SHA-256:AAAAAAAAAAAAAAAA";
+        String clearTextHash = "SHA-256:AAAAAAAAAAAAAAAA";
         String compressionAlgorithm = "GZIP";
 
         FileChunk fileChunk = new FileChunk();
@@ -148,8 +148,8 @@ public class FileChunkTest {
         long clearTextSize = 1234567;
         SecretKey chunkKey = new SecretKeySpec(keyBytes, "AES");
         byte[] iv = new byte[16];
-        byte[] cipherTextHash = new byte[32];
-        byte[] clearTextHash = new byte[32];
+        String cipherTextHash = "SHA-256:AAAAAAAAAAAAAAAA";
+        String clearTextHash = "SHA-256:AAAAAAAAAAAAAAAA";
         String compressionAlgorithm = "GZIP";
 
         FileChunk fileChunk1 = new FileChunk(chunkID, index, cipherTextSize, clearTextSize, chunkKey, iv, cipherTextHash, clearTextHash, compressionAlgorithm);
