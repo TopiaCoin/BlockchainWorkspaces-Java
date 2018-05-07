@@ -1,6 +1,30 @@
 package io.topiacoin.core;
 
-import java.io.File;
+import io.topiacoin.core.callbacks.AcceptInvitationCallback;
+import io.topiacoin.core.callbacks.AcknowledgeFileCallback;
+import io.topiacoin.core.callbacks.AcknowledgeMessageCallback;
+import io.topiacoin.core.callbacks.AddFileCallback;
+import io.topiacoin.core.callbacks.AddFileTagCallback;
+import io.topiacoin.core.callbacks.AddFileVersionCallback;
+import io.topiacoin.core.callbacks.AddFolderCallback;
+import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.ConnectWorkspaceCallback;
+import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
+import io.topiacoin.core.callbacks.DeclineInvitationCallback;
+import io.topiacoin.core.callbacks.FetchFileVersionCallback;
+import io.topiacoin.core.callbacks.InviteUserCallback;
+import io.topiacoin.core.callbacks.LeaveWorkspaceCallback;
+import io.topiacoin.core.callbacks.LockFileCallback;
+import io.topiacoin.core.callbacks.RemoveFileCallback;
+import io.topiacoin.core.callbacks.RemoveFileTagCallback;
+import io.topiacoin.core.callbacks.RemoveFileVersionCallback;
+import io.topiacoin.core.callbacks.RemoveFolderCallback;
+import io.topiacoin.core.callbacks.RemoveUserCallback;
+import io.topiacoin.core.callbacks.UnlockFileCallback;
+import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.model.File;
+import io.topiacoin.model.Message;
+import io.topiacoin.model.Workspace;
 
 /**
  * The Workspace API defines all of the operations that can be performed on a workspace. This documentation defines the
@@ -75,7 +99,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
      * will include the reason for the failure under the 'reason' key.
      */
-    void connectWorkspace(String workspaceID);
+    void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback);
 
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
@@ -103,7 +127,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void createWorkspace(String workspaceName, String workspaceDescription);
+    void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback);
 
     /**
      * Updates the description of the specified workspace. It is an error to specify a non-existent workspace. To remove
@@ -117,7 +141,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID. The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void updateWorkspaceDescription(String workspaceGUID, String workspaceDescription);
+    void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback);
 
     /**
      * Invites a user to a workspace, sending them the specified message along with the invitation. It is an error to
@@ -133,7 +157,7 @@ public interface WorkspacesAPI {
      * contain the user ID of the invited user under the 'userID' key, and the reason for the failure under the 'reason'
      * key.
      */
-    void inviteUser(String workspaceGUID, String userID, String inviteMessage);
+    void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback);
 
     /**
      * Accepts an invitation to a workspace. It is an error to specify a non-existent workspace. It is an error to
@@ -147,7 +171,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void acceptInvitation(String workspaceGUID);
+    void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback);
 
     /**
      * Declines an invitation to a workspace. It is an error to specify a non-existent workspace. Is is an error to
@@ -161,7 +185,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID. The notification info
      * will include the reason for the failure under the 'reason' key.
      */
-    void declineInvitation(String workspaceGUID);
+    void declineInvitation(Workspace workspace, DeclineInvitationCallback callback);
 
     /**
      * Sends an encrypted workspace key to a new workspace member. Normally, the inviter will send the encrypted
@@ -200,7 +224,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void leaveWorkspace(String workspaceGUID);
+    void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback);
 
     /**
      * Removes the specified member from the workspace. It is an error to specify a non-existent workspace GUID, or a
@@ -216,7 +240,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID. The notification info will
      * contain the user ID of the user under the 'userID' key, and the reason for the failure under the 'reason' key.
      */
-    void removeUserFromWorkspace(String worksapceGUID, String memberID);
+    void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback);
 
     /**
      * Adds a file to the specified workspace with the specified parent. If parentGUID is null or an empty string, then
@@ -244,7 +268,7 @@ public interface WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the file ID and version ID assigned to
      * this file.
      */
-    void addFile(String workspaceGUID, String folderGUID, File fileToBeAdded);
+    void addFile(File fileToAdd, AddFileCallback callback);
 
     /**
      * Removes a file from the specified workspace. It is an error to specify a non-existent workspace GUID, or a
@@ -259,7 +283,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
      * will contain the file ID under the 'fileID' key, and the reason for the failure under the 'reason' key.
      */
-    void removeFile(String workspaceGUID, String fileGUID);
+    void removeFile(File fileToRemove, RemoveFileCallback callback);
 
     /**
      * Adds a new version to an existing file. It is an error to specify a non-existent workspace GUID, a non-existent
@@ -288,7 +312,7 @@ public interface WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the version ID assigned to this
      * version.
      */
-    void addFileVersion(String workspaceGUID, String fileGUID, File fileToBeAdded);
+    void addFileVersion(File fileToBeAdded, AddFileVersionCallback callback);
 
     /**
      * Removes a file version from a file in a workspace. It is an error to specify a non-existent workspace GUID, a
@@ -306,7 +330,7 @@ public interface WorkspacesAPI {
      * notification info will contain the file ID under the 'fileID' key, and the reason for the failure under the
      * 'reason' key.
      */
-    void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID);
+    void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback);
 
     /**
      * Acknowledges receipt of a version of a file. It is an error to specify a non-existent workspace GUID, a
@@ -320,17 +344,17 @@ public interface WorkspacesAPI {
      * contain the file ID of the acknowledged file under the 'fileID' key, and the version number that was acknowledged
      * under the 'versionNumber' key.
      */
-    void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID);
+    void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback);
 
     /**
      *
      */
-    void addFileTag(String workspaceGUID, String fileGUID, String tagName, boolean isPrivate);
+    void addFileTag(File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback);
 
     /**
      *
      */
-    void removeFileTag(String workspaceGUID, String fileGUID, String tagName);
+    void removeFileTag(File fileToUntag, String tagName, RemoveFileTagCallback callback);
 
     /**
      * Initiates a download of the specified file version. It is an error to specify a non-existent workspaceGUID, a
@@ -359,27 +383,7 @@ public interface WorkspacesAPI {
      * notification is emitted is implementation dependent, but shouldn't occur more than 100 times for any download
      * (only when the percentage complete changes), and not more frequently than once every 5 seconds.
      */
-    void downloadFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID /*, DownloadCallback callback*/);
-
-    /**
-     * Decrypts, reconstructs, and saves the specified file into the target directory. This method assumes that the file
-     * has been previously downloaded and its chunks are available on the device. It is an error to specify a
-     * non-existent workspace GUID, a non-existent file GUID, or a non-existent file version GUID. It is also an error
-     * to attempt to save a file whose chunks have not been downloaded.
-     * <p>
-     * This method will invoke the callback when the file save finishes, either successfully or with an error.
-     * <p>
-     * On completion of file save, a notification of type 'fileVersionSaveComplete' will be posted to the notification
-     * center.  The classifier of this notification will be the fileID.  The notification information will contain the
-     * workspace ID of the saved file under the 'workspaceID' key, the version number under the 'versionNumber' key, and
-     * the full path to the location of the decrypted file under the 'filePath' key.
-     * <p>
-     * On failed save of the file, a notification of type 'fileVersionSaveFailed' will be posted to the the notification
-     * center.  The classifier of this notification will be the fileID.  The notification information will contain the
-     * workspace ID of the saved file under the 'workspaceID' key, the version number under the 'versionNumber' key, and
-     * the reason for the failure under the 'reason' key.
-     */
-    void saveFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, String targetDirectory/*, DecryptFileCallback callback*/);
+    void fetchFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, FetchFileVersionCallback callback);
 
     /**
      * Locks the specified file.  Locking a file prevents other users from deleting or uploading new version of the
@@ -395,7 +399,7 @@ public interface WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      */
-    void lockFile(String workspaceGUID, String fileGUID);
+    void lockFile(File fileToLock, LockFileCallback callback);
 
     /**
      * Unlocks the specified file.  Unlocking a file allows other users to once again delete or upload new version of
@@ -411,7 +415,7 @@ public interface WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      */
-    void unlockFile(String workspaceGUID, String fileGUID);
+    void unlockFile(File fileToUnlock, UnlockFileCallback callback);
 
     /**
      * Creates a new folder in the specified workspace with the specified parent. It is an error to specify a
@@ -428,7 +432,7 @@ public interface WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the the reason
      * for the failure under the 'reason' key.
      */
-    void addFolder(String workspaceGUID, String parentGUID, String folderName);
+    void addFolder(File folderToAdd, AddFolderCallback callback);
 
     /**
      * Removes the specified folder from workspace. All content contained within the folder is also removed. It is an
@@ -442,7 +446,7 @@ public interface WorkspacesAPI {
      * center.  The classifier of this notification will be the workspace ID.  The notification info will contain the
      * folder ID of the folder under the 'folderID' key, and the reason for the failure under the 'reason' key.
      */
-    void removeFolder(String workspaceGUID, String folderGUID);
+    void removeFolder(File folderToRemove, RemoveFolderCallback callback);
 
 
     /**
@@ -459,7 +463,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * contain the reason for the failure under the 'reason' key.
      */
-    void addMessage(String workspaceGUID, String message);
+    void addMessage(String workspaceGUID, String message, AddMessageCallback callback);
 
 
     /**
@@ -470,6 +474,6 @@ public interface WorkspacesAPI {
      * notification center. The classifier of this notification will be the workspace ID. The notification info will
      * contain the message ID under the key 'messageID'.
      */
-    void acknowledgeMessage(String workspaceGUID, String messageGUID);
+    void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback);
 
 }

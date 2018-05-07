@@ -53,6 +53,7 @@ import io.topiacoin.sdk.impl.BlockchainUsersAPI;
 import io.topiacoin.sdk.impl.BlockchainWorkspacesAPI;
 import io.topiacoin.sdk.impl.DHTEventsAPI;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -82,8 +83,7 @@ public class SDFS {
 
     private final Log _log = LogFactory.getLog(this.getClass());
 
-    private final Configuration _configuration;
-
+    private Configuration _configuration;
     private WorkspacesAPI _workspaceAPI;
     private UsersAPI _userAPI;
     private EventsAPI _eventAPI;
@@ -93,13 +93,19 @@ public class SDFS {
 
     private ExecutorService _taskExecutor;
 
+    SDFS() {
+        _configuration = null;
+        _taskExecutor = Executors.newSingleThreadExecutor();
+    }
+
     public SDFS(KeyPair userKeyPair, Configuration configuration) {
+        this() ;
+
         _configuration = configuration;
         _workspaceAPI = new BlockchainWorkspacesAPI(configuration);
         _userAPI = new BlockchainUsersAPI(configuration);
         _eventAPI = new DHTEventsAPI(configuration);
 
-        _taskExecutor = Executors.newSingleThreadExecutor();
     }
 
 
@@ -362,151 +368,218 @@ public class SDFS {
         try {
             CurrentUser currentUser = _dataModel.getCurrentUser();
 
-            String fileGUID = UUID.randomUUID().toString();
-            String fileVersionGUID = UUID.randomUUID().toString();
-            List<FileChunk> fileChunks = new ArrayList<>();
+            _taskExecutor.submit(() -> {
+                _log.info ( "Processing " + fileToBeAdded.getName()) ;
+                try {
+                    String fileGUID = UUID.randomUUID().toString();
+                    String fileVersionGUID = UUID.randomUUID().toString();
+                    List<FileChunk> fileChunks = new ArrayList<>();
 
-            // Create File object with the basic metadata.
-            File newFile = new File();
-            newFile.setEntryID(fileGUID);
-            newFile.setName(fileToBeAdded.getName());
-            newFile.setParentID(folderGUID);
-            newFile.setContainerID(workspaceGUID);
-            newFile.setFolder(false);
-            newFile.setMimeType(mimeTypeForFile(fileToBeAdded));
+                    // Create File object with the basic metadata.
+                    File newFile = new File();
+                    newFile.setEntryID(fileGUID);
+                    newFile.setName(fileToBeAdded.getName());
+                    newFile.setParentID(folderGUID);
+                    newFile.setContainerID(workspaceGUID);
+                    newFile.setFolder(false);
+                    newFile.setMimeType(mimeTypeForFile(fileToBeAdded));
 
-            // Create the version object for the new file
-            FileVersion fileVersion = new FileVersion();
-            fileVersion.setEntryID(fileGUID);
-            fileVersion.setVersionID(fileVersionGUID);
-            fileVersion.setUploadDate(System.currentTimeMillis());
-            fileVersion.setDate(fileToBeAdded.lastModified());
-            fileVersion.setSize(fileToBeAdded.length());
+                    // Create the version object for the new file
+                    FileVersion fileVersion = new FileVersion();
+                    fileVersion.setEntryID(fileGUID);
+                    fileVersion.setVersionID(fileVersionGUID);
+                    fileVersion.setUploadDate(System.currentTimeMillis());
+                    fileVersion.setDate(fileToBeAdded.lastModified());
+                    fileVersion.setSize(fileToBeAdded.length());
 
-            // Chunk and Encrypt the Data, collecting all the necessary metadata along the way.
-            int chunkSize = _configuration.getConfigurationOption("chunk.size", 524288);
-            long chunkIndex = 0;
-            long bytesRemaining = fileToBeAdded.length();
-            SecretKey chunkKey;
-            IvParameterSpec iv;
-            byte[] clearChunk = new byte[chunkSize];
-            byte[] cipherChunk = null;
-            byte[] fileHash = null ;
-            MessageDigest sha256File = MessageDigest.getInstance("SHA-256") ;
-            FileInputStream fileInputStream = new FileInputStream(fileToBeAdded);
+                    // Chunk and Encrypt the Data, collecting all the necessary metadata along the way.
+                    int chunkSize = _configuration.getConfigurationOption("chunk.size", 524288);
+                    long chunkIndex = 0;
+                    long bytesRemaining = fileToBeAdded.length();
+                    SecretKey chunkKey;
+                    IvParameterSpec iv;
+                    byte[] clearChunk = new byte[chunkSize];
+                    byte[] cipherChunk = null;
+                    byte[] fileHash = null;
+                    MessageDigest sha256File = MessageDigest.getInstance("SHA-256");
+                    FileInputStream fileInputStream = new FileInputStream(fileToBeAdded);
                     int bytesRead = 0;
-            try {
-                while (bytesRemaining > 0 && bytesRead >= 0 ) {
-                    // Generate a new Chunk ID
-                    String chunkID = HashUtils.sha256String(UUID.randomUUID().toString() + System.currentTimeMillis());
+                    try {
+                        while (bytesRemaining > 0 && bytesRead >= 0) {
+                            // Generate a new Chunk ID
+                            String chunkID = HashUtils.sha256String(UUID.randomUUID().toString() + System.currentTimeMillis());
 
-                    chunkKey = CryptoUtils.generateAESKey();
-                    iv = CryptoUtils.generateIV(chunkKey.getAlgorithm());
+                            chunkKey = CryptoUtils.generateAESKey();
+                            iv = CryptoUtils.generateIV(chunkKey.getAlgorithm());
 
-                    // Read in on chunk's worth of data from the source file
-                    bytesRead = fileInputStream.read(clearChunk);
-                    if (bytesRead > 0) {
-                        // Update the file Hash digest with the current chunk.
-                        sha256File.update(clearChunk, 0, bytesRead);
+                            // Read in on chunk's worth of data from the source file
+                            bytesRead = fileInputStream.read(clearChunk);
+                            if (bytesRead > 0) {
+                                FileChunk fileChunk;
 
-                        // Compress the clearChunk
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        GZIPOutputStream gzos = new GZIPOutputStream(baos);
-                        gzos.write(clearChunk, 0, bytesRead);
-                        gzos.close();
-                        byte[] compressedChunk = baos.toByteArray();
+                                // Update the file Hash digest with the current chunk.
+                                sha256File.update(clearChunk, 0, bytesRead);
 
-                        // Encrypt the chunk
-                        cipherChunk = CryptoUtils.encryptWithSecretKey(compressedChunk, chunkKey, iv);
-                        bytesRemaining -= bytesRead;
+                                int clearSize = bytesRead;
+                                String clearHashStr = HashUtils.sha256String(clearChunk);
 
-                        // Calculate sizes and hashes of the clear and cipher chunks.
-                        int clearSize = bytesRead;
-                        int cipherSize = cipherChunk.length;
-                        String clearHashStr = HashUtils.sha256String(clearChunk);
-                        String cipherHashStr = HashUtils.sha256String(cipherChunk);
+                                // Check to see if a chunk with this clear hash already exists.
+                                FileChunk existingFileChunk = _dataModel.getFileChunkWithClearHash(clearHashStr);
+                                if ( existingFileChunk != null ) {
+                                    // There is an existing chunk we can reuse.  Copy it, then update the
+                                    // chunk index of the copy to match where the chunk fits into this file.
+                                    fileChunk = new FileChunk(existingFileChunk);
+                                    fileChunk.setIndex(chunkIndex);
+                                } else {
+                                    // There is not an existing chunk.  Compress and encrypt the chunk data,
+                                    // then create a new FileChunk object to contain the info about this chunk.
 
-                        // Create the File Chunk Model object
-                        FileChunk fileChunk = new FileChunk();
-                        fileChunk.setIndex(chunkIndex);
-                        fileChunk.setChunkID(chunkID);
-                        fileChunk.setClearTextSize(clearSize);
-                        fileChunk.setCipherTextSize(cipherSize);
-                        fileChunk.setClearTextHash(clearHashStr);
-                        fileChunk.setCipherTextHash(cipherHashStr);
-                        fileChunk.setCompressionAlgorithm("GZIP");
-                        fileChunk.setChunkKey(chunkKey);
-                        fileChunk.setInitializationVector(iv.getIV());
+                                    // Compress the clearChunk
+                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                    GZIPOutputStream gzos = new GZIPOutputStream(baos);
+                                    gzos.write(clearChunk, 0, bytesRead);
+                                    gzos.close();
+                                    byte[] compressedChunk = baos.toByteArray();
 
-                        // Save the encrypted chunk in the chunk manager
-                        _chunkManager.addChunk(chunkID, cipherChunk);
+                                    // Encrypt the chunk
+                                    cipherChunk = CryptoUtils.encryptWithSecretKey(compressedChunk, chunkKey, iv);
+                                    bytesRemaining -= bytesRead;
 
-                        // Add the File Chunk to the Collection
-                        fileChunks.add(fileChunk);
+                                    // Calculate sizes and hashes of the clear and cipher chunks.
+                                    int cipherSize = cipherChunk.length;
+                                    String cipherHashStr = HashUtils.sha256String(cipherChunk);
 
-                        // Increment the Chunk Index Counter
-                        chunkIndex++;
+                                    // Create the File Chunk Model object
+                                    fileChunk = new FileChunk();
+                                    fileChunk.setIndex(chunkIndex);
+                                    fileChunk.setChunkID(chunkID);
+                                    fileChunk.setClearTextSize(clearSize);
+                                    fileChunk.setCipherTextSize(cipherSize);
+                                    fileChunk.setClearTextHash(clearHashStr);
+                                    fileChunk.setCipherTextHash(cipherHashStr);
+                                    fileChunk.setCompressionAlgorithm("GZIP");
+                                    fileChunk.setChunkKey(chunkKey);
+                                    fileChunk.setInitializationVector(iv.getIV());
+                                }
+
+                                // Save the encrypted chunk in the chunk manager
+                                _chunkManager.addChunk(chunkID, cipherChunk);
+
+                                // Add the File Chunk to the Collection
+                                fileChunks.add(fileChunk);
+
+                                // Increment the Chunk Index Counter
+                                chunkIndex++;
+                            }
+
+                        }
+
+                        fileHash = sha256File.digest();
+                    } finally {
+                        fileInputStream.close();
                     }
 
+                    // Set the calculated Information
+                    String fileHashStr = sha256File.getAlgorithm() + ":" + Base64.encodeBase64String(fileHash); // TODO - Try to figure out how to do this using Hash Utils
+                    fileVersion.setFileHash(fileHashStr);
+                    fileVersion.setOwnerID(currentUser.getUserID());
+                    fileVersion.setFileChunks(fileChunks);
+
+                    newFile.setVersions(Collections.singletonList(fileVersion));
+
+                    _log.info ( "Adding " + fileToBeAdded.getName() + " to Workspace") ;
+                    _workspaceAPI.addFile(newFile, new AddFileCallback() {
+                        @Override
+                        public void didAddFile(java.io.File addFile) {
+                            _log.info ( "Added " + fileToBeAdded.getName() + " to Workspace") ;
+                            if ( callback != null )
+                                callback.didAddFile(fileToBeAdded);
+                        }
+
+                        @Override
+                        public void failedToAddFile(java.io.File file) {
+                            _log.warn ( "Failed to Add " + fileToBeAdded.getName() + " to Workspace") ;
+                            if ( callback != null )
+                                callback.failedToAddFile(fileToBeAdded);
+                        }
+                    });
+
+                    // Save all of the objects into the data model
+                    _dataModel.addFileToWorkspace(workspaceGUID, newFile);
+                    _dataModel.addFileVersion(fileGUID, fileVersion);
+                    for (FileChunk fileChunk : fileChunks) {
+                        _dataModel.addChunkForFile(fileGUID, fileVersionGUID, fileChunk);
+                    }
+                } catch (CryptographicException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Encryption Failure Preparing File to be Added to Workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (InsufficientSpaceException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Insufficient Space Available to Add File to Workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    _log.warn ( "IOException Adding File to Workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (DuplicateChunkException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Attempt to add Duplicate chunk to data model", e) ;
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Failed to find necessary Java Cryptographic Algorithm",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (NoSuchWorkspaceException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Target workspace not found",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (FileAlreadyExistsException e) {
+                    e.printStackTrace();
+                    _log.warn ( "The specified file already exists in the workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (FileVersionAlreadyExistsException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Failure Adding File to Workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (NoSuchFileVersionException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Failure Adding File to Workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (NoSuchFileException e) {
+                    e.printStackTrace();
+                    _log.warn ( "Failure Adding File to Workspace",e);
+                    if ( callback != null )
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch (FileChunkAlreadyExistsException e) {
+                    e.printStackTrace();
+                    _log.warn("Failure Adding File to Workspace", e);
+                    if (callback != null)
+                        callback.failedToAddFile(fileToBeAdded);
+                } catch ( Exception e) {
+                    e.printStackTrace();
+                    // TODO - Remove this catch all
+                } finally {
+
                 }
+            });
 
-                fileHash = sha256File.digest() ;
-            } finally {
-                fileInputStream.close();
-            }
-
-            // Set the calculated Information
-            String fileHashStr = sha256File.getAlgorithm() + ":" + Base64.encodeBase64String(fileHash); // TODO - Try to figure out how to do this using Hash Utils
-            fileVersion.setFileHash(fileHashStr);
-            fileVersion.setOwnerID(currentUser.getUserID());
-
-            newFile.setVersions(Collections.singletonList(fileVersion));
-
-            // Save all of the objects into the data model
-            _dataModel.addFileToWorkspace(workspaceGUID, newFile);
-            _dataModel.addFileVersion(fileGUID, fileVersion);
-            for (FileChunk fileChunk : fileChunks) {
-                _dataModel.addChunkForFile(fileGUID, fileVersionGUID, fileChunk);
-            }
         } catch (NoSuchUserException e) {
             e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (NoSuchWorkspaceException e) {
+            _log.info ( "User Not Logged In",e);
+            throw new RuntimeException("No current user logged in", e);
+        } catch ( Exception e) {
             e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (FileAlreadyExistsException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (NoSuchFileException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (FileVersionAlreadyExistsException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (NoSuchFileVersionException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (FileChunkAlreadyExistsException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (CryptographicException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (IOException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (InsufficientSpaceException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (DuplicateChunkException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            // TODO - Implement this Exception Handler
+            // TODO - Remove this catch all
         } finally {
 
         }
@@ -689,7 +762,7 @@ public class SDFS {
             FileVersion fileVersion = _dataModel.getFileVersion(fileGUID, fileVersionGUID);
 
             // Get chunkIDs for the specified file.
-            List<FileChunk> fileChunks = fileVersion.getFileChunks();
+            List<FileChunk> fileChunks = _dataModel.getChunksForFileVersion(fileGUID, fileVersionGUID);
             List<String> chunkIDs = fileChunks.stream().map(FileChunk::getChunkID).collect(Collectors.toList());
 
             // --Fetch the Member Nodes for each of the userIDs-- Handled by Chunk Manager currently.
@@ -697,12 +770,14 @@ public class SDFS {
             _chunkManager.fetchChunks(chunkIDs, workspaceGUID, new ChunksFetchHandler() {
                 @Override
                 public void finishedFetchingChunks(List<String> successfulChunks, List<String> unsuccessfulChunks, Object state) {
-                    callback.didDownloadFileVersion(fileGUID, fileVersionGUID);
+                    if ( callback != null )
+                        callback.didDownloadFileVersion(fileGUID, fileVersionGUID);
                 }
 
                 @Override
                 public void errorFetchingChunks(String message, Exception cause, Object state) {
-                    callback.failedToDownloadFileVersion(fileGUID, fileVersionGUID, message);
+                    if ( callback != null )
+                        callback.failedToDownloadFileVersion(fileGUID, fileVersionGUID, message);
                 }
             }, null);
         } catch (NoSuchWorkspaceException e) {
@@ -759,10 +834,9 @@ public class SDFS {
             if (!file.getContainerID().equals(workspaceGUID)) {
                 throw new NoSuchFileException("The requested file does not exist in the specified workspace");
             }
-            FileVersion fileVersion = _dataModel.getFileVersion(fileGUID, fileVersionGUID);
 
             // Get chunkIDs for the specified file.
-            List<FileChunk> fileChunks = fileVersion.getFileChunks();
+            List<FileChunk> fileChunks = _dataModel.getChunksForFileVersion(fileGUID, fileVersionGUID);
 
             // Verify that the chunk Manager has all of the necessary chunks
             for (FileChunk fileChunk : fileChunks) {
@@ -791,13 +865,16 @@ public class SDFS {
                     }
                 } catch (CryptographicException e) {
                     _log.info("Failed to decrypt required file chunk.", e);
-                    callback.failedToSaveFile(fileGUID, fileVersionGUID, "Error decrypting the file chunks");
+                    if ( callback != null )
+                        callback.failedToSaveFile(fileGUID, fileVersionGUID, "Error decrypting the file chunks");
                 } catch (IOException e) {
                     _log.info("Exception while saving the file.", e);
-                    callback.failedToSaveFile(fileGUID, fileVersionGUID, "Error saving the file");
+                    if ( callback != null )
+                        callback.failedToSaveFile(fileGUID, fileVersionGUID, "Error saving the file");
                 } catch (NoSuchChunkException e) {
                     _log.info("Exception while saving the file.", e);
-                    callback.failedToSaveFile(fileGUID, fileVersionGUID, "Unable to find all of the required file chunks");
+                    if ( callback != null )
+                        callback.failedToSaveFile(fileGUID, fileVersionGUID, "Unable to find all of the required file chunks");
                 }
             });
         } catch (NoSuchFileException e) {
@@ -965,4 +1042,30 @@ public class SDFS {
     }
 
 
+    // -------- Accessor Methods --------
+
+
+    public void setWorkspaceAPI(WorkspacesAPI workspaceAPI) {
+        _workspaceAPI = workspaceAPI;
+    }
+
+    public void setUserAPI(UsersAPI userAPI) {
+        _userAPI = userAPI;
+    }
+
+    public void setEventAPI(EventsAPI eventAPI) {
+        _eventAPI = eventAPI;
+    }
+
+    public void setDataModel(DataModel dataModel) {
+        _dataModel = dataModel;
+    }
+
+    public void setChunkManager(ChunkManager chunkManager) {
+        _chunkManager = chunkManager;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        _configuration = configuration;
+    }
 }

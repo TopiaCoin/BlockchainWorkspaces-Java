@@ -2,6 +2,30 @@ package io.topiacoin.sdk.impl;
 
 import io.topiacoin.core.Configuration;
 import io.topiacoin.core.WorkspacesAPI;
+import io.topiacoin.core.callbacks.AcceptInvitationCallback;
+import io.topiacoin.core.callbacks.AcknowledgeFileCallback;
+import io.topiacoin.core.callbacks.AcknowledgeMessageCallback;
+import io.topiacoin.core.callbacks.AddFileCallback;
+import io.topiacoin.core.callbacks.AddFileTagCallback;
+import io.topiacoin.core.callbacks.AddFileVersionCallback;
+import io.topiacoin.core.callbacks.AddFolderCallback;
+import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.ConnectWorkspaceCallback;
+import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
+import io.topiacoin.core.callbacks.DeclineInvitationCallback;
+import io.topiacoin.core.callbacks.FetchFileVersionCallback;
+import io.topiacoin.core.callbacks.InviteUserCallback;
+import io.topiacoin.core.callbacks.LeaveWorkspaceCallback;
+import io.topiacoin.core.callbacks.LockFileCallback;
+import io.topiacoin.core.callbacks.RemoveFileCallback;
+import io.topiacoin.core.callbacks.RemoveFileTagCallback;
+import io.topiacoin.core.callbacks.RemoveFileVersionCallback;
+import io.topiacoin.core.callbacks.RemoveFolderCallback;
+import io.topiacoin.core.callbacks.RemoveUserCallback;
+import io.topiacoin.core.callbacks.UnlockFileCallback;
+import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.model.Message;
+import io.topiacoin.model.Workspace;
 
 import java.io.File;
 
@@ -9,6 +33,7 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
     public BlockchainWorkspacesAPI(Configuration configuration) {
 
     }
+
 
     /**
      * Instructs the Blockchain API to connect to the blockchain for the specified workspace ID. This will start the
@@ -24,9 +49,10 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * will include the reason for the failure under the 'reason' key.
      *
      * @param workspaceID
+     * @param callback
      */
     @Override
-    public void connectWorkspace(String workspaceID) {
+    public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) {
 
     }
 
@@ -61,9 +87,10 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      *
      * @param workspaceName
      * @param workspaceDescription
+     * @param callback
      */
     @Override
-    public void createWorkspace(String workspaceName, String workspaceDescription) {
+    public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) {
 
     }
 
@@ -79,11 +106,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID. The notification info will
      * include the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param workspaceDescription
+     * @param workspaceToUpdate
+     * @param callback
      */
     @Override
-    public void updateWorkspaceDescription(String workspaceGUID, String workspaceDescription) {
+    public void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback) {
 
     }
 
@@ -101,12 +128,13 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * contain the user ID of the invited user under the 'userID' key, and the reason for the failure under the 'reason'
      * key.
      *
-     * @param workspaceGUID
+     * @param workspace
      * @param userID
      * @param inviteMessage
+     * @param callback
      */
     @Override
-    public void inviteUser(String workspaceGUID, String userID, String inviteMessage) {
+    public void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback) {
 
     }
 
@@ -122,10 +150,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
+     * @param workspace
+     * @param callback
      */
     @Override
-    public void acceptInvitation(String workspaceGUID) {
+    public void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback) {
 
     }
 
@@ -141,10 +170,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID. The notification info
      * will include the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
+     * @param workspace
+     * @param callback
      */
     @Override
-    public void declineInvitation(String workspaceGUID) {
+    public void declineInvitation(Workspace workspace, DeclineInvitationCallback callback) {
 
     }
 
@@ -183,10 +213,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
+     * @param workspace
+     * @param callback
      */
     @Override
-    public void leaveWorkspace(String workspaceGUID) {
+    public void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback) {
 
     }
 
@@ -204,11 +235,12 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID. The notification info will
      * contain the user ID of the user under the 'userID' key, and the reason for the failure under the 'reason' key.
      *
-     * @param worksapceGUID
+     * @param workspace
      * @param memberID
+     * @param callback
      */
     @Override
-    public void removeUserFromWorkspace(String worksapceGUID, String memberID) {
+    public void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback) {
 
     }
 
@@ -238,12 +270,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the file ID and version ID assigned to
      * this file.
      *
-     * @param workspaceGUID
-     * @param folderGUID
-     * @param fileToBeAdded
+     * @param fileToAdd
+     * @param callback
      */
     @Override
-    public void addFile(String workspaceGUID, String folderGUID, File fileToBeAdded) {
+    public void addFile(io.topiacoin.model.File fileToAdd, AddFileCallback callback) {
 
     }
 
@@ -260,11 +291,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
      * will contain the file ID under the 'fileID' key, and the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param fileGUID
+     * @param fileToRemove
+     * @param callback
      */
     @Override
-    public void removeFile(String workspaceGUID, String fileGUID) {
+    public void removeFile(io.topiacoin.model.File fileToRemove, RemoveFileCallback callback) {
 
     }
 
@@ -295,12 +326,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the version ID assigned to this
      * version.
      *
-     * @param workspaceGUID
-     * @param fileGUID
      * @param fileToBeAdded
+     * @param callback
      */
     @Override
-    public void addFileVersion(String workspaceGUID, String fileGUID, File fileToBeAdded) {
+    public void addFileVersion(io.topiacoin.model.File fileToBeAdded, AddFileVersionCallback callback) {
 
     }
 
@@ -323,9 +353,10 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param fileGUID
      * @param fileVersionGUID
+     * @param callback
      */
     @Override
-    public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID) {
+    public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) {
 
     }
 
@@ -344,30 +375,31 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param fileGUID
      * @param fileVersionGUID
+     * @param callback
      */
     @Override
-    public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID) {
+    public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) {
 
     }
 
     /**
-     * @param workspaceGUID
-     * @param fileGUID
+     * @param fileToTag
      * @param tagName
      * @param isPrivate
+     * @param callback
      */
     @Override
-    public void addFileTag(String workspaceGUID, String fileGUID, String tagName, boolean isPrivate) {
+    public void addFileTag(io.topiacoin.model.File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback) {
 
     }
 
     /**
-     * @param workspaceGUID
-     * @param fileGUID
+     * @param fileToUntag
      * @param tagName
+     * @param callback
      */
     @Override
-    public void removeFileTag(String workspaceGUID, String fileGUID, String tagName) {
+    public void removeFileTag(io.topiacoin.model.File fileToUntag, String tagName, RemoveFileTagCallback callback) {
 
     }
 
@@ -401,37 +433,10 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param workspaceGUID
      * @param fileGUID
      * @param fileVersionGUID
+     * @param callback
      */
     @Override
-    public void downloadFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID) {
-
-    }
-
-    /**
-     * Decrypts, reconstructs, and saves the specified file into the target directory. This method assumes that the file
-     * has been previously downloaded and its chunks are available on the device. It is an error to specify a
-     * non-existent workspace GUID, a non-existent file GUID, or a non-existent file version GUID. It is also an error
-     * to attempt to save a file whose chunks have not been downloaded.
-     * <p>
-     * This method will invoke the callback when the file save finishes, either successfully or with an error.
-     * <p>
-     * On completion of file save, a notification of type 'fileVersionSaveComplete' will be posted to the notification
-     * center.  The classifier of this notification will be the fileID.  The notification information will contain the
-     * workspace ID of the saved file under the 'workspaceID' key, the version number under the 'versionNumber' key, and
-     * the full path to the location of the decrypted file under the 'filePath' key.
-     * <p>
-     * On failed save of the file, a notification of type 'fileVersionSaveFailed' will be posted to the the notification
-     * center.  The classifier of this notification will be the fileID.  The notification information will contain the
-     * workspace ID of the saved file under the 'workspaceID' key, the version number under the 'versionNumber' key, and
-     * the reason for the failure under the 'reason' key.
-     *
-     * @param workspaceGUID
-     * @param fileGUID
-     * @param fileVersionGUID
-     * @param targetDirectory
-     */
-    @Override
-    public void saveFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, String targetDirectory) {
+    public void fetchFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, FetchFileVersionCallback callback) {
 
     }
 
@@ -449,11 +454,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param fileGUID
+     * @param fileToLock
+     * @param callback
      */
     @Override
-    public void lockFile(String workspaceGUID, String fileGUID) {
+    public void lockFile(io.topiacoin.model.File fileToLock, LockFileCallback callback) {
 
     }
 
@@ -471,11 +476,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param fileGUID
+     * @param fileToUnlock
+     * @param callback
      */
     @Override
-    public void unlockFile(String workspaceGUID, String fileGUID) {
+    public void unlockFile(io.topiacoin.model.File fileToUnlock, UnlockFileCallback callback) {
 
     }
 
@@ -494,12 +499,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the the reason
      * for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param parentGUID
-     * @param folderName
+     * @param folderToAdd
+     * @param callback
      */
     @Override
-    public void addFolder(String workspaceGUID, String parentGUID, String folderName) {
+    public void addFolder(io.topiacoin.model.File folderToAdd, AddFolderCallback callback) {
 
     }
 
@@ -515,11 +519,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * center.  The classifier of this notification will be the workspace ID.  The notification info will contain the
      * folder ID of the folder under the 'folderID' key, and the reason for the failure under the 'reason' key.
      *
-     * @param workspaceGUID
-     * @param folderGUID
+     * @param folderToRemove
+     * @param callback
      */
     @Override
-    public void removeFolder(String workspaceGUID, String folderGUID) {
+    public void removeFolder(io.topiacoin.model.File folderToRemove, RemoveFolderCallback callback) {
 
     }
 
@@ -539,9 +543,10 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      *
      * @param workspaceGUID
      * @param message
+     * @param callback
      */
     @Override
-    public void addMessage(String workspaceGUID, String message) {
+    public void addMessage(String workspaceGUID, String message, AddMessageCallback callback) {
 
     }
 
@@ -553,11 +558,11 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * notification center. The classifier of this notification will be the workspace ID. The notification info will
      * contain the message ID under the key 'messageID'.
      *
-     * @param workspaceGUID
-     * @param messageGUID
+     * @param messageToAcknowledge
+     * @param callback
      */
     @Override
-    public void acknowledgeMessage(String workspaceGUID, String messageGUID) {
+    public void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback) {
 
     }
 }
