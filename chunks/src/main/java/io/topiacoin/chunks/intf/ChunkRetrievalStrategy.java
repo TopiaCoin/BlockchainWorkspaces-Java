@@ -19,4 +19,8 @@ public interface ChunkRetrievalStrategy {
 	public void setChunkIDs(List<String> chunkIDs);
 
 	public ChunkRetrievalPlan getPlan();
+
+	int getChunksTransferred();
+
+	int getTotalChunks();
 }

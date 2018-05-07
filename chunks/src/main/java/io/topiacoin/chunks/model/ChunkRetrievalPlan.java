@@ -92,10 +92,18 @@ public class ChunkRetrievalPlan {
 		return _fetchedChunks.size() == _plannedChunkIDs.size() || _sources.isEmpty();
 	}
 
+	public int getChunksFetched() {
+		return _fetchedChunks.size();
+	}
+
 	public List<String> getFailedChunks() {
 		List<String> failedChunks = _plannedChunkIDs;
 		failedChunks.removeAll(_fetchedChunks);
 		return failedChunks;
+	}
+
+	public int getTotalChunks() {
+		return _plannedChunkIDs.size();
 	}
 
 	public class PlanTask {

@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class SDFSChunkTransferer implements ChunkTransferer {
 	private static final Log _log = LogFactory.getLog(SDFSChunkTransferer.class);
@@ -57,8 +58,13 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	private int _listenPort;
 
 	public SDFSChunkTransferer(KeyPair chunkTransferPair, int defaultPort) throws IOException, FailedToStartCommsListenerException {
+		this(chunkTransferPair, defaultPort, 30000);
+	}
+
+	public SDFSChunkTransferer(KeyPair chunkTransferPair, int defaultPort, int timeoutMs) throws IOException, FailedToStartCommsListenerException {
 		_comms = new TCPProtocolCommsService(defaultPort, chunkTransferPair);
 		_comms.setHandler(new StandardProtocolCommsResponder());
+		_comms.setTimeout(timeoutMs, TimeUnit.MILLISECONDS);
 		_listenPort = _comms.startListener();
 	}
 
@@ -137,10 +143,11 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 				if (strategy.isCompletePlan()) {
 					if (!isExecuting) {
 						isExecuting = true;
+						chunksHandler.fetchPlanBuiltSuccessfully(strategy, state);
 						executeStrategy(strategy, chunksHandler, state, me, containerID);
 					}
 				} else if (allMessagesFetched) {
-					chunksHandler.failedToBuildFetchPlan();
+					chunksHandler.failedToBuildFetchPlan(state);
 				}
 			}
 		};
@@ -238,7 +245,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 							} catch (DuplicateChunkException e) {
 								//Ok, whatever
 							}
-							chunksHandler.didFetchChunk(chunkID, state);
+							chunksHandler.didFetchChunk(chunkID, strategy, state);
 						} else {
 							_log.warn("Response from " + responseImpl.getUserID() + " had an invalid signature - ignoring message");
 						}

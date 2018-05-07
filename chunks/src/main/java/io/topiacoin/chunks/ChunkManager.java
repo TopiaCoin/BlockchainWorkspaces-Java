@@ -9,6 +9,7 @@ import io.topiacoin.chunks.impl.FileSystemChunkStorage;
 import io.topiacoin.chunks.impl.InMemoryChunkInfoManager;
 import io.topiacoin.chunks.impl.SDFSChunkTransferer;
 import io.topiacoin.chunks.impl.SimpleChunkRetrievalStrategyFactory;
+import io.topiacoin.chunks.intf.ChunkRetrievalStrategy;
 import io.topiacoin.chunks.intf.ChunkTransferer;
 import io.topiacoin.chunks.intf.ChunksFetchHandler;
 import io.topiacoin.chunks.intf.ChunksTransferHandler;
@@ -18,6 +19,8 @@ import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.UserNode;
 import io.topiacoin.model.exceptions.NoSuchUserException;
+import io.topiacoin.util.Notification;
+import io.topiacoin.util.NotificationCenter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,7 +31,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChunkManager {
 	private static final Log _log = LogFactory.getLog(ChunkManager.class);
@@ -38,8 +43,10 @@ public class ChunkManager {
 	private int _listenPort;
 	private String _listenAddress;
 	private DataModel _model;
+	private NotificationCenter _notificationCenter;
 
 	public ChunkManager(Configuration config, DataModel model) throws NoSuchUserException, IOException, FailedToStartCommsListenerException, CryptographicException {
+		_notificationCenter = NotificationCenter.defaultCenter();
 		_model = model;
 		InMemoryChunkInfoManager infomgr = new InMemoryChunkInfoManager();
 		infomgr.init();
@@ -54,7 +61,7 @@ public class ChunkManager {
 
 		_myChunkTransferPair = CryptoUtils.generateECKeyPair();
 		String myUserID = _model.getCurrentUser().getUserID();
-		_chunkTransferer = new SDFSChunkTransferer(_myChunkTransferPair, config.getConfigurationOption("chunkListenerPort", 0));
+		_chunkTransferer = new SDFSChunkTransferer(_myChunkTransferPair, config.getConfigurationOption("chunkListenerPort", 0), config.getConfigurationOption("protocolTimeoutMs", 30000));
 		_listenPort = _chunkTransferer.getListenPort();
 		_listenAddress = "127.0.0.1";
 		UserNode thisNode = new UserNode(myUserID, _listenAddress, _listenPort, _myChunkTransferPair.getPublic().getEncoded());
@@ -198,8 +205,9 @@ public class ChunkManager {
 			}
 		}
 		ChunksTransferHandler chunkFetchHandler = new ChunksTransferHandler() {
-			@Override public void didFetchChunk(String chunkID, Object state) {
+			@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strategy, Object state) {
 				successfulChunks.add(chunkID);
+				updateTransferProgress(strategy, state);
 			}
 
 			@Override public void failedToFetchChunk(String chunkID, String message, Exception cause, Object state) {
@@ -210,8 +218,12 @@ public class ChunkManager {
 				handler.finishedFetchingChunks(successfulChunks, failedChunks, state);
 			}
 
-			@Override public void failedToBuildFetchPlan() {
+			@Override public void failedToBuildFetchPlan(Object state) {
 				handler.errorFetchingChunks("Failed to find a place to download the requested chunks", null, state);
+			}
+
+			@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+				updateTransferProgress(strategy, state);
 			}
 
 			@Override public void failedToFetchAllChunks(Object state) {
@@ -227,5 +239,13 @@ public class ChunkManager {
 
 	public void stop() {
 		_chunkTransferer.stop();
+	}
+
+	private void updateTransferProgress(ChunkRetrievalStrategy strategy, Object state) {
+		Map<String, Object> info = new HashMap<>();
+		info.put("completed", strategy.getChunksTransferred());
+		info.put("total", strategy.getTotalChunks());
+		Notification tpNotification = new Notification("transferProgress", state.toString(), info);
+		_notificationCenter.postNotification(tpNotification);
 	}
 }
