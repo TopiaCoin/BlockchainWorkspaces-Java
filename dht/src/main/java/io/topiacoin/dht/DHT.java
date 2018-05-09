@@ -48,7 +48,7 @@ public class DHT {
     protected DHTComponents _dhtComponents;
 
     private NodeID nodeID;
-    private final Node _node;
+    private Node _node;
     private boolean isRunning;
 
     private Timer refreshTimer;
@@ -127,6 +127,7 @@ public class DHT {
         routingTableChannel.close();
 
         this.nodeID = nodeID;
+        this._node = new Node(this.nodeID, this._node.getAddress(), this._node.getPort());
         _dhtComponents.setRoutingTable(routingTable);
     }
 
@@ -183,7 +184,14 @@ public class DHT {
     }
 
     public void start() throws IllegalStateException, IOException {
-        start(true);
+        try {
+            start(true);
+            _log.info("Started DHT with existing state");
+        } catch(IOException ex) {
+            isRunning = false;
+            start(false);
+            _log.info("Started DHT with new state");
+        }
     }
 
     public void start(boolean loadState) throws IllegalStateException, IOException {

@@ -1,8 +1,10 @@
 package io.topiacoin.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class UserNode implements Comparable<UserNode> {
+public class UserNode implements Comparable<UserNode>, Serializable {
+	private static final long serialVersionUID = 1;
 	private String userId;
 	private String hostname;
 	private int port;
