@@ -2,17 +2,25 @@ package io.topiacoin.model;
 
 import java.util.Objects;
 
-public class UserNode implements Comparable<UserNode> {
+public class MemberNode implements Comparable<MemberNode> {
 	private String userId;
 	private String hostname;
 	private int port;
-	private byte[] publicKey;
 
-	public UserNode(String userId, String hostname, int port, byte[] transferPublicKey) {
+	public MemberNode(String userId, String hostname, int port) {
 		this.userId = userId;
 		this.hostname = hostname;
 		this.port = port;
-		this.publicKey = transferPublicKey;
+	}
+
+	public MemberNode(String dhtString) {
+		String[] dhtParts = dhtString.split("\n");
+		if(dhtParts.length != 3) {
+			throw new IllegalArgumentException("Malformed DHT String");
+		}
+		this.userId = dhtParts[0];
+		this.hostname = dhtParts[1];
+		this.port = Integer.parseInt(dhtParts[2]);
 	}
 
 	public String getUserID() {
@@ -27,8 +35,14 @@ public class UserNode implements Comparable<UserNode> {
 		return port;
 	}
 
-	public byte[] getPublicKey() {
-		return publicKey;
+	public String toDHTString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(this.userId);
+		builder.append("\n");
+		builder.append(this.hostname);
+		builder.append("\n");
+		builder.append(this.port);
+		return builder.toString();
 	}
 
 	@Override public boolean equals(Object o) {
@@ -36,7 +50,7 @@ public class UserNode implements Comparable<UserNode> {
 			return true;
 		if (o == null || getClass() != o.getClass())
 			return false;
-		UserNode that = (UserNode) o;
+		MemberNode that = (MemberNode) o;
 		return port == that.port &&
 				Objects.equals(userId, that.userId) &&
 				Objects.equals(hostname, that.hostname);
@@ -46,7 +60,7 @@ public class UserNode implements Comparable<UserNode> {
 		return Objects.hash(userId, hostname, port);
 	}
 
-	@Override public int compareTo(UserNode o) {
+	@Override public int compareTo(MemberNode o) {
 		if(o == null) {
 			return 1;
 		} else {
