@@ -31,7 +31,15 @@ public class DHTTestConfiguration extends DHTConfiguration {
 
     public DHTTestConfiguration() {
         super(new DefaultConfiguration());
+        setEm();
+    }
 
+    public DHTTestConfiguration(Configuration c) {
+        super(c);
+        setEm();
+    }
+
+    private void setEm() {
         setRestoreInterval(defaultRestoreInterval);
         setResponseTimeout(defaultResponseTimeout);
         setOperationTimeout(defaultOperationTimeout);

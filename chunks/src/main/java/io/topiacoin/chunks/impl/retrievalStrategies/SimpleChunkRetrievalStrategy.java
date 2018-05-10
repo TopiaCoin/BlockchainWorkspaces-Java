@@ -44,4 +44,12 @@ public class SimpleChunkRetrievalStrategy implements ChunkRetrievalStrategy {
 	@Override public ChunkRetrievalPlan getPlan() {
 		return _plan;
 	}
+
+	@Override public int getChunksTransferred() {
+		return _plan.getChunksFetched();
+	}
+
+	@Override public int getTotalChunks() {
+		return _plan.getTotalChunks();
+	}
 }

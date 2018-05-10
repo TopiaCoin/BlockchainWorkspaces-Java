@@ -130,7 +130,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererB.setDataModel(modelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					assertTrue(chunksExpected.remove(chunkID));
 					lock.countDown();
 				}
@@ -152,8 +152,12 @@ public abstract class AbstractChunkTransfererTest {
 					}
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					fail();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -270,7 +274,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setDataModel(modelA);
 			transfererB.setDataModel(modelB);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					assertTrue(testChunks.containsKey(chunkID));
 					lock.countDown();
 				}
@@ -292,8 +296,12 @@ public abstract class AbstractChunkTransfererTest {
 					}
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					fail();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -498,7 +506,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererC.setDataModel(modelC);
 			transfererD.setDataModel(modelD);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					assertTrue(testChunks.containsKey(chunkID));
 					lock.countDown();
 				}
@@ -520,8 +528,12 @@ public abstract class AbstractChunkTransfererTest {
 					}
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					fail();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -721,7 +733,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererC.setDataModel(modelC);
 			transfererD.setDataModel(modelD);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					fail();
 				}
 
@@ -733,8 +745,12 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					lock.countDown();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -851,7 +867,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setDataModel(modelA);
 			transfererB.setDataModel(modelB);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					fail();
 				}
 
@@ -863,8 +879,12 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					lock.countDown();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -1012,7 +1032,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererB.setDataModel(modelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					assertTrue(chunksExpected.remove(chunkID));
 					lock.countDown();
 				}
@@ -1030,8 +1050,12 @@ public abstract class AbstractChunkTransfererTest {
 					lock.countDown();
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					fail();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 			};
 			List<String> testChunkIDs = new ArrayList<>(testChunks.keySet());
@@ -1174,7 +1198,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setDataModel(modelA);
 			transfererB.setDataModel(modelB);
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					fail();
 				}
 
@@ -1187,8 +1211,12 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					lock.countDown();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -1337,7 +1365,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererB.setDataModel(modelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					fail();
 				}
 
@@ -1349,8 +1377,12 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					fail();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -1460,7 +1492,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererB.setDataModel(modelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					fail();
 				}
 
@@ -1472,8 +1504,12 @@ public abstract class AbstractChunkTransfererTest {
 					fail();
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					lock.countDown();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {
@@ -1581,7 +1617,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererB.setDataModel(modelB);
 			Set<String> chunksExpected = new HashSet<>(testChunks.keySet());
 			ChunksTransferHandler handler = new ChunksTransferHandler() {
-				@Override public void didFetchChunk(String chunkID, Object state) {
+				@Override public void didFetchChunk(String chunkID, ChunkRetrievalStrategy strat, Object state) {
 					fail();
 				}
 
@@ -1602,8 +1638,12 @@ public abstract class AbstractChunkTransfererTest {
 					}
 				}
 
-				@Override public void failedToBuildFetchPlan() {
+				@Override public void failedToBuildFetchPlan(Object state) {
 					lock.countDown();
+				}
+
+				@Override public void fetchPlanBuiltSuccessfully(ChunkRetrievalStrategy strategy, Object state) {
+
 				}
 
 				@Override public void failedToFetchAllChunks(Object state) {

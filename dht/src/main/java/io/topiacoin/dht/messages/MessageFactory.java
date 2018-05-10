@@ -90,6 +90,7 @@ public class MessageFactory {
                 break;
             case RemoveValueRequest.TYPE:
                 responseHandler = new RemoveValueRequestHandler(_dhtComponents);
+                break;
             default:
                 System.err.println("Unable to create handler - Unrecognized msgType: " + msgType);
         }

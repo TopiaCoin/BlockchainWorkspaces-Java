@@ -1,6 +1,13 @@
 package io.topiacoin.dht.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.Base64;
 
 public class Utilities {
 
@@ -44,5 +51,4 @@ public class Utilities {
 
         return (intVersion.compareTo(limit) < 0);
     }
-
 }

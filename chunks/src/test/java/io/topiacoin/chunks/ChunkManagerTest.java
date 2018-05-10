@@ -18,6 +18,9 @@ import io.topiacoin.model.User;
 import io.topiacoin.model.UserNode;
 import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.NoSuchUserException;
+import io.topiacoin.util.Notification;
+import io.topiacoin.util.NotificationCenter;
+import io.topiacoin.util.NotificationHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
@@ -30,7 +33,9 @@ import java.io.InputStream;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -133,6 +138,8 @@ public class ChunkManagerTest {
 		File chunkStorageLocB = new File("./target/chunks2");
 		ChunkManager managerA = null;
 		ChunkManager managerB = null;
+		NotificationCenter notificationCenter = NotificationCenter.defaultCenter();
+		NotificationHandler notificationHandler = null;
 		try {
 			Configuration configA = new DefaultConfiguration();
 			configA.setConfigurationOption("chunkStorageLoc", chunkStorageLocA.getAbsolutePath());
@@ -143,16 +150,9 @@ public class ChunkManagerTest {
 			configB.setConfigurationOption("chunkStorageQuota", "1000");
 			configB.setConfigurationOption("chunkListenerPort", "" + userBPort);
 
-			//final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
-			//final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
-			//System.out.println("USERATK: " + DatatypeConverter.printHexBinary(userAChunkTransferKeyPair.getPublic().getEncoded()));
-			//System.out.println("USERBTK: " + DatatypeConverter.printHexBinary(userBChunkTransferKeyPair.getPublic().getEncoded()));
 			String testContainerId = "containerA";
 			String userAAuthToken = "userAAuthToken";
 			String userBAuthToken = "userBAuthToken";
-			//List<UserNode> containerAMemberNodes = new ArrayList<>();
-			//containerAMemberNodes.add(userAMemberNode);
-			//containerAMemberNodes.add(userBMemberNode);
 			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
 			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
@@ -224,9 +224,156 @@ public class ChunkManagerTest {
 			assertTrue(managerB.hasChunk("bar"));
 			assertTrue(managerB.hasChunk("baz"));
 
-			//UserNode userANode = new UserNode("userA", "127.0.0.1", userAPort, managerA._myChunkTransferPair.getPublic().getEncoded());
 			UserNode userANode = managerA.getMyUserNode();
-			//UserNode userBNode = new UserNode("userB", "127.0.0.1", userBPort, managerB._myChunkTransferPair.getPublic().getEncoded());
+			UserNode userBNode = managerB.getMyUserNode();
+			modelA.addUserNode(userBNode);
+			modelB.addUserNode(userANode);
+
+			List<String> chunksIWant = new ArrayList<>();
+			chunksIWant.add("foo");
+			chunksIWant.add("bar");
+			chunksIWant.add("baz");
+			String stateExpected = "StateTest";
+			Set<Integer> expectedIntegers = new HashSet<Integer>();
+			expectedIntegers.add(0);
+			expectedIntegers.add(1);
+			expectedIntegers.add(2);
+			expectedIntegers.add(3);
+			final CountDownLatch lock = new CountDownLatch(chunksIWant.size() + 2);
+			notificationHandler = new NotificationHandler() {
+				@Override public void handleNotification(Notification notification) {
+					assertEquals(3, notification.getNotificationInfo().get("total"));
+					Integer s = (Integer) notification.getNotificationInfo().get("completed");
+					assertTrue(expectedIntegers.remove(s));
+					lock.countDown();
+				}
+			};
+			notificationCenter.addHandler(notificationHandler, "transferProgress", stateExpected);
+			managerA.fetchChunks(chunksIWant, workspace.getGuid(), new ChunksFetchHandler() {
+				@Override public void finishedFetchingChunks(List<String> successfulChunks, List<String> unsuccessfulChunks, Object state) {
+					assertTrue(successfulChunks.containsAll(chunksIWant));
+					assertEquals(successfulChunks.size(), chunksIWant.size());
+					assertTrue(unsuccessfulChunks.isEmpty());
+					assertEquals(stateExpected, state);
+					lock.countDown();
+				}
+
+				@Override public void errorFetchingChunks(String message, Exception cause, Object state) {
+					fail();
+				}
+			}, stateExpected);
+
+			assertTrue("Chunks never fetched", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			FileUtils.deleteDirectory(chunkStorageLocA);
+			FileUtils.deleteDirectory(chunkStorageLocB);
+			if(managerA != null) {
+				managerA.stop();
+			}
+			if(managerB != null) {
+				managerB.stop();
+			}
+			if(notificationHandler != null) {
+				notificationCenter.removeHandler(notificationHandler);
+			}
+		}
+	}
+
+	@Test
+	public void chunkFetchWhenIAlreadyHaveOneTest() throws Exception {
+		int userAPort = 7777;
+		int userBPort = 7778;
+		File chunkStorageLocA = new File("./target/chunks1");
+		File chunkStorageLocB = new File("./target/chunks2");
+		ChunkManager managerA = null;
+		ChunkManager managerB = null;
+		try {
+			Configuration configA = new DefaultConfiguration();
+			configA.setConfigurationOption("chunkStorageLoc", chunkStorageLocA.getAbsolutePath());
+			configA.setConfigurationOption("chunkStorageQuota", "1000");
+			configA.setConfigurationOption("chunkListenerPort", "" + userAPort);
+			Configuration configB = new DefaultConfiguration();
+			configB.setConfigurationOption("chunkStorageLoc", chunkStorageLocB.getAbsolutePath());
+			configB.setConfigurationOption("chunkStorageQuota", "1000");
+			configB.setConfigurationOption("chunkListenerPort", "" + userBPort);
+
+			String testContainerId = "containerA";
+			String userAAuthToken = "userAAuthToken";
+			String userBAuthToken = "userBAuthToken";
+			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
+			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			memberA.setAuthToken(userAAuthToken);
+			memberB.setAuthToken(userBAuthToken);
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspace.setGuid("containerA");
+			workspaces.add(workspace);
+			FileChunk fooChunk = new FileChunk();
+			fooChunk.setChunkID("foo");
+			FileChunk barChunk = new FileChunk();
+			barChunk.setChunkID("bar");
+			FileChunk bazChunk = new FileChunk();
+			bazChunk.setChunkID("baz");
+			FileVersion v = new FileVersion();
+			v.setVersionID("VersionFoo");
+			io.topiacoin.model.File f = new io.topiacoin.model.File();
+			f.setEntryID("FileFoo");
+
+			DataModel modelA = new TestDataModel();
+			modelA.addUser(new User(currentUserA));
+			modelA.addUser(new User(currentUserB));
+			modelA.setCurrentUser(currentUserA);
+			modelA.addWorkspace(workspace);
+			modelA.addMemberToWorkspace("containerA", memberA);
+			modelA.addMemberToWorkspace("containerA", memberB);
+			modelA.addFileToWorkspace("containerA", f);
+			modelA.addFileVersion("FileFoo", v);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
+
+			DataModel modelB = new TestDataModel();
+			modelB.addUser(new User(currentUserA));
+			modelB.addUser(new User(currentUserB));
+			modelB.setCurrentUser(currentUserB);
+			modelB.addWorkspace(workspace);
+			modelB.addMemberToWorkspace("containerA", memberA);
+			modelB.addMemberToWorkspace("containerA", memberB);
+			modelB.addFileToWorkspace("containerA", f);
+			modelB.addFileVersion("FileFoo", v);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", barChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
+
+			managerA = new ChunkManager(configA, modelA);
+			assertTrue(!managerA.hasChunk("foo"));
+			assertTrue(!managerA.hasChunk("bar"));
+			assertTrue(!managerA.hasChunk("baz"));
+			managerA.addChunk("foo", "FOODATA".getBytes());
+			assertTrue(managerA.hasChunk("foo"));
+
+			managerB = new ChunkManager(configB, modelB);
+			assertTrue(!managerB.hasChunk("foo"));
+			assertTrue(!managerB.hasChunk("bar"));
+			assertTrue(!managerB.hasChunk("baz"));
+			managerB.addChunk("foo", "FOODATA".getBytes());
+			managerB.addChunk("bar", "BARDATA".getBytes());
+			managerB.addChunk("baz", "BAZDATA".getBytes());
+			assertTrue(managerB.hasChunk("foo"));
+			assertTrue(managerB.hasChunk("bar"));
+			assertTrue(managerB.hasChunk("baz"));
+
+			UserNode userANode = managerA.getMyUserNode();
 			UserNode userBNode = managerB.getMyUserNode();
 			modelA.addUserNode(userBNode);
 			modelB.addUserNode(userANode);
@@ -260,6 +407,283 @@ public class ChunkManagerTest {
 			}
 			if(managerB != null) {
 				managerB.stop();
+			}
+		}
+	}
+
+	@Test
+	public void chunkFetchFailBuildPlanTest() throws Exception {
+		int userAPort = 7777;
+		int userBPort = 7778;
+		File chunkStorageLocA = new File("./target/chunks1");
+		File chunkStorageLocB = new File("./target/chunks2");
+		ChunkManager managerA = null;
+		ChunkManager managerB = null;
+		try {
+			Configuration configA = new DefaultConfiguration();
+			configA.setConfigurationOption("chunkStorageLoc", chunkStorageLocA.getAbsolutePath());
+			configA.setConfigurationOption("chunkStorageQuota", "1000");
+			configA.setConfigurationOption("chunkListenerPort", "" + userAPort);
+			Configuration configB = new DefaultConfiguration();
+			configB.setConfigurationOption("chunkStorageLoc", chunkStorageLocB.getAbsolutePath());
+			configB.setConfigurationOption("chunkStorageQuota", "1000");
+			configB.setConfigurationOption("chunkListenerPort", "" + userBPort);
+
+			String testContainerId = "containerA";
+			String userAAuthToken = "userAAuthToken";
+			String userBAuthToken = "userBAuthToken";
+			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
+			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			memberA.setAuthToken(userAAuthToken);
+			memberB.setAuthToken(userBAuthToken);
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspace.setGuid("containerA");
+			workspaces.add(workspace);
+			FileChunk fooChunk = new FileChunk();
+			fooChunk.setChunkID("foo");
+			FileChunk barChunk = new FileChunk();
+			barChunk.setChunkID("bar");
+			FileChunk bazChunk = new FileChunk();
+			bazChunk.setChunkID("baz");
+			FileChunk bingoChunk = new FileChunk();
+			bazChunk.setChunkID("bingo");
+			FileVersion v = new FileVersion();
+			v.setVersionID("VersionFoo");
+			io.topiacoin.model.File f = new io.topiacoin.model.File();
+			f.setEntryID("FileFoo");
+
+			DataModel modelA = new TestDataModel();
+			modelA.addUser(new User(currentUserA));
+			modelA.addUser(new User(currentUserB));
+			modelA.setCurrentUser(currentUserA);
+			modelA.addWorkspace(workspace);
+			modelA.addMemberToWorkspace("containerA", memberA);
+			modelA.addMemberToWorkspace("containerA", memberB);
+			modelA.addFileToWorkspace("containerA", f);
+			modelA.addFileVersion("FileFoo", v);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", bingoChunk);
+
+			DataModel modelB = new TestDataModel();
+			modelB.addUser(new User(currentUserA));
+			modelB.addUser(new User(currentUserB));
+			modelB.setCurrentUser(currentUserB);
+			modelB.addWorkspace(workspace);
+			modelB.addMemberToWorkspace("containerA", memberA);
+			modelB.addMemberToWorkspace("containerA", memberB);
+			modelB.addFileToWorkspace("containerA", f);
+			modelB.addFileVersion("FileFoo", v);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", barChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", bingoChunk);
+
+			managerA = new ChunkManager(configA, modelA);
+			assertTrue(!managerA.hasChunk("foo"));
+			assertTrue(!managerA.hasChunk("bar"));
+			assertTrue(!managerA.hasChunk("baz"));
+			assertTrue(!managerA.hasChunk("bingo"));
+
+			managerB = new ChunkManager(configB, modelB);
+			assertTrue(!managerB.hasChunk("foo"));
+			assertTrue(!managerB.hasChunk("bar"));
+			assertTrue(!managerB.hasChunk("baz"));
+			assertTrue(!managerB.hasChunk("bingo"));
+			managerB.addChunk("foo", "FOODATA".getBytes());
+			managerB.addChunk("bar", "BARDATA".getBytes());
+			managerB.addChunk("baz", "BAZDATA".getBytes());
+			assertTrue(managerB.hasChunk("foo"));
+			assertTrue(managerB.hasChunk("bar"));
+			assertTrue(managerB.hasChunk("baz"));
+
+			UserNode userANode = managerA.getMyUserNode();
+			UserNode userBNode = managerB.getMyUserNode();
+			modelA.addUserNode(userBNode);
+			modelB.addUserNode(userANode);
+
+			List<String> chunksIWant = new ArrayList<>();
+			chunksIWant.add("foo");
+			chunksIWant.add("bar");
+			chunksIWant.add("baz");
+			List<String> chunksIAintGonnaGet = new ArrayList<>();
+			chunksIAintGonnaGet.add("bingo");
+			List<String> chunksImGonnaAskFor = new ArrayList<>();
+			chunksImGonnaAskFor.addAll(chunksIWant);
+			chunksImGonnaAskFor.addAll(chunksIAintGonnaGet);
+			String stateExpected = "StateTest";
+			final CountDownLatch lock = new CountDownLatch(1);
+			managerA.fetchChunks(chunksImGonnaAskFor, workspace.getGuid(), new ChunksFetchHandler() {
+				@Override public void finishedFetchingChunks(List<String> successfulChunks, List<String> unsuccessfulChunks, Object state) {
+					fail();
+				}
+
+				@Override public void errorFetchingChunks(String message, Exception cause, Object state) {
+					lock.countDown();
+				}
+			}, stateExpected);
+
+			assertTrue("Chunks never fetched", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			FileUtils.deleteDirectory(chunkStorageLocA);
+			FileUtils.deleteDirectory(chunkStorageLocB);
+			if(managerA != null) {
+				managerA.stop();
+			}
+			if(managerB != null) {
+				managerB.stop();
+			}
+		}
+	}
+
+	@Test
+	public void chunkFetchFailToFetchAllTest() throws Exception {
+		int userAPort = 7777;
+		int userBPort = 7778;
+		File chunkStorageLocA = new File("./target/chunks1");
+		File chunkStorageLocB = new File("./target/chunks2");
+		ChunkManager managerA = null;
+		final ChunkManager managerB;
+		NotificationCenter notificationCenter = NotificationCenter.defaultCenter();
+		NotificationHandler notificationHandler = null;
+		try {
+			Configuration configA = new DefaultConfiguration();
+			configA.setConfigurationOption("chunkStorageLoc", chunkStorageLocA.getAbsolutePath());
+			configA.setConfigurationOption("chunkStorageQuota", "1000");
+			configA.setConfigurationOption("chunkListenerPort", "" + userAPort);
+			configA.setConfigurationOption("protocolTimeoutMs", "" + 3000);
+			Configuration configB = new DefaultConfiguration();
+			configB.setConfigurationOption("chunkStorageLoc", chunkStorageLocB.getAbsolutePath());
+			configB.setConfigurationOption("chunkStorageQuota", "1000");
+			configB.setConfigurationOption("chunkListenerPort", "" + userBPort);
+			configA.setConfigurationOption("protocolTimeoutMs", "" + 3000);
+
+			String testContainerId = "containerA";
+			String userAAuthToken = "userAAuthToken";
+			String userBAuthToken = "userBAuthToken";
+			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
+			KeyPair userBKeyPair = CryptoUtils.generateECKeyPair();
+			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
+			CurrentUser currentUserB = new CurrentUser("userB", "userB@email.com", userBKeyPair.getPublic(), userBKeyPair.getPrivate());
+			Member memberA = new Member();
+			Member memberB = new Member();
+			memberA.setUserID(currentUserA.getUserID());
+			memberB.setUserID(currentUserB.getUserID());
+			memberA.setAuthToken(userAAuthToken);
+			memberB.setAuthToken(userBAuthToken);
+			List<Member> members = new ArrayList<Member>();
+			members.add(memberA);
+			members.add(memberB);
+			Workspace workspace = new Workspace();
+			workspace.setMembers(members);
+			List<Workspace> workspaces = new ArrayList<Workspace>();
+			workspace.setGuid("containerA");
+			workspaces.add(workspace);
+			FileChunk fooChunk = new FileChunk();
+			fooChunk.setChunkID("foo");
+			FileChunk barChunk = new FileChunk();
+			barChunk.setChunkID("bar");
+			FileChunk bazChunk = new FileChunk();
+			bazChunk.setChunkID("baz");
+			FileVersion v = new FileVersion();
+			v.setVersionID("VersionFoo");
+			io.topiacoin.model.File f = new io.topiacoin.model.File();
+			f.setEntryID("FileFoo");
+
+			DataModel modelA = new TestDataModel();
+			modelA.addUser(new User(currentUserA));
+			modelA.addUser(new User(currentUserB));
+			modelA.setCurrentUser(currentUserA);
+			modelA.addWorkspace(workspace);
+			modelA.addMemberToWorkspace("containerA", memberA);
+			modelA.addMemberToWorkspace("containerA", memberB);
+			modelA.addFileToWorkspace("containerA", f);
+			modelA.addFileVersion("FileFoo", v);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
+			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
+
+			DataModel modelB = new TestDataModel();
+			modelB.addUser(new User(currentUserA));
+			modelB.addUser(new User(currentUserB));
+			modelB.setCurrentUser(currentUserB);
+			modelB.addWorkspace(workspace);
+			modelB.addMemberToWorkspace("containerA", memberA);
+			modelB.addMemberToWorkspace("containerA", memberB);
+			modelB.addFileToWorkspace("containerA", f);
+			modelB.addFileVersion("FileFoo", v);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", barChunk);
+			modelB.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
+
+			managerA = new ChunkManager(configA, modelA);
+			assertTrue(!managerA.hasChunk("foo"));
+			assertTrue(!managerA.hasChunk("bar"));
+			assertTrue(!managerA.hasChunk("baz"));
+
+			managerB = new ChunkManager(configB, modelB);
+			assertTrue(!managerB.hasChunk("foo"));
+			assertTrue(!managerB.hasChunk("bar"));
+			assertTrue(!managerB.hasChunk("baz"));
+			managerB.addChunk("foo", "FOODATA".getBytes());
+			managerB.addChunk("bar", "BARDATA".getBytes());
+			managerB.addChunk("baz", "BAZDATA".getBytes());
+			assertTrue(managerB.hasChunk("foo"));
+			assertTrue(managerB.hasChunk("bar"));
+			assertTrue(managerB.hasChunk("baz"));
+
+			UserNode userANode = managerA.getMyUserNode();
+			UserNode userBNode = managerB.getMyUserNode();
+			modelA.addUserNode(userBNode);
+			modelB.addUserNode(userANode);
+
+			List<String> chunksIWant = new ArrayList<>();
+			chunksIWant.add("foo");
+			chunksIWant.add("bar");
+			chunksIWant.add("baz");
+			String stateExpected = "StateTest";
+			final CountDownLatch lock = new CountDownLatch(1);
+			notificationHandler = new NotificationHandler() {
+				@Override public void handleNotification(Notification notification) {
+					//Murdertime
+					managerB.stop();
+				}
+			};
+			notificationCenter.addHandler(notificationHandler, "transferProgress", stateExpected);
+			managerA.fetchChunks(chunksIWant, workspace.getGuid(), new ChunksFetchHandler() {
+				@Override public void finishedFetchingChunks(List<String> successfulChunks, List<String> unsuccessfulChunks, Object state) {
+					assertTrue(unsuccessfulChunks.containsAll(chunksIWant));
+					assertEquals(unsuccessfulChunks.size(), chunksIWant.size());
+					assertEquals(stateExpected, state);
+					lock.countDown();
+				}
+
+				@Override public void errorFetchingChunks(String message, Exception cause, Object state) {
+					fail();
+				}
+			}, stateExpected);
+
+			assertTrue("Chunks never fetched", lock.await(10, TimeUnit.SECONDS));
+		} finally {
+			FileUtils.deleteDirectory(chunkStorageLocA);
+			FileUtils.deleteDirectory(chunkStorageLocB);
+			if(managerA != null) {
+				managerA.stop();
+			}
+			if(notificationHandler != null) {
+				notificationCenter.removeHandler(notificationHandler);
 			}
 		}
 	}

@@ -3,18 +3,23 @@ package io.topiacoin.dht.config;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.core.impl.DefaultConfiguration;
 
+import java.util.Base64;
+
 public class DHTConfiguration {
 
-    private static final String RESTORE_INTERVAL = "dht.restore.interval";
-    private static final String RESPONSE_TIMEOUT = "dht.response.timeout";
-    private static final String OPERATION_TIMEOUT = "dht.operation.timeout";
-    private static final String MAX_CONCURRENT_MESSAGES = "dht.max.concurrent.messages";
-    private static final String NODEID_C1 = "dht.nodeid.c1";
-    private static final String NODEID_C2 = "dht.nodeid.c2";
-    private static final String DHT_K = "dht.k";
-    private static final String STALE_LIMIT = "dht.stale.limit";
-    private static final String NODE_DATA_FOLDER = "dht.node.data.folder";
-    private static final String ENTRY_EXPIRATION_TIME = "dht.entry.expiration.time";
+    public static final String RESTORE_INTERVAL = "dht.restore.interval";
+    public static final String RESPONSE_TIMEOUT = "dht.response.timeout";
+    public static final String OPERATION_TIMEOUT = "dht.operation.timeout";
+    public static final String MAX_CONCURRENT_MESSAGES = "dht.max.concurrent.messages";
+    public static final String NODEID_C1 = "dht.nodeid.c1";
+    public static final String NODEID_C2 = "dht.nodeid.c2";
+    public static final String DHT_K = "dht.k";
+    public static final String STALE_LIMIT = "dht.stale.limit";
+    public static final String NODE_DATA_FOLDER = "dht.node.data.folder";
+    public static final String ENTRY_EXPIRATION_TIME = "dht.entry.expiration.time";
+    public static final String BOOTSTRAP_NODE_ID = "dht.bootstrap.id";
+    public static final String BOOTSTRAP_NODE_HOSTNAME = "dht.bootstrap.host";
+    public static final String BOOTSTRAP_NODE_PORT = "dht.bootstrap.port";
 
     private static final long defaultRestoreInterval = 60 * 1000;
     private static final long defaultResponseTimeout = 2000;
@@ -26,7 +31,9 @@ public class DHTConfiguration {
     private static final int defaultStaleLimit = 1;
     private static final String defaultNodeDataFolder = "kademlia";
     private static final int defaultEntryExpirationTime = 86400000; // 24 hours
-
+    private static final String defaultBootstrapNodeID = "idunno";
+    private static final String defaultBootstrapHostname = "localhost";
+    private static final String defaultBootstrapPort = "11111";
 
     private Configuration _coreConfiguration ;
 
@@ -112,5 +119,29 @@ public class DHTConfiguration {
 
     public void setEntryExpirationTime(int entryExpirationTime) {
         _coreConfiguration.setConfigurationOption(ENTRY_EXPIRATION_TIME, Integer.toString(entryExpirationTime));
+    }
+
+    public byte[] getBootstrapNodeID() {
+        return Base64.getDecoder().decode(_coreConfiguration.getConfigurationOption(BOOTSTRAP_NODE_ID, defaultBootstrapNodeID));
+    }
+
+    public void setBootstrapNodeID(byte[] bootstrapNodeID) {
+        _coreConfiguration.setConfigurationOption(BOOTSTRAP_NODE_ID, Base64.getEncoder().encodeToString(bootstrapNodeID));
+    }
+
+    public String getBootstrapNodeHostname() {
+        return _coreConfiguration.getConfigurationOption(BOOTSTRAP_NODE_HOSTNAME, defaultBootstrapHostname);
+    }
+
+    public void setBootstrapNodeHostname(String bootstrapNodeHostname) {
+        _coreConfiguration.setConfigurationOption(BOOTSTRAP_NODE_HOSTNAME, bootstrapNodeHostname);
+    }
+
+    public int getBootstrapNodePort() {
+        return Integer.valueOf(_coreConfiguration.getConfigurationOption(BOOTSTRAP_NODE_PORT, defaultBootstrapPort));
+    }
+
+    public void setBootstrapNodePort(int bootstrapNodePort) {
+        _coreConfiguration.setConfigurationOption(BOOTSTRAP_NODE_PORT, Integer.toString(bootstrapNodePort));
     }
 }

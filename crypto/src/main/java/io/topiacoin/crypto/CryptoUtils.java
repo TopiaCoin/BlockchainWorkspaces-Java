@@ -18,6 +18,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -174,6 +175,10 @@ public class CryptoUtils {
 
     public static PublicKey getECPublicKeyFromEncodedBytes(byte[] ecPublicKeyBytes) throws CryptographicException {
         return getPublicKeyFromEncodedBytes("EC", ecPublicKeyBytes);
+    }
+
+    public static SecretKey getAESKeyFromEncodedBytes(byte[] aesBytes) {
+        return new SecretKeySpec(aesBytes, "AES");
     }
 
 
