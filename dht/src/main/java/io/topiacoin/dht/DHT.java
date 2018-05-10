@@ -73,7 +73,7 @@ public class DHT {
 
         int entryExpirationTime = configuration.getEntryExpirationTime();
 
-        ValueStorage valueStorage = new InMemoryExpiringValueStorage(entryExpirationTime);
+        ValueStorage valueStorage = new InMemoryExpiringValueStorage();
 
         Semaphore refreshSemaphore = new Semaphore(1);
 

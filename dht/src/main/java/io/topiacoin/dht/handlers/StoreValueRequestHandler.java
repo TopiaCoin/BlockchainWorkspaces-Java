@@ -23,10 +23,15 @@ public class StoreValueRequestHandler implements ResponseHandler {
 
             String key = strMsg.getKey();
             String value = strMsg.getValue();
+            long timeout = strMsg.getExpirationTime();
 
             // Put the value in the HashTable
             ValueStorage valueStorage = _dhtComponents.getValueStorage();
-            valueStorage.setValue(key, value);
+            if ( strMsg.isRefresh() ) {
+                valueStorage.refreshValue(key, value, timeout);
+            } else {
+                valueStorage.setValue(key, value, timeout);
+            }
 
             StoreValueResponse response = new StoreValueResponse();
             response.setKey(key);

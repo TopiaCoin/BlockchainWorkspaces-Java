@@ -12,12 +12,7 @@ public class InMemoryExpiringValueStorageTest extends AbstractValueStorageTest {
     @Override
     protected ValueStorage getValueStorage() {
 
-        int entryExpirationTime = 60000;
-        return getValueStorage(entryExpirationTime);
-    }
-
-    private ValueStorage getValueStorage(int entryExpirationTime) {
-        InMemoryExpiringValueStorage valueStorage = new InMemoryExpiringValueStorage(entryExpirationTime);
+        InMemoryExpiringValueStorage valueStorage = new InMemoryExpiringValueStorage();
 
         valueStorage.initialize();
 
@@ -36,10 +31,15 @@ public class InMemoryExpiringValueStorageTest extends AbstractValueStorageTest {
         int timeout = 250;
         String key = "Go" ;
         String value = "Fight" ;
+        long expirationTime = System.currentTimeMillis() + timeout;
 
-        ValueStorage valueStorage = getValueStorage(timeout);
+        InMemoryExpiringValueStorage valueStorage1 = new InMemoryExpiringValueStorage();
 
-        valueStorage.setValue(key, value);
+        valueStorage1.initialize();
+
+        ValueStorage valueStorage = valueStorage1;
+
+        valueStorage.setValue(key, value, expirationTime);
 
         Collection<String> values = valueStorage.getValues(key) ;
 
@@ -61,11 +61,16 @@ public class InMemoryExpiringValueStorageTest extends AbstractValueStorageTest {
         int timeout = 250;
         String key = "Go" ;
         String value = "Fight" ;
+        long expirationTime = System.currentTimeMillis() + timeout;
 
-        ValueStorage valueStorage = getValueStorage(timeout);
+        InMemoryExpiringValueStorage valueStorage1 = new InMemoryExpiringValueStorage();
+
+        valueStorage1.initialize();
+
+        ValueStorage valueStorage = valueStorage1;
 
         // Set the value in the Value Storage
-        valueStorage.setValue(key, value);
+        valueStorage.setValue(key, value, expirationTime);
 
         // Verify that the value is still in the Value Storage
         Collection<String> values = valueStorage.getValues(key) ;
@@ -77,7 +82,8 @@ public class InMemoryExpiringValueStorageTest extends AbstractValueStorageTest {
 
         // We are just over half way through the expiration period.
         // Set the value in storage again to reset the counter.
-        valueStorage.setValue(key, value);
+        expirationTime = System.currentTimeMillis() + timeout;
+        valueStorage.setValue(key, value, expirationTime);
 
         Thread.sleep ( (int)(timeout * 0.6)) ;
 
@@ -106,12 +112,17 @@ public class InMemoryExpiringValueStorageTest extends AbstractValueStorageTest {
         String key1 = "Go" ;
         String value1 = "Fight" ;
         String value2 = "Tonight" ;
+        long expirationTime = System.currentTimeMillis() + timeout;
 
-        ValueStorage valueStorage = getValueStorage(timeout);
+        InMemoryExpiringValueStorage valueStorage1 = new InMemoryExpiringValueStorage();
+
+        valueStorage1.initialize();
+
+        ValueStorage valueStorage = valueStorage1;
 
         // Set the value in the Value Storage
-        valueStorage.setValue(key1, value1);
-        valueStorage.setValue(key1, value2);
+        valueStorage.setValue(key1, value1, expirationTime);
+        valueStorage.setValue(key1, value2, expirationTime);
 
         // Verify that both values are still in the Value Storage
         Collection<String> values = valueStorage.getValues(key1) ;
@@ -123,7 +134,8 @@ public class InMemoryExpiringValueStorageTest extends AbstractValueStorageTest {
 
         // We are just over half way through the expiration period.
         // Set the first value in storage again to reset its counter.
-        valueStorage.setValue(key1, value1);
+        expirationTime = System.currentTimeMillis() + timeout;
+        valueStorage.setValue(key1, value1, expirationTime);
 
         Thread.sleep ( (int)(timeout * 0.6)) ;
 

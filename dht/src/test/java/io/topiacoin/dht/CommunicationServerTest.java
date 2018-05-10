@@ -36,8 +36,9 @@ public class CommunicationServerTest {
         MessageSigner messageSigner1 = new MessageSigner();
 
         DHTConfiguration configuration1 = new DHTTestConfiguration();
+        configuration1.setEntryExpirationTime(10000);
 
-        ValueStorage valueStorage1 = new InMemoryExpiringValueStorage(10000) ;
+        ValueStorage valueStorage1 = new InMemoryExpiringValueStorage() ;
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration1);
         NodeID thisNodeID = nodeIDGenerator.generateNodeID();
@@ -102,8 +103,9 @@ public class CommunicationServerTest {
         MessageSigner messageSigner1 = new MessageSigner();
 
         DHTConfiguration configuration1 = new DHTTestConfiguration();
+        configuration1.setEntryExpirationTime(10000);
 
-        ValueStorage valueStorage1 = new InMemoryExpiringValueStorage(10000) ;
+        ValueStorage valueStorage1 = new InMemoryExpiringValueStorage() ;
 
         NodeIDGenerator nodeIDGenerator = new NodeIDGenerator(configuration1);
         NodeID thisNodeID = nodeIDGenerator.generateNodeID();
@@ -132,8 +134,9 @@ public class CommunicationServerTest {
         MessageSigner messageSigner2 = new MessageSigner();
 
         DHTConfiguration configuration2 = new DHTTestConfiguration();
+        configuration2.setEntryExpirationTime(10000);
 
-        ValueStorage valueStorage2 = new InMemoryExpiringValueStorage(10000) ;
+        ValueStorage valueStorage2 = new InMemoryExpiringValueStorage() ;
 
         NodeIDGenerator nodeIDGenerator2 = new NodeIDGenerator(configuration2);
         NodeID thisNodeID2 = nodeIDGenerator2.generateNodeID();

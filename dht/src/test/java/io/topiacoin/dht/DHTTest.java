@@ -117,6 +117,84 @@ public class DHTTest {
     }
 
     @Test
+    public void testStoredValuesExpire() throws Exception {
+
+        DHTConfiguration configuration = new DHTTestConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+        configuration.setEntryExpirationTime(250);
+
+        int port1 = getPortNumber();
+        String key = "Key";
+        List<String> values = new ArrayList<String>();
+        values.add( "HarryPotterAndMagicalRock");
+        values.add( "HarryPotterAndSecretCave");
+        values.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
+
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+
+        DHT dht1 = new DHT(port1, keyPair1, configuration);
+        dht1.start(false);
+
+        try {
+            for ( String value: values) {
+                dht1.storeContent(key, value);
+            }
+
+            Thread.sleep(1000);
+
+            Set<String> fetchedValues = dht1.fetchContent(key);
+
+            assertNotNull("No Values Fetched", fetchedValues);
+            assertEquals("Wrong number of values fetched", 0, fetchedValues.size());
+        } finally {
+            dht1.shutdown(false);
+        }
+    }
+
+    @Test
+    public void testStoredValuesExpireUnlessStoredAgain() throws Exception {
+
+        DHTConfiguration configuration = new DHTTestConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+        configuration.setEntryExpirationTime(1500);
+
+        int port1 = getPortNumber();
+        String key = "Key";
+        List<String> values = new ArrayList<String>();
+        values.add( "HarryPotterAndMagicalRock");
+        values.add( "HarryPotterAndSecretCave");
+        values.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
+
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+
+        DHT dht1 = new DHT(port1, keyPair1, configuration);
+        dht1.start(false);
+
+        try {
+            for ( String value: values) {
+                dht1.storeContent(key, value);
+            }
+
+            Thread.sleep(1000);
+
+            // Store the first value again
+            dht1.storeContent(key, values.get(0));
+
+            Thread.sleep(1000);
+
+            Set<String> fetchedValues = dht1.fetchContent(key);
+
+            assertNotNull("No Values Fetched", fetchedValues);
+            assertEquals("Wrong number of values fetched", 1, fetchedValues.size());
+            assertEquals("Expected Value not Found", values.get(0), fetchedValues.iterator().next());
+        } finally {
+            dht1.shutdown(false);
+        }
+    }
+
+    @Test
     public void testStoreMultipleValuesFromMultipleDHTs() throws Exception {
 
         DHTConfiguration configuration = new DHTTestConfiguration();
@@ -171,6 +249,129 @@ public class DHTTest {
         }
     }
 
+    @Test
+    public void testStoreMultipleValuesFromMultipleDHTsExpire() throws Exception {
+
+        DHTConfiguration configuration = new DHTTestConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+        configuration.setEntryExpirationTime(500);
+
+        int port1 = getPortNumber();
+        int port2 = getPortNumber();
+        String key = "Key";
+        List<String> values1 = new ArrayList<String>();
+        values1.add( "HarryPotterAndMagicalRock");
+        values1.add( "HarryPotterAndSecretCave");
+        values1.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
+
+        List<String> values2 = new ArrayList<String>();
+        values2.add( "HarryPotterAndEscapedPrisoner");
+        values2.add( "HarryPotterAndStuffThatWillKillYou");
+        values2.add( "HarryPotterAndPrinceWhoIsn'tAPrince");
+
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
+
+        DHT dht1 = new DHT(port1, keyPair1, configuration);
+        DHT dht2 = new DHT(port2, keyPair2, configuration);
+
+        dht1.start(false);
+        dht2.bootstrap(dht1.getNode());
+
+        try {
+            for ( String value: values1) {
+                dht1.storeContent(key, value);
+            }
+
+            for ( String value: values2) {
+                dht2.storeContent(key, value);
+            }
+
+            Thread.sleep(1000);
+
+            Set<String> fetchedValues = dht1.fetchContent(key);
+
+            List<String> allValues = new ArrayList<String>();
+            allValues.addAll(values1);
+            allValues.addAll(values2) ;
+
+            assertNotNull("No Values Fetched", fetchedValues);
+            assertEquals("Wrong number of values fetched", 0, fetchedValues.size());
+        } finally {
+            dht1.shutdown(false);
+            dht2.shutdown(false);
+        }
+    }
+
+    @Test
+    public void testStoreMultipleValuesFromMultipleDHTsExpiresUnlessStoredAgain() throws Exception {
+
+        DHTConfiguration configuration = new DHTTestConfiguration();
+        configuration.setC1(4);
+        configuration.setC2(8);
+        configuration.setEntryExpirationTime(3000);
+        configuration.setRestoreInterval(500);
+
+        int port1 = getPortNumber();
+        int port2 = getPortNumber();
+        String key = "Key";
+        List<String> values1 = new ArrayList<String>();
+        values1.add( "HarryPotterAndMagicalRock");
+        values1.add( "HarryPotterAndSecretCave");
+        values1.add( "HarryPotterAndTheGuyWhoLooksLikeASnake");
+
+        List<String> values2 = new ArrayList<String>();
+        values2.add( "HarryPotterAndEscapedPrisoner");
+        values2.add( "HarryPotterAndStuffThatWillKillYou");
+        values2.add( "HarryPotterAndPrinceWhoIsn'tAPrince");
+
+        KeyPair keyPair1 = CryptoUtils.generateECKeyPair();
+        KeyPair keyPair2 = CryptoUtils.generateECKeyPair();
+
+        DHT dht1 = new DHT(port1, keyPair1, configuration);
+        DHT dht2 = new DHT(port2, keyPair2, configuration);
+
+        dht1.start(false);
+        dht2.bootstrap(dht1.getNode());
+
+        System.out.println ( "Storing Values" ) ;
+
+        try {
+            for ( String value: values1) {
+                dht1.storeContent(key, value);
+            }
+
+            for ( String value: values2) {
+                dht2.storeContent(key, value);
+            }
+
+            Thread.sleep(2000);
+
+            System.out.println ( "Storing Some Values Again" ) ;
+
+            dht1.storeContent(key, values1.get(0));
+            dht2.storeContent(key, values2.get(0));
+
+            Thread.sleep ( 2000 );
+
+            System.out.println ( "Fetching Values" ) ;
+
+            Set<String> fetchedValues = dht1.fetchContent(key);
+
+            List<String> allValues = new ArrayList<String>();
+            allValues.addAll(values1);
+            allValues.addAll(values2) ;
+
+            assertNotNull("No Values Fetched", fetchedValues);
+            assertEquals("Wrong number of values fetched", 2, fetchedValues.size());
+            assertTrue("Fetched Values does not contain stored values", fetchedValues.contains(values1.get(0)));
+            assertTrue("Fetched Values does not contain stored values", fetchedValues.contains(values2.get(0)));
+        } finally {
+            dht1.shutdown(false);
+            dht2.shutdown(false);
+        }
+    }
 
     @Test
     public void testStoreMultipleValuesThenAddNewDHT() throws Exception {

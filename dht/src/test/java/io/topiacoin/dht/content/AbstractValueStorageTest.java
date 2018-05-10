@@ -29,8 +29,9 @@ public abstract class AbstractValueStorageTest {
 
         String key = "Firefly";
         String value = "Serenity";
+        long timeout = System.currentTimeMillis() + 10000 ;
 
-        valueStorage.setValue(key, value);
+        valueStorage.setValue(key, value, timeout);
 
         Collection<String> values = valueStorage.getValues(key);
 
@@ -65,9 +66,10 @@ public abstract class AbstractValueStorageTest {
         values.add("Simon");
         values.add("River");
         values.add("Kaylee");
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         Collection<String> fetchedValues = valueStorage.getValues(key);
@@ -92,9 +94,10 @@ public abstract class AbstractValueStorageTest {
         values.add("Simon");
         values.add("River");
         values.add("Kaylee");
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         valueStorage.removeValue(key, values.get(1));
@@ -121,9 +124,10 @@ public abstract class AbstractValueStorageTest {
         values.add("Simon");
         values.add("River");
         values.add("Kaylee");
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         for (String value : values) {
@@ -152,9 +156,10 @@ public abstract class AbstractValueStorageTest {
         values.add("Simon");
         values.add("River");
         values.add("Kaylee");
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         valueStorage.removeValue(key, "CaptKirk");
@@ -181,14 +186,15 @@ public abstract class AbstractValueStorageTest {
         values.add("Simon");
         values.add("River");
         values.add("Kaylee");
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         // Add them all again
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         Collection<String> fetchedValues = valueStorage.getValues(key);
@@ -203,9 +209,10 @@ public abstract class AbstractValueStorageTest {
         ValueStorage valueStorage = getValueStorage();
 
         String key = "Iamnull";
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         try {
-            valueStorage.setValue(key, null);
+            valueStorage.setValue(key, null, timeout);
             fail("Expected InvalidArgumentException to tbe thrown");
         } catch (NullPointerException e) {
             // NOOP
@@ -218,9 +225,10 @@ public abstract class AbstractValueStorageTest {
         ValueStorage valueStorage = getValueStorage();
 
         String value = "Iamnull";
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         try {
-            valueStorage.setValue(null, value);
+            valueStorage.setValue(null, value, timeout);
             fail("Expected InvalidArgumentException to tbe thrown");
         } catch (NullPointerException e) {
             // NOOP
@@ -242,15 +250,16 @@ public abstract class AbstractValueStorageTest {
         values.add("Simon");
         values.add("River");
         values.add("Kaylee");
+        long timeout = System.currentTimeMillis() + 10000 ;
 
         // Put in the forward Mapping
         for (String value : values) {
-            valueStorage.setValue(key, value);
+            valueStorage.setValue(key, value, timeout);
         }
 
         // Put in the Reverse Mapping
         for (String value : values) {
-            valueStorage.setValue(value, key);
+            valueStorage.setValue(value, key, timeout);
         }
 
         File tempFile = File.createTempFile("dht", null);

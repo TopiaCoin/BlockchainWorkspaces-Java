@@ -34,13 +34,19 @@ public class InMemoryValueStorage implements ValueStorage {
 
     }
 
-    public void setValue(String key, String value) {
+    public void setValue(String key, String value, long timeout) {
         Collection<String> valueSet = this.valueMap.get(key);
         if (valueSet == null) {
             valueSet = new TreeSet<String>();
             this.valueMap.put(key, valueSet);
         }
         valueSet.add(value);
+    }
+
+    @Override
+    public void refreshValue(String key, String value, long timeout) {
+        // This implementation has no timeout, so refreshing is the same as storing.
+        setValue(key, value, timeout);
     }
 
     public Collection<String> getValues(String key) {
@@ -71,6 +77,11 @@ public class InMemoryValueStorage implements ValueStorage {
 
     public Map<String, Collection<String>> getValueMap() {
         return valueMap;
+    }
+
+    @Override
+    public long getExpirationTime(String key, String value) {
+        return Long.MAX_VALUE;
     }
 
     public void save(File file) throws IOException {

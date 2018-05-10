@@ -15,15 +15,19 @@ public interface ValueStorage {
     @PreDestroy
     void shutdown();
 
-    void setValue(String key, String value) ;
+    void setValue(String key, String value, long timeout);
 
-    Collection<String> getValues(String key) ;
+    void refreshValue(String key, String value, long timeout);
 
-    boolean containsKey(String key) ;
+    Collection<String> getValues(String key);
+
+    boolean containsKey(String key);
 
     void removeValue(String key, String value);
 
     Map<String, Collection<String>> getValueMap();
+
+    long getExpirationTime(String key, String value);
 
     void save(File file) throws IOException;
 

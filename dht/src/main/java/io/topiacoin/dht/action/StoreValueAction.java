@@ -29,9 +29,13 @@ public class StoreValueAction implements Action, ResponseHandler{
         _keyID = new NodeID(key);
 
         _dhtComponents = dhtComponents;
+
+        long expirationTimeout = _dhtComponents.getConfiguration().getEntryExpirationTime() ;
+
         _request = new StoreValueRequest();
         _request.setKey(key);
         _request.setValue(value);
+        _request.setExpirationTime(System.currentTimeMillis() + expirationTimeout);
 
         _routingTable = dhtComponents.getRoutingTable();
         _communicationServer = dhtComponents.getCommunicationServer();
@@ -46,7 +50,7 @@ public class StoreValueAction implements Action, ResponseHandler{
         // Send the Store Value Request to each of the K closet nodes
         for ( Node node : closestNodes ) {
             if ( node.equals(_thisNode)) {
-                this._dhtComponents.getValueStorage().setValue(_request.getKey(), _request.getValue());
+                this._dhtComponents.getValueStorage().setValue(_request.getKey(), _request.getValue(), _request.getExpirationTime());
                 _storageCount++ ;
             } else {
                 _communicationServer.sendMessage(node, _request, this);

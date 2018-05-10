@@ -13,11 +13,9 @@ import java.util.TreeSet;
 
 public class InMemoryExpiringValueStorage implements ValueStorage {
 
-    private final int _entryExpirationTime;
     Map<String, Collection<ExpiringStringValue>> _valueMap;
 
-    public InMemoryExpiringValueStorage(int entryExpirationTime) {
-        _entryExpirationTime = entryExpirationTime;
+    public InMemoryExpiringValueStorage() {
     }
 
     @Override
@@ -31,7 +29,7 @@ public class InMemoryExpiringValueStorage implements ValueStorage {
     }
 
     @Override
-    public void setValue(String key, String value) {
+    public void setValue(String key, String value, long timeout) {
         if (key == null || key.isEmpty()) {
             throw new NullPointerException("Key not specified");
         }
@@ -42,12 +40,42 @@ public class InMemoryExpiringValueStorage implements ValueStorage {
             _valueMap.put(key, values);
         }
 
-        long expirationTime = System.currentTimeMillis() + _entryExpirationTime;
+        long expirationTime = timeout;
         ExpiringStringValue expiringStringValue = new ExpiringStringValue(value, expirationTime);
 
         // Remove the entry for the value, then readd it.
         values.remove(expiringStringValue);
         values.add(expiringStringValue);
+    }
+
+    @Override
+    public void refreshValue(String key, String value, long timeout) {
+        if (key == null || key.isEmpty()) {
+            throw new NullPointerException("Key not specified");
+        }
+
+        Collection<ExpiringStringValue> values = _valueMap.get(key);
+        if (values == null) {
+            values = new TreeSet<ExpiringStringValue>();
+            _valueMap.put(key, values);
+        }
+
+        // Iterate through the list looking for the value object that matches our value, then update its expiration date.
+        Iterator<ExpiringStringValue> iterator = values.iterator();
+        while (iterator.hasNext()) {
+            ExpiringStringValue expiringStringValue = iterator.next();
+            if ( expiringStringValue.getValue().equals(value)){
+                // We found a matching value, so bail out
+                break;
+            }
+
+        }
+
+        if ( !iterator.hasNext()) {
+            // If we are here, it means we reached the end of the list without finding a match,
+            // so insert the value into the storage.
+            this.setValue(key, value, timeout);
+        }
     }
 
     @Override
@@ -113,6 +141,27 @@ public class InMemoryExpiringValueStorage implements ValueStorage {
         }
 
         return retValueMap;
+    }
+
+    public long getExpirationTime(String key, String value) {
+        long expirationTime = -1 ;
+
+        Collection<ExpiringStringValue> values = _valueMap.get(key);
+
+        if (values != null) {
+            Iterator<ExpiringStringValue> iterator = values.iterator();
+            while (iterator.hasNext()) {
+                ExpiringStringValue expiringStringValue = iterator.next();
+                if (expiringStringValue.isExpired()) {
+                    // This entry has expired, so remove it from the collection
+                    iterator.remove();
+                } else if ( expiringStringValue.getValue().equals(value)){
+                    expirationTime = expiringStringValue.getExpirationTime();
+                }
+            }
+        }
+
+        return expirationTime;
     }
 
     @Override
