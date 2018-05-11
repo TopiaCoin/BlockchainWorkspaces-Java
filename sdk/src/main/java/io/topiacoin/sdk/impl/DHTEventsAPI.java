@@ -33,7 +33,7 @@ public class DHTEventsAPI implements EventsAPI {
 
     public DHTEventsAPI(Configuration configuration, DataModel model) {
         _model = model;
-        _dhtAccessor = new SDFSDHTAccessor(configuration, model);
+        _dhtAccessor = SDFSDHTAccessor.getInstance(configuration, model);
         _DHTEventFetchRunnable = new DHTEventFetchRunnable();
     }
 

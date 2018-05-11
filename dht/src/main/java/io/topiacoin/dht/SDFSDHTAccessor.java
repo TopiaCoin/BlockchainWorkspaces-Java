@@ -46,8 +46,18 @@ public class SDFSDHTAccessor {
 	private DHT _dht;
 	private DataModel _model;
 	private boolean running = true;
+	private static SDFSDHTAccessor _instance = null;
 
-	public SDFSDHTAccessor(Configuration config, DataModel model) {
+	public static SDFSDHTAccessor getInstance(Configuration config, DataModel model) {
+		synchronized (SDFSDHTAccessor.class) {
+			if (_instance == null) {
+				_instance = new SDFSDHTAccessor(config, model);
+			}
+		}
+		return _instance;
+	}
+
+	SDFSDHTAccessor(Configuration config, DataModel model) {
 		DHTConfiguration _dhtConfig = new DHTConfiguration(config);
 		_model = model;
 		try {
