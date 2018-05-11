@@ -1,5 +1,7 @@
 package io.topiacoin.core;
 
+import io.topiacoin.model.exceptions.NoSuchUserException;
+
 public interface EventsAPI {
 
     /**
@@ -25,7 +27,7 @@ public interface EventsAPI {
      * the notification will be the ID of the item the notification is related to (e.g. workspace ID, or file ID), or
      * null if the notification isn't related to a specific entity.
      */
-    void startEventFetching();
+    void startEventFetching() throws NoSuchUserException;
 
     /**
      * Stops looking for events.
