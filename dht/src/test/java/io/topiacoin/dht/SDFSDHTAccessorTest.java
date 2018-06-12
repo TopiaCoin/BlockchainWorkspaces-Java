@@ -1,6 +1,7 @@
 package io.topiacoin.dht;
 
 import io.topiacoin.core.Configuration;
+import io.topiacoin.core.exceptions.NotLoggedInException;
 import io.topiacoin.core.impl.DefaultConfiguration;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
@@ -243,7 +244,7 @@ public class SDFSDHTAccessorTest {
 	}
 
 	@Test
-	public void testSingleUserWorkspaceCRUDHighLevel() throws NoSuchUserException, CryptographicException, NoSuchAlgorithmException, IOException, WorkspaceAlreadyExistsException, UserAlreadyExistsException, InterruptedException, NoSuchWorkspaceException, MemberAlreadyExistsException {
+	public void testSingleUserWorkspaceCRUDHighLevel() throws NoSuchUserException, CryptographicException, NoSuchAlgorithmException, IOException, WorkspaceAlreadyExistsException, UserAlreadyExistsException, InterruptedException, NoSuchWorkspaceException, MemberAlreadyExistsException, NotLoggedInException {
 		Configuration config = new DefaultConfiguration();
 		DHTConfiguration dhtconfig = new DHTTestConfiguration(config);
 		KeyPair DHTKeyPair = CryptoUtils.generateECKeyPair();
@@ -335,7 +336,7 @@ public class SDFSDHTAccessorTest {
 	}
 
 	@Test
-	public void testInviteHighLevel() throws NoSuchUserException, CryptographicException, NoSuchAlgorithmException, IOException, WorkspaceAlreadyExistsException, UserAlreadyExistsException, InterruptedException, NoSuchWorkspaceException, MemberAlreadyExistsException {
+	public void testInviteHighLevel() throws NoSuchUserException, CryptographicException, NoSuchAlgorithmException, IOException, WorkspaceAlreadyExistsException, UserAlreadyExistsException, InterruptedException, NoSuchWorkspaceException, MemberAlreadyExistsException, NotLoggedInException {
 		Configuration config = new DefaultConfiguration();
 		DHTConfiguration dhtconfig = new DHTTestConfiguration(config);
 		KeyPair DHTKeyPair = CryptoUtils.generateECKeyPair();

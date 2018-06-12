@@ -31,6 +31,7 @@ import io.topiacoin.core.callbacks.RemoveMemberCallback;
 import io.topiacoin.core.callbacks.SaveFileVersionCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.core.exceptions.NotLoggedInException;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.crypto.HashUtils;
@@ -49,6 +50,7 @@ import io.topiacoin.model.exceptions.FileChunkAlreadyExistsException;
 import io.topiacoin.model.exceptions.FileVersionAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchFileException;
 import io.topiacoin.model.exceptions.NoSuchFileVersionException;
+import io.topiacoin.model.exceptions.NoSuchMemberException;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.sdk.impl.BlockchainUsersAPI;
@@ -107,19 +109,19 @@ public class SDFS {
         _configuration = configuration;
         _workspaceAPI = new BlockchainWorkspacesAPI(configuration);
         _userAPI = new BlockchainUsersAPI(configuration);
-        _eventAPI = new DHTEventsAPI(configuration);
+        _eventAPI = new DHTEventsAPI();
 
     }
 
 
     // -------- Event API --------
 
-    public void addUpdateListener() {
-
+    public void addUpdateListener() throws NoSuchUserException {
+        _eventAPI.startEventFetching(_configuration, _dataModel);
     }
 
     public void removeUpdateListener() {
-
+        _eventAPI.stopEventFetching();
     }
 
     /**
@@ -183,7 +185,7 @@ public class SDFS {
      * @param workspaceName
      * @param workspaceDescription
      */
-    public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) {
+    public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) throws NotLoggedInException {
         String workspaceID = "howeverThisGetsGenerated";
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = accessor.addNewWorkspaceToDHT(workspaceID);
@@ -229,7 +231,7 @@ public class SDFS {
      * @param userID
      * @param inviteMessage
      */
-    public void inviteUser(String workspaceGUID, String userID, String inviteMessage, InviteUserCallback callback) {
+    public void inviteUser(String workspaceGUID, String userID, String inviteMessage, InviteUserCallback callback) throws IOException, NoSuchUserException {
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = null; //Where does this come from?
         User user = _dataModel.getUserByID(userID);
@@ -270,7 +272,7 @@ public class SDFS {
      *
      * @param workspaceGUID
      */
-    public void declineInvitation(String workspaceGUID, DeclineInvitationCallback callback) {
+    public void declineInvitation(String workspaceGUID, DeclineInvitationCallback callback) throws NotLoggedInException {
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = null; //Where does this come from?
         accessor.leaveWorkspace(dhtEntry);
@@ -314,7 +316,7 @@ public class SDFS {
      *
      * @param workspaceGUID
      */
-    public void leaveWorkspace(String workspaceGUID, LeaveWorkspaceCallback callback) {
+    public void leaveWorkspace(String workspaceGUID, LeaveWorkspaceCallback callback) throws NotLoggedInException {
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = null; //Where does this come from?
         accessor.leaveWorkspace(dhtEntry);
@@ -339,7 +341,7 @@ public class SDFS {
      * @param worksapceGUID
      * @param memberID
      */
-    public void removeUserFromWorkspace(String worksapceGUID, String memberID, RemoveMemberCallback callback) {
+    public void removeUserFromWorkspace(String worksapceGUID, String memberID, RemoveMemberCallback callback) throws NoSuchUserException, NoSuchWorkspaceException, NoSuchMemberException {
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = null; //Where does this come from?
         Member member = _dataModel.getMemberInWorkspace(worksapceGUID, memberID);

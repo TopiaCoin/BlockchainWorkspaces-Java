@@ -24,18 +24,12 @@ import java.util.List;
 
 public class DHTEventsAPI implements EventsAPI {
     private static final Log _log = LogFactory.getLog(DHTEventsAPI.class);
-    private final SDFSDHTAccessor _dhtAccessor;
+    private SDFSDHTAccessor _dhtAccessor;
     private Thread _DHTEventFetchThread;
     private DHTEventFetchRunnable _DHTEventFetchRunnable;
     private final long _DHTEventFetchInterval = 1000;
     private DataModel _model;
     private NotificationCenter _notificationCenter = NotificationCenter.defaultCenter();
-
-    public DHTEventsAPI(Configuration configuration, DataModel model) {
-        _model = model;
-        _dhtAccessor = SDFSDHTAccessor.getInstance(configuration, model);
-        _DHTEventFetchRunnable = new DHTEventFetchRunnable();
-    }
 
     /**
      * Starts the Event Fetcher. This will start the process of looking for events.
@@ -47,7 +41,10 @@ public class DHTEventsAPI implements EventsAPI {
      * @throws NoSuchUserException If the current user cannot be ascertained (read: not logged in)
      */
     @Override
-    public void startEventFetching() throws NoSuchUserException {
+    public void startEventFetching(Configuration configuration, DataModel model) throws NoSuchUserException {
+        _model = model;
+        _dhtAccessor = SDFSDHTAccessor.getInstance(configuration, model);
+        _DHTEventFetchRunnable = new DHTEventFetchRunnable();
         _model.getCurrentUser();
         if(!isRunning()) {
             _DHTEventFetchThread = new Thread(_DHTEventFetchRunnable, "DHTEventFetch");
