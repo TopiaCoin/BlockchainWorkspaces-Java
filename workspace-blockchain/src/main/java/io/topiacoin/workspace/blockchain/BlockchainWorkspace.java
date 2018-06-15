@@ -23,12 +23,31 @@ import io.topiacoin.core.callbacks.RemoveFolderCallback;
 import io.topiacoin.core.callbacks.RemoveUserCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.File;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
+import org.apache.commons.lang.NotImplementedException;
 
-import java.io.File;
+public class BlockchainWorkspace implements WorkspacesAPI {
 
-public class BlockchainWorkspaceAPI implements WorkspacesAPI {
+    private EOSAdapter _eosAdapter ;
+    private DataModel _dataModel;
+    // private ChainMail _chainMail;
+
+    /**
+     * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
+     * to check all of the tracked blockchains for changes. This functionality is periodically invoked by the API to
+     * insure that the system is regularly updated with any new activity. This method is provided so that the client
+     * application can trigger on demand updates, such as when requested by the user. This method does not guarentee
+     * that an update will occur. In certain cases, the system may choose to ignore the request for updates, such as if
+     * an update was recently performed (e.g. within the last 10 seconds).
+     */
+    @Override
+    public void checkForUpdates() {
+
+    }
 
     /**
      * Instructs the Blockchain API to connect to the blockchain for the specified workspace ID. This will start the
@@ -49,19 +68,8 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
     @Override
     public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) {
 
-    }
-
-    /**
-     * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
-     * to check all of the tracked blockchains for changes. This functionality is periodically invoked by the API to
-     * insure that the system is regularly updated with any new activity. This method is provided so that the client
-     * application can trigger on demand updates, such as when requested by the user. This method does not guarentee
-     * that an update will occur. In certain cases, the system may choose to ignore the request for updates, such as if
-     * an update was recently performed (e.g. within the last 10 seconds).
-     */
-    @Override
-    public void checkForUpdates() {
-
+        // Instruct ChainMail to connect to the specified workspace's blockchain
+        // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
     }
 
     /**
@@ -86,7 +94,11 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) {
-
+        // Generate a GUID for the new workspace
+        // Instruct Chainmail to create a new workspace blockchain using the new workspace GUID.
+        // Once the chain has been created and started, get the RPC Adapter from the Manager.
+        // Instruct the RPC Adapter to initialize the chain with the workspace name, description, and user record for
+        // the currently logged in user.
     }
 
     /**
@@ -106,7 +118,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to set the workspace description
     }
 
     /**
@@ -130,7 +144,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to add an invitation record to the blockchain for the specified user.
     }
 
     /**
@@ -150,7 +166,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to accept the invitation to the specified workspace for the currently logged in user.
     }
 
     /**
@@ -170,7 +188,11 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void declineInvitation(Workspace workspace, DeclineInvitationCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to decline the invitation to the specified workspace for the currently logged in user.
+        // Instruct Chainmail to stop the blockchain for the declined workspace
+        // Instruct Chainmail to delete the blockchain fro the declined workspace.
     }
 
     /**
@@ -213,7 +235,11 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to remove the currently logged in user from the workspace
+        // Instruct Chainmail to stop the blockchain for the workspace
+        // Instruct Chainmail to delete the blockchain for the workspace
     }
 
     /**
@@ -236,7 +262,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to remove the specified user from the workspace
     }
 
     /**
@@ -269,8 +297,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFile(io.topiacoin.model.File fileToAdd, AddFileCallback callback) {
-
+    public void addFile(File fileToAdd, AddFileCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the Adapter to add the specified file metadata to the blockchain
     }
 
     /**
@@ -290,8 +320,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeFile(io.topiacoin.model.File fileToRemove, RemoveFileCallback callback) {
-
+    public void removeFile(File fileToRemove, RemoveFileCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to remove the specified file from the blockchain
     }
 
     /**
@@ -325,8 +357,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFileVersion(io.topiacoin.model.File fileToBeAdded, AddFileVersionCallback callback) {
-
+    public void addFileVersion(File fileToBeAdded, AddFileVersionCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to add a new version to the specified file with the given metadata.
     }
 
     /**
@@ -352,7 +386,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instract the RPC Adapter to remove the specified file version from the blockchain.
     }
 
     /**
@@ -374,7 +410,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to mark the specified file version as acknowledged.
     }
 
     /**
@@ -384,18 +422,23 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFileTag(io.topiacoin.model.File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback) {
-
+    public void addFileTag(File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to add the given tag to the specified file.
     }
 
     /**
      * @param fileToUntag
      * @param tagName
+     * @param isPrivate
      * @param callback
      */
     @Override
-    public void removeFileTag(io.topiacoin.model.File fileToUntag, String tagName, RemoveFileTagCallback callback) {
-
+    public void removeFileTag(File fileToUntag, String tagName, boolean isPrivate, RemoveFileTagCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to remove the given tag from the specified file.
     }
 
     /**
@@ -432,7 +475,7 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void fetchFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, FetchFileVersionCallback callback) {
-
+        throw new NotImplementedException("The Blockchain code is not responsible for this action");
     }
 
     /**
@@ -453,8 +496,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void lockFile(io.topiacoin.model.File fileToLock, LockFileCallback callback) {
-
+    public void lockFile(File fileToLock, LockFileCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to lock the specified file in the blockchain
     }
 
     /**
@@ -475,8 +520,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void unlockFile(io.topiacoin.model.File fileToUnlock, UnlockFileCallback callback) {
-
+    public void unlockFile(File fileToUnlock, UnlockFileCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to unlock the specified file in the blockchain
     }
 
     /**
@@ -498,8 +545,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFolder(io.topiacoin.model.File folderToAdd, AddFolderCallback callback) {
-
+    public void addFolder(File folderToAdd, AddFolderCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to add the specified folder in the blockchain.
     }
 
     /**
@@ -518,8 +567,10 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeFolder(io.topiacoin.model.File folderToRemove, RemoveFolderCallback callback) {
-
+    public void removeFolder(File folderToRemove, RemoveFolderCallback callback) {
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to remove the specified folder in the blockchain.
     }
 
     /**
@@ -542,7 +593,9 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void addMessage(String workspaceGUID, String message, AddMessageCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to add the specified message to the blockchain.
     }
 
     /**
@@ -558,6 +611,8 @@ public class BlockchainWorkspaceAPI implements WorkspacesAPI {
      */
     @Override
     public void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback) {
-
+        // Get the RPC Adapter for the specified workspace
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        // Instruct the RPC Adapter to acknowledge the specified message in the blockchain.
     }
 }

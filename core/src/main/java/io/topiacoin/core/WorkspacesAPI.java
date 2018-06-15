@@ -354,7 +354,7 @@ public interface WorkspacesAPI {
     /**
      *
      */
-    void removeFileTag(File fileToUntag, String tagName, RemoveFileTagCallback callback);
+    void removeFileTag(File fileToUntag, String tagName, boolean isPrivate, RemoveFileTagCallback callback);
 
     /**
      * Initiates a download of the specified file version. It is an error to specify a non-existent workspaceGUID, a

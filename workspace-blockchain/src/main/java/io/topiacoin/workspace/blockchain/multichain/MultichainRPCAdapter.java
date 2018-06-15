@@ -1,4 +1,4 @@
-package io.topiacoin.workspace.blockchain;
+package io.topiacoin.workspace.blockchain.multichain;
 
 import io.topiacoin.chainmail.exceptions.ChainNotRunningException;
 import io.topiacoin.chainmail.exceptions.CouldNotCreateStreamException;
