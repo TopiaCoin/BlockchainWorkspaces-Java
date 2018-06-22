@@ -23,10 +23,12 @@ import java.util.Stack;
 public class EOSChainmail implements Chainmail {
 
 	private final String EOSExe;
+	private final String KeyOSExe;
 	private final File EOSConfigBaseDir;
 	private final String EOSConfigBaseDirButInLinuxStyle;
 	private final int PORT_RANGE_START;
 	private final int PORT_RANGE_END;
+	private Process keosTerm;
 	private Process cmdTerm;
 	private final ProcessBuilder termBuilder;
 
@@ -39,23 +41,23 @@ public class EOSChainmail implements Chainmail {
 	}
 
 	public EOSChainmail(int portRangeStart, int portRangeEnd) {
-		this("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", portRangeStart, portRangeEnd);
+		this("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "/mnt/c/EOS/eos/build/programs/keosd/keosd", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", portRangeStart, portRangeEnd);
 	}
 
-	EOSChainmail(String exe, String baseDir, String baseDirLinux, int portRangeStart, int portRangeEnd) {
-		EOSExe = exe;
+	EOSChainmail(String nodeOSexe, String keosEXE, String baseDir, String baseDirLinux, int portRangeStart, int portRangeEnd) {
+		EOSExe = nodeOSexe;
+		KeyOSExe = keosEXE;
 		EOSConfigBaseDir = new File(baseDir);
 		EOSConfigBaseDirButInLinuxStyle = baseDirLinux;
 		termBuilder = new ProcessBuilder("wsl");
 		termBuilder.redirectErrorStream(true);
 		PORT_RANGE_START = portRangeStart;
 		PORT_RANGE_END = portRangeEnd;
-
 	}
 
 	@Override public void start() throws IOException {
 		if(PORT_RANGE_END - PORT_RANGE_START < 2) {
-			throw new IllegalArgumentException(PORT_RANGE_START + " -> " + PORT_RANGE_END + " must be a range of at least 2");
+			throw new IllegalArgumentException(PORT_RANGE_START + " -> " + PORT_RANGE_END + " must be a range of at least 3");
 		}
 		if(PORT_RANGE_START <= 0 || PORT_RANGE_END <= 0 || PORT_RANGE_START > 65535 || PORT_RANGE_END > 65535) {
 			throw new IllegalArgumentException(PORT_RANGE_START + " and/or " + PORT_RANGE_END + " illegal. Port numbers must be 0 < [port number] < 65536");
@@ -63,14 +65,27 @@ public class EOSChainmail implements Chainmail {
 		availablePorts.clear();
 		portsInUse.clear();
 		chainInfo.clear();
-		for (int i = PORT_RANGE_START; i <= PORT_RANGE_END - 1; i += 2) {
+		for (int i = PORT_RANGE_START+1; i <= PORT_RANGE_END - 1; i += 2) {
 			availablePorts.push(i);
 		}
 		cmdTerm = termBuilder.start();
+		keosTerm = termBuilder.start();
 		try {
 			Thread.sleep(200);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		}
+		OutputStreamWriter writer = new OutputStreamWriter(keosTerm.getOutputStream());
+		String walletStartCmd = KeyOSExe + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir " + EOSConfigBaseDirButInLinuxStyle + "/wallet" + "\n";
+		writer.write(walletStartCmd);
+		writer.flush();
+		BufferedReader in = new BufferedReader(new InputStreamReader(keosTerm.getInputStream()));
+		String line;
+		while ((line = in.readLine()) != null) {
+			System.out.println(line);
+			if (line.contains("add api url: /v1/wallet/unlock")) {
+				break;
+			}
 		}
 	}
 
@@ -83,7 +98,8 @@ public class EOSChainmail implements Chainmail {
 				e.printStackTrace();
 			}
 		}
-		cmdTerm.destroyForcibly();
+		cmdTerm.destroy();
+		keosTerm.destroy();
 	}
 
 	@Override public void createBlockchain(String workspaceID) throws ChainAlreadyExistsException {
@@ -232,8 +248,6 @@ public class EOSChainmail implements Chainmail {
 					" --genesis-json " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "/genesis.json" :
 					"") + " --http-server-address 127.0.0.1:" + rpcPort + " --p2p-listen-endpoint 0.0.0.0:" + nodePort + " --data-dir "
 					+ EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "\n";
-			System.out.println(startCmd);
-			System.out.println("-----------------------------------------");
 			writer.write(startCmd);
 			writer.flush();
 			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -283,14 +297,28 @@ public class EOSChainmail implements Chainmail {
 	@Override public boolean stopBlockchain(String workspaceID) throws IOException {
 		if (chainInfo.containsKey(workspaceID)) {
 			OutputStreamWriter cmdWriter = new OutputStreamWriter(cmdTerm.getOutputStream());
+			BufferedReader in = new BufferedReader(new InputStreamReader(cmdTerm.getInputStream()));
 			Integer sid = Integer.parseInt(chainInfo.get(workspaceID).extraInfo.get("ppid"));
 			cmdWriter.write("pkill -P " + sid + "\n");
 			cmdWriter.flush();
 			try {
-				Thread.sleep(200);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			String line;
+			do {
+				cmdWriter.write("ps -f --ppid=" + sid + " --no-headers || echo ''\n");
+				cmdWriter.flush();
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				line = in.readLine();
+				System.out.println(line);
+			} while(!line.trim().isEmpty());
+
 			chainInfo.get(workspaceID).proc.destroy();
 			chainInfo.remove(workspaceID);
 			Integer i = portsInUse.remove(workspaceID);
