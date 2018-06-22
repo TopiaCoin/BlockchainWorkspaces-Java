@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public interface Chainmail {
 
-	public void start() throws IOException;
+	public void start(RPCAdapterManager manager) throws IOException;
 
 	public void stop();
 
@@ -17,4 +17,6 @@ public interface Chainmail {
 	public boolean stopBlockchain(String workspaceID) throws IOException;
 
 	public void addBlockchainListener(ChainmailCallback callback);
+
+	void destroyBlockchain(String workspaceID) throws IOException;
 }

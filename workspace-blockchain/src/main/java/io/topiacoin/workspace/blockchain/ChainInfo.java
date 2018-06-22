@@ -8,25 +8,12 @@ public class ChainInfo {
 	public int peerPort;
 	public String workspaceId;
 	public Process proc;
-	public RPCAdapter rpcAdapter;
 	public Map<String, String> extraInfo = new HashMap<>();
 
-	public ChainInfo(String name, int rpc, int peer, Process multichaindProcess, RPCAdapter rpcAdap) {
+	public ChainInfo(String name, int rpc, int peer, Process multichaindProcess) {
 		rpcPort = rpc;
 		peerPort = peer;
 		workspaceId = name;
 		proc = multichaindProcess;
-		rpcAdapter = rpcAdap;
-	}
-
-	public boolean isChainRunning() {
-		return proc != null;
-	}
-
-	public void stopChain() {
-		if(isChainRunning()) {
-			proc.destroy();
-			proc = null;
-		}
 	}
 }

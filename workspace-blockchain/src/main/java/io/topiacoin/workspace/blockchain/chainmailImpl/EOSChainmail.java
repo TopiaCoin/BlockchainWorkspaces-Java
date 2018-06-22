@@ -1,10 +1,11 @@
 package io.topiacoin.workspace.blockchain.chainmailImpl;
 
+import io.topiacoin.chainmail.multichainstuff.RPCAdapter;
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.ChainInfo;
 import io.topiacoin.workspace.blockchain.Chainmail;
 import io.topiacoin.workspace.blockchain.ChainmailCallback;
-import io.topiacoin.workspace.blockchain.RPCAdapter;
+import io.topiacoin.workspace.blockchain.RPCAdapterManager;
 import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
@@ -36,8 +37,9 @@ public class EOSChainmail implements Chainmail {
 
 	private final Stack<Integer> availablePorts = new Stack<>();
 	private final Map<String, Integer> portsInUse = new HashMap<>();
-	Map<String, ChainInfo> chainInfo = new HashMap<>();
-	private Set<ChainmailCallback> blockchainListeners = new HashSet<>();
+	private final Map<String, ChainInfo> chainInfo = new HashMap<>();
+	private final Set<ChainmailCallback> blockchainListeners = new HashSet<>();
+	private RPCAdapterManager _rpcManager;
 
 	public EOSChainmail() {
 		this(9240, 9250);
@@ -58,13 +60,17 @@ public class EOSChainmail implements Chainmail {
 		PORT_RANGE_END = portRangeEnd;
 	}
 
-	@Override public void start() throws IOException {
+	@Override public void start(RPCAdapterManager manager) throws IOException {
 		if(PORT_RANGE_END - PORT_RANGE_START < 2) {
 			throw new IllegalArgumentException(PORT_RANGE_START + " -> " + PORT_RANGE_END + " must be a range of at least 3");
 		}
 		if(PORT_RANGE_START <= 0 || PORT_RANGE_END <= 0 || PORT_RANGE_START > 65535 || PORT_RANGE_END > 65535) {
 			throw new IllegalArgumentException(PORT_RANGE_START + " and/or " + PORT_RANGE_END + " illegal. Port numbers must be 0 < [port number] < 65536");
 		}
+		if(manager == null) {
+			throw new IllegalArgumentException("RPCAdapterManager must not be null");
+		}
+		_rpcManager = manager;
 		availablePorts.clear();
 		portsInUse.clear();
 		chainInfo.clear();
@@ -256,7 +262,7 @@ public class EOSChainmail implements Chainmail {
 			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			int lineCounter = 0;
 			String line;
-			ChainInfo info = new ChainInfo(workspaceID, rpcPort, nodePort, proc, new RPCAdapter());
+			ChainInfo info = new ChainInfo(workspaceID, rpcPort, nodePort, proc);
 			while ((line = in.readLine()) != null) {
 				System.out.println(line);
 				if (lineCounter == 0) {
@@ -284,9 +290,9 @@ public class EOSChainmail implements Chainmail {
 		//Sort the array by last modified
 		Arrays.sort(chains, new Comparator<ChainInfo>() {
 			public int compare(ChainInfo o1, ChainInfo o2) {
-				if(o1.rpcAdapter.getLastModified() < o2.rpcAdapter.getLastModified()) {
+				if(_rpcManager.getRPCAdapter(o1.workspaceId).getLastBlockTime() < _rpcManager.getRPCAdapter(o2.workspaceId).getLastBlockTime()) {
 					return -1;
-				} else if(o1.rpcAdapter.getLastModified() > o2.rpcAdapter.getLastModified()) {
+				} else if(_rpcManager.getRPCAdapter(o1.workspaceId).getLastBlockTime() > _rpcManager.getRPCAdapter(o2.workspaceId).getLastBlockTime()) {
 					return 1;
 				}
 				return 0;
@@ -294,7 +300,7 @@ public class EOSChainmail implements Chainmail {
 		});
 		//Debug
 		for(int i = 0; i < chains.length; i++) {
-			System.out.println(chains[i].rpcAdapter.getLastModified());
+			System.out.println(_rpcManager.getRPCAdapter(chains[i].workspaceId).getLastBlockTime());
 		}
 		//Stop the chains that need stoppin
 		stopBlockchain(chains[0].workspaceId);
@@ -343,14 +349,14 @@ public class EOSChainmail implements Chainmail {
 		blockchainListeners.add(callback);
 	}
 
-	private boolean chainExists(String workspaceID) {
-		return new File(EOSConfigBaseDir, workspaceID).exists();
-	}
-
-	void destroyBlockchain(String workspaceID) throws IOException {
+	@Override public void destroyBlockchain(String workspaceID) throws IOException {
 		if (chainExists(workspaceID)) {
 			stopBlockchain(workspaceID);
 			FileUtils.deleteDirectory(new File(EOSConfigBaseDir, workspaceID));
 		}
+	}
+
+	private boolean chainExists(String workspaceID) {
+		return new File(EOSConfigBaseDir, workspaceID).exists();
 	}
 }

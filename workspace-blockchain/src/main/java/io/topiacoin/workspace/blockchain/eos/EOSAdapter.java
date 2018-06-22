@@ -32,6 +32,7 @@ public class EOSAdapter {
     private URL nodeURL;
     private URL walletURL;
     private EOSRPCAdapter _eosRpcAdapter;
+    private long _lastModified = 0;
 
     public EOSAdapter(String eosNodeURL, String eosWalletURL) {
         this.eosNodeURL = eosNodeURL;
@@ -223,4 +224,7 @@ public class EOSAdapter {
         return info;
     }
 
+    public long getLastBlockTime() {
+        return _lastModified;
+    }
 }

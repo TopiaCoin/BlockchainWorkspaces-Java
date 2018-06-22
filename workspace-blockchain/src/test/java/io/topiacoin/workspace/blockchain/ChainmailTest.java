@@ -1,7 +1,6 @@
-package io.topiacoin.workspace.blockchain.chainmailImpl;
+package io.topiacoin.workspace.blockchain;
 
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
-import io.topiacoin.workspace.blockchain.ChainmailCallback;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,9 +8,13 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.fail;
 
-public class EOSChainmailIntegrationTest {
+public abstract class ChainmailTest {
+
+	public abstract Chainmail getChainmailInstance(int portstart, int portend);
+
+	public abstract Chainmail getChainmailInstance();
 
 	@Test
 	public void testToSeeIfItWorks() throws Exception {
@@ -25,8 +28,9 @@ public class EOSChainmailIntegrationTest {
 				latch.countDown();
 			}
 		};
-		EOSChainmail chainmail = new EOSChainmail();
-		chainmail.start();
+		Chainmail chainmail = getChainmailInstance();
+		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+		chainmail.start(manager);
 		chainmail.addBlockchainListener(callback);
 		String workspaceID = UUID.randomUUID().toString();
 		chainmail.createBlockchain(workspaceID);
@@ -41,31 +45,41 @@ public class EOSChainmailIntegrationTest {
 	@Test
 	public void testIllegalPortsFails() throws IOException {
 		try {
-			new EOSChainmail(9240, 9241).start();
+			Chainmail chainmail = getChainmailInstance(9240, 9241);
+			RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+			chainmail.start(manager);
 			fail();
 		} catch(IllegalArgumentException ex) {
 			//Good
 		}
 		try {
-			new EOSChainmail(9241, 9241).start();
+			Chainmail chainmail = getChainmailInstance(9241, 9241);
+			RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+			chainmail.start(manager);
 			fail();
 		} catch(IllegalArgumentException ex) {
 			//Good
 		}
 		try {
-			new EOSChainmail(9242, 9241).start();
+			Chainmail chainmail = getChainmailInstance(9242, 9241);
+			RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+			chainmail.start(manager);
 			fail();
 		} catch(IllegalArgumentException ex) {
 			//Good
 		}
 		try {
-			new EOSChainmail(-1, 9241).start();
+			Chainmail chainmail = getChainmailInstance(-1, 9241);
+			RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+			chainmail.start(manager);
 			fail();
 		} catch(IllegalArgumentException ex) {
 			//Good
 		}
 		try {
-			new EOSChainmail(0, 9241).start();
+			Chainmail chainmail = getChainmailInstance(0, 9241);
+			RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+			chainmail.start(manager);
 			fail();
 		} catch(IllegalArgumentException ex) {
 			//Good
@@ -74,8 +88,9 @@ public class EOSChainmailIntegrationTest {
 
 	@Test
 	public void testWhatHappensWhenThereArentEnoughPorts() throws IOException, ChainAlreadyExistsException {
-		EOSChainmail chainmail = new EOSChainmail(9240, 9242);
-		chainmail.start();
+		Chainmail chainmail = getChainmailInstance(9240, 9242);
+		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+		chainmail.start(manager);
 		String workspaceID = UUID.randomUUID().toString();
 		String workspaceID2 = UUID.randomUUID().toString();
 		try {
@@ -94,8 +109,9 @@ public class EOSChainmailIntegrationTest {
 
 	@Test
 	public void makeSureLRUWorks() throws IOException, ChainAlreadyExistsException {
-		EOSChainmail chainmail = new EOSChainmail(9240, 9244);
-		chainmail.start();
+		Chainmail chainmail = getChainmailInstance(9240, 9244);
+		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+		chainmail.start(manager);
 		String workspaceID = UUID.randomUUID().toString();
 		String workspaceID2 = UUID.randomUUID().toString();
 		String workspaceID3 = UUID.randomUUID().toString();
