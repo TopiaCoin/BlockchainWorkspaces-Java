@@ -111,7 +111,7 @@ public abstract class ChainmailTest {
 	}
 
 	@Test
-	public void makeSureLRUWorks() throws IOException, ChainAlreadyExistsException {
+	public void makeSureLRUWorks() throws IOException, ChainAlreadyExistsException, InterruptedException {
 		Chainmail chainmail = getChainmailInstance(9240, 9244);
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
@@ -122,10 +122,13 @@ public abstract class ChainmailTest {
 			chainmail.createBlockchain(workspaceID);
 			chainmail.startBlockchain(workspaceID);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
+			Thread.sleep(1);
 			chainmail.createBlockchain(workspaceID2);
 			chainmail.startBlockchain(workspaceID2);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID2));
+			Thread.sleep(1);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
+			Thread.sleep(1);
 			chainmail.createBlockchain(workspaceID3);
 			chainmail.startBlockchain(workspaceID3);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID3));
