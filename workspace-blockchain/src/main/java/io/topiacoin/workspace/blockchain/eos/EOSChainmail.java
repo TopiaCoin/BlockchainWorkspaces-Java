@@ -1,4 +1,4 @@
-package io.topiacoin.workspace.blockchain.chainmailImpl;
+package io.topiacoin.workspace.blockchain.eos;
 
 import io.topiacoin.chainmail.multichainstuff.RPCAdapter;
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
@@ -300,7 +300,7 @@ public class EOSChainmail implements Chainmail {
 		});
 		//Debug
 		for(int i = 0; i < chains.length; i++) {
-			System.out.println(_rpcManager.getRPCAdapter(chains[i].workspaceId).getLastBlockTime());
+			System.out.println(chains[i].workspaceId + ": " + _rpcManager.getRPCAdapter(chains[i].workspaceId).getLastBlockTime());
 		}
 		//Stop the chains that need stoppin
 		stopBlockchain(chains[0].workspaceId);

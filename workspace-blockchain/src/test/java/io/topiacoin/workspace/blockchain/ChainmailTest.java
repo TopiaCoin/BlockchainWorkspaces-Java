@@ -1,6 +1,7 @@
 package io.topiacoin.workspace.blockchain;
 
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
+import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,6 +16,8 @@ public abstract class ChainmailTest {
 	public abstract Chainmail getChainmailInstance(int portstart, int portend);
 
 	public abstract Chainmail getChainmailInstance();
+
+	public abstract void updateRPCLastModified(EOSAdapter adapter);
 
 	@Test
 	public void testToSeeIfItWorks() throws Exception {
@@ -118,11 +121,14 @@ public abstract class ChainmailTest {
 		try {
 			chainmail.createBlockchain(workspaceID);
 			chainmail.startBlockchain(workspaceID);
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
 			chainmail.createBlockchain(workspaceID2);
 			chainmail.startBlockchain(workspaceID2);
-			chainmail.chainInfo.get(workspaceID).rpcAdapter.updateLastModified();
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID2));
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
 			chainmail.createBlockchain(workspaceID3);
 			chainmail.startBlockchain(workspaceID3);
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID3));
 			Assert.assertFalse(chainmail.stopBlockchain(workspaceID2)); //Because it should've already been stopped
 			Assert.assertTrue(chainmail.stopBlockchain(workspaceID));
 			Assert.assertTrue(chainmail.stopBlockchain(workspaceID3));

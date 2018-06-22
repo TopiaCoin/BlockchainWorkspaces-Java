@@ -1,4 +1,4 @@
-package io.topiacoin.workspace.blockchain.chainmailImpl;
+package io.topiacoin.workspace.blockchain.exceptions;
 
 public class ChainNotRunningException extends Exception {
 	public ChainNotRunningException() {

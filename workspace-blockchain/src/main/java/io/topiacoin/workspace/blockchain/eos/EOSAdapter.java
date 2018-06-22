@@ -227,4 +227,8 @@ public class EOSAdapter {
     public long getLastBlockTime() {
         return _lastModified;
     }
+
+    void updateLastBlockTime(long time) {
+        _lastModified = time;
+    }
 }
