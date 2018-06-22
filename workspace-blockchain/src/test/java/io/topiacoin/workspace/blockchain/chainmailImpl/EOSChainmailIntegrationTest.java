@@ -1,11 +1,13 @@
 package io.topiacoin.workspace.blockchain.chainmailImpl;
 
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
+import io.topiacoin.workspace.blockchain.ChainmailCallback;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
 import static junit.framework.TestCase.*;
 
@@ -13,16 +15,27 @@ public class EOSChainmailIntegrationTest {
 
 	@Test
 	public void testToSeeIfItWorks() throws Exception {
+		CountDownLatch latch = new CountDownLatch(2);
+		ChainmailCallback callback = new ChainmailCallback() {
+			@Override public void onBlockchainStarted(String workspaceId, String nodeURL, String walletURL) {
+				latch.countDown();
+			}
+
+			@Override public void onBlockchainStopped(String workspaceId) {
+				latch.countDown();
+			}
+		};
 		EOSChainmail chainmail = new EOSChainmail();
 		chainmail.start();
+		chainmail.addBlockchainListener(callback);
 		String workspaceID = UUID.randomUUID().toString();
 		chainmail.createBlockchain(workspaceID);
 		chainmail.startBlockchain(workspaceID);
 		//This is the part where we do whatever it is we do with a running blockchain.
 		chainmail.stopBlockchain(workspaceID);
-		//Thread.sleep(2000);
 		chainmail.destroyBlockchain(workspaceID);
 		chainmail.stop();
+		Assert.assertEquals(0, latch.getCount());
 	}
 
 	@Test

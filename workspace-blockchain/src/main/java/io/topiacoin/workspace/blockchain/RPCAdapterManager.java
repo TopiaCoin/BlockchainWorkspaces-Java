@@ -1,6 +1,5 @@
 package io.topiacoin.workspace.blockchain;
 
-import io.topiacoin.eosrpcadapter.EOSRPCAdapter;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
 
 import java.util.HashMap;
@@ -18,37 +17,47 @@ import java.util.Map;
  */
 public class RPCAdapterManager {
 
-    private Map<String,EOSAdapter> _eosrpcAdapterMap ;
+	private Map<String, EOSAdapter> _eosrpcAdapterMap;
+	private ChainmailCallback _chainmailCallback;
 
-    public RPCAdapterManager(/* Chainmail Instance */) {
-        _eosrpcAdapterMap = new HashMap<>();
+	public RPCAdapterManager(Chainmail chainmail) {
+		this();
+		// Register with the BlockChain Instance to get notified of chain start and stop.
+		chainmail.addBlockchainListener(_chainmailCallback);
+	}
 
-        // Register with the BlockChain Instance to get notified of chain start and stop.
-    }
+	private RPCAdapterManager() {
+		_eosrpcAdapterMap = new HashMap<>();
+		_chainmailCallback = new ChainmailCallback() {
+			@Override public void onBlockchainStarted(String workspaceId, String nodeURL, String walletURL) {
+				didStartBlockchain(workspaceId, nodeURL, walletURL);
+			}
 
-    /**
-     * Returns the RPC Adapter associated with the specified workspaceID, if is available.  Otherwise, returns null.
-     *
-     * @param workspaceID The ID of the workspace whose RPC Adapter is being retrieved.
-     *
-     * @return The RPC Adapter associated with the specified workspace ID, or null if no such Adapter exists.
-     */
-    public EOSAdapter getRPCAdapter(String workspaceID) {
-        return _eosrpcAdapterMap.get(workspaceID);
-    }
+			@Override public void onBlockchainStopped(String workspaceId) {
+				didStopBlockchain(workspaceId);
+			}
+		};
+	}
 
-    // ======== Chainmail Callback Methods ========
+	/**
+	 * Returns the RPC Adapter associated with the specified workspaceID, if is available.  Otherwise, returns null.
+	 *
+	 * @param workspaceID The ID of the workspace whose RPC Adapter is being retrieved.
+	 *
+	 * @return The RPC Adapter associated with the specified workspace ID, or null if no such Adapter exists.
+	 */
+	public EOSAdapter getRPCAdapter(String workspaceID) {
+		return _eosrpcAdapterMap.get(workspaceID);
+	}
 
-     public void didStartBlockchain(String workspaceID, Map<String, String> blockchainInfo) {
-        String nodeURL = blockchainInfo.get("nodeURL");
-        String walletURL = blockchainInfo.get("walletURL");
+	// ======== Chainmail Callback Methods ========
 
-        EOSAdapter adapter = new EOSAdapter(nodeURL, walletURL);
+	public void didStartBlockchain(String workspaceID, String nodeURL, String walletURL) {
+		EOSAdapter adapter = new EOSAdapter(nodeURL, walletURL);
+		_eosrpcAdapterMap.put(workspaceID, adapter);
+	}
 
-        _eosrpcAdapterMap.put(workspaceID, adapter) ;
-     }
-
-     public void didStopBlockchain(String worksapceID) {
-         _eosrpcAdapterMap.remove(worksapceID);
-     }
+	public void didStopBlockchain(String worksapceID) {
+		_eosrpcAdapterMap.remove(worksapceID);
+	}
 }

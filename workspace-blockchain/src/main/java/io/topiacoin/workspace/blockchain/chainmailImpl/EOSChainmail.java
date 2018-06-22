@@ -3,6 +3,7 @@ package io.topiacoin.workspace.blockchain.chainmailImpl;
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.ChainInfo;
 import io.topiacoin.workspace.blockchain.Chainmail;
+import io.topiacoin.workspace.blockchain.ChainmailCallback;
 import io.topiacoin.workspace.blockchain.RPCAdapter;
 import org.apache.commons.io.FileUtils;
 
@@ -16,6 +17,7 @@ import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -35,6 +37,7 @@ public class EOSChainmail implements Chainmail {
 	private final Stack<Integer> availablePorts = new Stack<>();
 	private final Map<String, Integer> portsInUse = new HashMap<>();
 	Map<String, ChainInfo> chainInfo = new HashMap<>();
+	private Set<ChainmailCallback> blockchainListeners = new HashSet<>();
 
 	public EOSChainmail() {
 		this(9240, 9250);
@@ -269,6 +272,9 @@ public class EOSChainmail implements Chainmail {
 					break;
 				}
 			}
+			for(ChainmailCallback callback : blockchainListeners) {
+				callback.onBlockchainStarted(workspaceID, "127.0.0.1:" + nodePort, "127.0.0.1:" + PORT_RANGE_START);
+			}
 		}
 	}
 
@@ -325,9 +331,16 @@ public class EOSChainmail implements Chainmail {
 			if (i != null) {
 				availablePorts.push(i);
 			}
+			for(ChainmailCallback callback : blockchainListeners) {
+				callback.onBlockchainStopped(workspaceID);
+			}
 			return true;
 		}
 		return false;
+	}
+
+	public void addBlockchainListener(ChainmailCallback callback) {
+		blockchainListeners.add(callback);
 	}
 
 	private boolean chainExists(String workspaceID) {

@@ -15,4 +15,6 @@ public interface Chainmail {
 	public void startBlockchain(String workspaceID) throws IOException;
 
 	public boolean stopBlockchain(String workspaceID) throws IOException;
+
+	public void addBlockchainListener(ChainmailCallback callback);
 }
