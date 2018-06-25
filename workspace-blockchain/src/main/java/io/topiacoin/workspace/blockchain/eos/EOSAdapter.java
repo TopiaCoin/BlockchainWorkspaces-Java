@@ -11,10 +11,13 @@ import io.topiacoin.eosrpcadapter.messages.TableRows;
 import io.topiacoin.eosrpcadapter.messages.Transaction;
 import io.topiacoin.model.File;
 import io.topiacoin.model.Member;
+import io.topiacoin.model.Message;
 import io.topiacoin.model.exceptions.NoSuchFileException;
+import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.http.util.TextUtils;
 
 import javax.annotation.PostConstruct;
@@ -674,11 +677,11 @@ public class EOSAdapter {
 
             for (Map<String, Object> row : rows.rows) {
                 String name = null;
-                String mimeType = null ;
+                String mimeType = null;
                 String entryID = (String) row.get("fileID");
                 String parentID = (String) row.get("parentID");
-                boolean isFolder = false ;
-                int status = (Integer)row.get("status");
+                boolean isFolder = false;
+                int status = (Integer) row.get("status");
                 String lockOwner = null;
                 File file = new File(name, mimeType, entryID, Long.toString(guid), parentID, isFolder, status, lockOwner, null);
                 files.add(file);
@@ -692,19 +695,19 @@ public class EOSAdapter {
 
     public File getFile(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
-        File file = null ;
+        File file = null;
 
         try {
-            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "files", fileID, fileID, 100, true);
+            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "files", "fileID", fileID, fileID, 100, true);
             System.out.println("rows: " + rows);
 
             for (Map<String, Object> row : rows.rows) {
                 String name = null;
-                String mimeType = null ;
+                String mimeType = null;
                 String entryID = (String) row.get("fileID");
                 String parentID = (String) row.get("parentID");
-                boolean isFolder = false ;
-                int status = (Integer)row.get("status");
+                boolean isFolder = false;
+                int status = (Integer) row.get("status");
                 String lockOwner = null;
                 file = new File(name, mimeType, entryID, Long.toString(guid), parentID, isFolder, status, lockOwner, null);
                 if (TextUtils.isEmpty(versionID) || row.get("versionID").equals(versionID)) {
@@ -718,48 +721,404 @@ public class EOSAdapter {
         return file;
     }
 
-    public void acknowledgeFile() {
+    public void acknowledgeFile(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+            args.put("versionID", versionID);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "ackfile", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void addMessage() {
+    public void addMessage(long guid, String user, String message, String mimeType) throws NoSuchWorkspaceException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("author", user);
+            args.put("message", message);
+            args.put("mimeType", mimeType);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "addmessage", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void getMessages() {
+    public List<Message> getMessages(long guid) throws NoSuchWorkspaceException, BlockchainException {
 
+        List<Message> messages = new ArrayList<>();
+
+        try {
+            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "messages", 100, true);
+            System.out.println("rows: " + rows);
+
+            for (Map<String, Object> row : rows.rows) {
+                String author = (String) row.get("author");
+                String msgID = (String) row.get("msgID");
+                long seq = (Integer) row.get("id");
+                long timestamp = (Integer) row.get("timestamp");
+                String text = (String) row.get("text");
+                String mimeType = (String) row.get("mimeType");
+                byte[] digSig = null;
+                Message message = new Message(author, Long.toString(guid), msgID, seq, timestamp, text, mimeType, digSig);
+                messages.add(message);
+            }
+        } catch (ChainException e) {
+            throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
+        }
+
+        return messages;
     }
 
     public void getMessage() {
-
+        throw new NotImplementedException("This method does not work due to bugs in the EOS software");
     }
 
-    public void acknowledgeMessage() {
+    public void acknowledgeMessage(long guid, String user, String msgID) throws NoSuchWorkspaceException, NoSuchMessageException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("msgID", msgID);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "ackmessage", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void addFileTag() {
+    public void addFileTag(long guid, String user, String fileID, String versionID, String tagValue, boolean isPublic) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+            args.put("versionID", versionID);
+            args.put("isPublic", (isPublic ? 1 : 0));
+            args.put("value", tagValue);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "addtag", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void removeFileTag() {
+    public void removeFileTag(long guid, String user, String fileID, String versionID, String tagValue, boolean isPublic) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+            args.put("versionID", versionID);
+            args.put("isPublic", (isPublic ? 1 : 0));
+            args.put("value", tagValue);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "removetag", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void lockFile() {
+    public void lockFile(long guid, String user, String fileID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "lockfile", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void unlockFile() {
+    public void unlockFile(long guid, String user, String fileID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "unlockfile", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void lockFileVersion() {
+    public void lockFileVersion(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+            args.put("versionID", versionID);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "lockver", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
-    public void unlockFileVersion() {
+    public void unlockFileVersion(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("guid", guid);
+            args.put("user", user);
+            args.put("fileID", fileID);
+            args.put("versionID", versionID);
+
+            ChainInfo info = _eosRpcAdapter.chain().getInfo();
+
+            List<String> scopes = new ArrayList<>();
+            scopes.add(user);
+
+            List<Transaction.Authorization> authorizations = new ArrayList<>();
+            authorizations.add(new Transaction.Authorization(user, "active"));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + 30000);
+
+            Transaction initTX = _eosRpcAdapter.chain().createRawTransaction(contractAccount, "unlockver", args, scopes, authorizations, expirationDate);
+
+            List<String> availableKeys = _eosRpcAdapter.wallet().getPublicKeys();
+            RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
+            SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
+            _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+        } catch (ChainException e) {
+            if (e.getCause() instanceof ChainException) {
+                Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
+                if (extractedException instanceof NoSuchWorkspaceException) {
+                    throw (NoSuchWorkspaceException) extractedException;
+                } else {
+                    throw (BlockchainException) extractedException;
+                }
+            } else {
+                throw new BlockchainException(e);
+            }
+        } catch (WalletException e) {
+            throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
+        }
     }
 
     // ======== Private Methods ========
