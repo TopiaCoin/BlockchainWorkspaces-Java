@@ -1,6 +1,7 @@
 package io.topiacoin.workspace.blockchain;
 
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
+import io.topiacoin.chainmail.multichainstuff.exception.NoSuchChainException;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
 import org.junit.Assert;
 import org.junit.Test;
@@ -90,7 +91,7 @@ public abstract class ChainmailTest {
 	}
 
 	@Test
-	public void testWhatHappensWhenThereArentEnoughPorts() throws IOException, ChainAlreadyExistsException {
+	public void testWhatHappensWhenThereArentEnoughPorts() throws IOException, ChainAlreadyExistsException, NoSuchChainException {
 		Chainmail chainmail = getChainmailInstance(9240, 9242);
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
@@ -111,7 +112,7 @@ public abstract class ChainmailTest {
 	}
 
 	@Test
-	public void makeSureLRUWorks() throws IOException, ChainAlreadyExistsException, InterruptedException {
+	public void makeSureLRUWorks() throws IOException, ChainAlreadyExistsException, InterruptedException, NoSuchChainException {
 		Chainmail chainmail = getChainmailInstance(9240, 9244);
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
@@ -139,6 +140,35 @@ public abstract class ChainmailTest {
 			chainmail.destroyBlockchain(workspaceID);
 			chainmail.destroyBlockchain(workspaceID2);
 			chainmail.destroyBlockchain(workspaceID3);
+			chainmail.stop();
+		}
+	}
+
+	@Test
+	public void makeSureBlockchainsCantBeDoubleStarted() throws IOException, ChainAlreadyExistsException, InterruptedException, NoSuchChainException {
+		Chainmail chainmail = getChainmailInstance(9240, 9244);
+		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
+		chainmail.start(manager);
+		String workspaceID = UUID.randomUUID().toString();
+		String workspaceID2 = UUID.randomUUID().toString();
+		try {
+			chainmail.createBlockchain(workspaceID);
+			chainmail.startBlockchain(workspaceID);
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
+			Thread.sleep(1);
+			chainmail.createBlockchain(workspaceID2);
+			chainmail.startBlockchain(workspaceID2);
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID2));
+			Thread.sleep(1);
+			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
+			Thread.sleep(1);
+			//Ok, so since workspaceID2 has the older datestamp on it, if I start workspaceID again and it actually starts, LRU will kill workspaceID2.
+			chainmail.startBlockchain(workspaceID);
+			Assert.assertTrue(chainmail.stopBlockchain(workspaceID));
+			Assert.assertTrue(chainmail.stopBlockchain(workspaceID2));
+		} finally {
+			chainmail.destroyBlockchain(workspaceID);
+			chainmail.destroyBlockchain(workspaceID2);
 			chainmail.stop();
 		}
 	}

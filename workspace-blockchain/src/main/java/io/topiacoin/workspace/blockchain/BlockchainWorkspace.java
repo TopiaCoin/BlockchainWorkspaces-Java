@@ -32,9 +32,9 @@ import org.apache.commons.lang.NotImplementedException;
 
 public class BlockchainWorkspace implements WorkspacesAPI {
 
-    private EOSAdapter _eosAdapter ;
+    private RPCAdapterManager _adapterManager ;
     private DataModel _dataModel;
-    // private ChainMail _chainMail;
+    private Chainmail _chainMail;
 
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
@@ -69,6 +69,8 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) {
 
         // Instruct ChainMail to connect to the specified workspace's blockchain
+        _chainMail.startBlockchain(workspaceID);
+        EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
         // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
     }
 

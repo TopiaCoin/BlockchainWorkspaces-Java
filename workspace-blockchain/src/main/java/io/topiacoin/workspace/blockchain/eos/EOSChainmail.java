@@ -2,6 +2,7 @@ package io.topiacoin.workspace.blockchain.eos;
 
 import io.topiacoin.chainmail.multichainstuff.RPCAdapter;
 import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
+import io.topiacoin.chainmail.multichainstuff.exception.NoSuchChainException;
 import io.topiacoin.workspace.blockchain.ChainInfo;
 import io.topiacoin.workspace.blockchain.Chainmail;
 import io.topiacoin.workspace.blockchain.ChainmailCallback;
@@ -228,58 +229,66 @@ public class EOSChainmail implements Chainmail {
 			stopBlockchain(workspaceID);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (NoSuchChainException e) {
+			e.printStackTrace();
 		}
 	}
 
-	@Override public void startBlockchain(String workspaceID) throws IOException {
+	@Override public void startBlockchain(String workspaceID) throws IOException, NoSuchChainException {
 		startBlockchain(false, workspaceID);
 	}
 
-	private void startBlockchain(boolean includeGenesis, String workspaceID) throws IOException {
-		if(availablePorts.empty()) {
-			stopLRUBlockchain();
+	private void startBlockchain(boolean firstTimeStartup, String workspaceID) throws IOException, NoSuchChainException {
+		if(!firstTimeStartup && !chainExists(workspaceID)) {
+			throw new NoSuchChainException("Cannot start Blockchain with ID " + workspaceID + " - no such blockchain");
 		}
-		int nodePort = availablePorts.pop();
-		int rpcPort = nodePort + 1;
-		portsInUse.put(workspaceID, nodePort);
+		if(!chainIsRunning(workspaceID)) {
+			if (availablePorts.empty()) {
+				stopLRUBlockchain();
+			}
+			int nodePort = availablePorts.pop();
+			int rpcPort = nodePort + 1;
+			portsInUse.put(workspaceID, nodePort);
 
-		boolean runAgain = true;
-		while (runAgain) {
-			runAgain = false;
-			Process proc = termBuilder.start();
-			try {
-				Thread.sleep(200);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			OutputStreamWriter writer = new OutputStreamWriter(proc.getOutputStream());
-			String startCmd = "echo $$\n" + EOSExe + " -e -p eosio --config-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + (includeGenesis ?
-					" --genesis-json " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "/genesis.json" :
-					"") + " --http-server-address 127.0.0.1:" + rpcPort + " --p2p-listen-endpoint 0.0.0.0:" + nodePort + " --data-dir "
-					+ EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "\n";
-			writer.write(startCmd);
-			writer.flush();
-			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			int lineCounter = 0;
-			String line;
-			ChainInfo info = new ChainInfo(workspaceID, rpcPort, nodePort, proc);
-			while ((line = in.readLine()) != null) {
-				System.out.println(line);
-				if (lineCounter == 0) {
-					info.extraInfo.put("ppid", "" + Integer.parseInt(line));
+			boolean runAgain = true;
+			while (runAgain) {
+				runAgain = false;
+				Process proc = termBuilder.start();
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-				lineCounter++;
-				if (line.contains("producer plugin:  plugin_startup() end")) {
-					chainInfo.put(workspaceID, info);
-					break;
+				OutputStreamWriter writer = new OutputStreamWriter(proc.getOutputStream());
+				String startCmd =
+						"echo $$\n" + EOSExe + " -e -p eosio --config-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + (firstTimeStartup ?
+								" --genesis-json " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "/genesis.json" :
+								"") + " --http-server-address 127.0.0.1:" + rpcPort + " --p2p-listen-endpoint 0.0.0.0:" + nodePort + " --data-dir "
+								+ EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "\n";
+				writer.write(startCmd);
+				writer.flush();
+				BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+				int lineCounter = 0;
+				String line;
+				ChainInfo info = new ChainInfo(workspaceID, rpcPort, nodePort, proc);
+				while ((line = in.readLine()) != null) {
+					System.out.println(line);
+					if (lineCounter == 0) {
+						info.extraInfo.put("ppid", "" + Integer.parseInt(line));
+					}
+					lineCounter++;
+					if (line.contains("producer plugin:  plugin_startup() end")) {
+						chainInfo.put(workspaceID, info);
+						break;
+					}
+					if (line.contains("Segmentation fault")) {
+						runAgain = true;
+						break;
+					}
 				}
-				if (line.contains("Segmentation fault")) {
-					runAgain = true;
-					break;
+				for (ChainmailCallback callback : blockchainListeners) {
+					callback.onBlockchainStarted(workspaceID, "127.0.0.1:" + nodePort, "127.0.0.1:" + PORT_RANGE_START);
 				}
-			}
-			for(ChainmailCallback callback : blockchainListeners) {
-				callback.onBlockchainStarted(workspaceID, "127.0.0.1:" + nodePort, "127.0.0.1:" + PORT_RANGE_START);
 			}
 		}
 	}
@@ -358,5 +367,9 @@ public class EOSChainmail implements Chainmail {
 
 	private boolean chainExists(String workspaceID) {
 		return new File(EOSConfigBaseDir, workspaceID).exists();
+	}
+
+	private boolean chainIsRunning(String workspaceID) {
+		return chainInfo.containsKey(workspaceID);
 	}
 }
