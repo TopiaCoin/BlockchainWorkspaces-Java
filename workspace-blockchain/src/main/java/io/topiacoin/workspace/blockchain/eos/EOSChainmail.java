@@ -1,5 +1,6 @@
 package io.topiacoin.workspace.blockchain.eos;
 
+import io.topiacoin.model.MemberNode;
 import io.topiacoin.workspace.blockchain.ChainInfo;
 import io.topiacoin.workspace.blockchain.Chainmail;
 import io.topiacoin.workspace.blockchain.ChainmailCallback;
@@ -15,10 +16,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -40,6 +45,7 @@ public class EOSChainmail implements Chainmail {
 	private final Map<String, ChainInfo> chainInfo = new HashMap<>();
 	private final Set<ChainmailCallback> blockchainListeners = new HashSet<>();
 	private RPCAdapterManager _rpcManager;
+	private static final DateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
 	public EOSChainmail() {
 		this(9240, 9250);
@@ -61,20 +67,20 @@ public class EOSChainmail implements Chainmail {
 	}
 
 	@Override public void start(RPCAdapterManager manager) throws IOException {
-		if(PORT_RANGE_END - PORT_RANGE_START < 2) {
+		if (PORT_RANGE_END - PORT_RANGE_START < 2) {
 			throw new IllegalArgumentException(PORT_RANGE_START + " -> " + PORT_RANGE_END + " must be a range of at least 3");
 		}
-		if(PORT_RANGE_START <= 0 || PORT_RANGE_END <= 0 || PORT_RANGE_START > 65535 || PORT_RANGE_END > 65535) {
+		if (PORT_RANGE_START <= 0 || PORT_RANGE_END <= 0 || PORT_RANGE_START > 65535 || PORT_RANGE_END > 65535) {
 			throw new IllegalArgumentException(PORT_RANGE_START + " and/or " + PORT_RANGE_END + " illegal. Port numbers must be 0 < [port number] < 65536");
 		}
-		if(manager == null) {
+		if (manager == null) {
 			throw new IllegalArgumentException("RPCAdapterManager must not be null");
 		}
 		_rpcManager = manager;
 		availablePorts.clear();
 		portsInUse.clear();
 		chainInfo.clear();
-		for (int i = PORT_RANGE_START+1; i <= PORT_RANGE_END - 1; i += 2) {
+		for (int i = PORT_RANGE_START + 1; i <= PORT_RANGE_END - 1; i += 2) {
 			availablePorts.push(i);
 		}
 		cmdTerm = termBuilder.start();
@@ -85,7 +91,9 @@ public class EOSChainmail implements Chainmail {
 			e.printStackTrace();
 		}
 		OutputStreamWriter writer = new OutputStreamWriter(keosTerm.getOutputStream());
-		String walletStartCmd = KeyOSExe + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir " + EOSConfigBaseDirButInLinuxStyle + "/wallet" + "\n";
+		String walletStartCmd =
+				KeyOSExe + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir "
+						+ EOSConfigBaseDirButInLinuxStyle + "/wallet" + "\n";
 		writer.write(walletStartCmd);
 		writer.flush();
 		BufferedReader in = new BufferedReader(new InputStreamReader(keosTerm.getInputStream()));
@@ -111,7 +119,7 @@ public class EOSChainmail implements Chainmail {
 		keosTerm.destroy();
 	}
 
-	@Override public void createBlockchain(String workspaceID) throws ChainAlreadyExistsException {
+	@Override public boolean createBlockchain(String currentUserID, String workspaceID) throws ChainAlreadyExistsException {
 		if (chainExists(workspaceID)) {
 			throw new ChainAlreadyExistsException();
 		}
@@ -177,10 +185,15 @@ public class EOSChainmail implements Chainmail {
 			confWriter.newLine();
 			confWriter.write("plugin = eosio::net_api_plugin");
 			confWriter.close();
+			Instant genesis_date = Instant.now();
 			BufferedWriter genesisWriter = new BufferedWriter(new FileWriter(genesis));
+			String initialTimestamp = genesis_date.toString();
+			if(initialTimestamp.endsWith("Z")) {
+				initialTimestamp = initialTimestamp.substring(0, initialTimestamp.length() - 1);
+			}
 			genesisWriter.write("{");
 			genesisWriter.newLine();
-			genesisWriter.write("\"initial_timestamp\": \"2018-06-03T12:00:00.000\",");
+			genesisWriter.write("\"initial_timestamp\": \"" + initialTimestamp + "\",");
 			genesisWriter.newLine();
 			genesisWriter.write("\"initial_key\": \"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV\",");
 			genesisWriter.newLine();
@@ -224,24 +237,27 @@ public class EOSChainmail implements Chainmail {
 			genesisWriter.newLine();
 			genesisWriter.write("}");
 			genesisWriter.close();
-			startBlockchain(true, workspaceID);
-			stopBlockchain(workspaceID);
+			if (startBlockchain(true, currentUserID, workspaceID, null)) {
+				stopBlockchain(workspaceID);
+				return true;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NoSuchChainException e) {
 			e.printStackTrace();
 		}
+		return false;
 	}
 
-	@Override public void startBlockchain(String workspaceID) throws IOException, NoSuchChainException {
-		startBlockchain(false, workspaceID);
+	@Override public boolean startBlockchain(String currentUserID, String workspaceID, List<MemberNode> memberNodes) throws IOException, NoSuchChainException {
+		return startBlockchain(false, currentUserID, workspaceID, memberNodes);
 	}
 
-	private void startBlockchain(boolean firstTimeStartup, String workspaceID) throws IOException, NoSuchChainException {
-		if(!firstTimeStartup && !chainExists(workspaceID)) {
+	private boolean startBlockchain(boolean firstTimeStartup, String userID, String workspaceID, List<MemberNode> memberNodes) throws IOException, NoSuchChainException {
+		if (!firstTimeStartup && !chainExists(workspaceID)) {
 			throw new NoSuchChainException("Cannot start Blockchain with ID " + workspaceID + " - no such blockchain");
 		}
-		if(!chainIsRunning(workspaceID)) {
+		if (!chainIsRunning(workspaceID)) {
 			if (availablePorts.empty()) {
 				stopLRUBlockchain();
 			}
@@ -250,6 +266,7 @@ public class EOSChainmail implements Chainmail {
 			portsInUse.put(workspaceID, nodePort);
 
 			boolean runAgain = true;
+			boolean success = false;
 			while (runAgain) {
 				runAgain = false;
 				Process proc = termBuilder.start();
@@ -258,12 +275,19 @@ public class EOSChainmail implements Chainmail {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+				StringBuilder memberNodeString = new StringBuilder();
+				if (memberNodes != null) {
+					for (MemberNode node : memberNodes) {
+						memberNodeString.append(" --p2p-peer-address ").append(node.getHostname()).append(":").append(node.getPort());
+					}
+				}
 				OutputStreamWriter writer = new OutputStreamWriter(proc.getOutputStream());
 				String startCmd =
-						"echo $$\n" + EOSExe + " -e -p eosio --config-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + (firstTimeStartup ?
-								" --genesis-json " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "/genesis.json" :
-								"") + " --http-server-address 127.0.0.1:" + rpcPort + " --p2p-listen-endpoint 0.0.0.0:" + nodePort + " --data-dir "
-								+ EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "\n";
+						"echo $$\n" + EOSExe + " -e -p " + userID + " --config-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + (firstTimeStartup ?
+								" --genesis-json " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "/genesis.json" : "")
+								+ " --http-server-address 127.0.0.1:" + rpcPort + " --p2p-listen-endpoint 0.0.0.0:" + nodePort
+								+ memberNodeString.toString()
+								+ " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "\n";
 				writer.write(startCmd);
 				writer.flush();
 				BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -278,6 +302,7 @@ public class EOSChainmail implements Chainmail {
 					lineCounter++;
 					if (line.contains("producer plugin:  plugin_startup() end")) {
 						chainInfo.put(workspaceID, info);
+						success = true;
 						break;
 					}
 					if (line.contains("Segmentation fault")) {
@@ -285,11 +310,15 @@ public class EOSChainmail implements Chainmail {
 						break;
 					}
 				}
-				for (ChainmailCallback callback : blockchainListeners) {
-					callback.onBlockchainStarted(workspaceID, "127.0.0.1:" + nodePort, "127.0.0.1:" + PORT_RANGE_START);
+				if (success) {
+					for (ChainmailCallback callback : blockchainListeners) {
+						callback.onBlockchainStarted(workspaceID, "127.0.0.1:" + nodePort, "127.0.0.1:" + PORT_RANGE_START);
+					}
 				}
 			}
+			return success;
 		}
+		return true;
 	}
 
 	private void stopLRUBlockchain() throws IOException {
@@ -298,16 +327,16 @@ public class EOSChainmail implements Chainmail {
 		//Sort the array by last modified
 		Arrays.sort(chains, new Comparator<ChainInfo>() {
 			public int compare(ChainInfo o1, ChainInfo o2) {
-				if(_rpcManager.getRPCAdapter(o1.workspaceId).getLastBlockTime() < _rpcManager.getRPCAdapter(o2.workspaceId).getLastBlockTime()) {
+				if (_rpcManager.getRPCAdapter(o1.workspaceId).getLastBlockTime() < _rpcManager.getRPCAdapter(o2.workspaceId).getLastBlockTime()) {
 					return -1;
-				} else if(_rpcManager.getRPCAdapter(o1.workspaceId).getLastBlockTime() > _rpcManager.getRPCAdapter(o2.workspaceId).getLastBlockTime()) {
+				} else if (_rpcManager.getRPCAdapter(o1.workspaceId).getLastBlockTime() > _rpcManager.getRPCAdapter(o2.workspaceId).getLastBlockTime()) {
 					return 1;
 				}
 				return 0;
 			}
 		});
 		//Debug
-		for(int i = 0; i < chains.length; i++) {
+		for (int i = 0; i < chains.length; i++) {
 			System.out.println(chains[i].workspaceId + ": " + _rpcManager.getRPCAdapter(chains[i].workspaceId).getLastBlockTime());
 		}
 		//Stop the chains that need stoppin
@@ -337,7 +366,7 @@ public class EOSChainmail implements Chainmail {
 				}
 				line = in.readLine();
 				System.out.println(line);
-			} while(!line.trim().isEmpty());
+			} while (!line.trim().isEmpty());
 
 			chainInfo.get(workspaceID).proc.destroy();
 			chainInfo.remove(workspaceID);
@@ -345,7 +374,7 @@ public class EOSChainmail implements Chainmail {
 			if (i != null) {
 				availablePorts.push(i);
 			}
-			for(ChainmailCallback callback : blockchainListeners) {
+			for (ChainmailCallback callback : blockchainListeners) {
 				callback.onBlockchainStopped(workspaceID);
 			}
 			return true;

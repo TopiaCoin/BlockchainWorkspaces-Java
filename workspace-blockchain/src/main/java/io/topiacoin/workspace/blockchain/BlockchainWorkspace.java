@@ -30,9 +30,15 @@ import io.topiacoin.model.DataModel;
 import io.topiacoin.model.File;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
+import io.topiacoin.workspace.blockchain.exceptions.ChainAlreadyExistsException;
+import io.topiacoin.workspace.blockchain.exceptions.NoSuchChainException;
 import org.apache.commons.lang.NotImplementedException;
+
+import java.io.IOException;
+import java.util.UUID;
 
 public class BlockchainWorkspace implements WorkspacesAPI {
 
@@ -78,7 +84,24 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         if(dhtWorkspace == null) {
             throw new NoSuchWorkspaceException();
         }
-        //_chainMail.startBlockchain(workspaceID);
+        String currentUserID;
+        try {
+            currentUserID = _dataModel.getCurrentUser().getUserID();
+        } catch (NoSuchUserException e) {
+            throw new NotLoggedInException("", e);
+        }
+        try {
+            _chainMail.startBlockchain(currentUserID, workspaceID, dhtWorkspace.getMemberNodes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchChainException e) {
+            try {
+                _chainMail.createBlockchain(currentUserID, workspaceID);
+                _chainMail.startBlockchain(currentUserID, workspaceID, null);
+            } catch (ChainAlreadyExistsException | NoSuchChainException | IOException e1) {
+                e1.printStackTrace();
+            }
+        }
         EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
         // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
     }
@@ -104,12 +127,27 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) {
+    public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) throws NotLoggedInException {
         // Generate a GUID for the new workspace
+        String workspaceID = UUID.randomUUID().toString();
         // Instruct Chainmail to create a new workspace blockchain using the new workspace GUID.
+        String currentUserID;
+        try {
+            currentUserID = _dataModel.getCurrentUser().getUserID();
+        } catch (NoSuchUserException e) {
+            throw new NotLoggedInException("", e);
+        }
+        try {
+            _chainMail.createBlockchain(currentUserID, workspaceID);
+            _chainMail.startBlockchain(currentUserID, workspaceID, null);
+        } catch (ChainAlreadyExistsException | NoSuchChainException | IOException e1) {
+            e1.printStackTrace();
+        }
         // Once the chain has been created and started, get the RPC Adapter from the Manager.
-        // Instruct the RPC Adapter to initialize the chain with the workspace name, description, and user record for
-        // the currently logged in user.
+        EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
+        // Instruct the RPC Adapter to initialize the chain with the workspace name, description, and user record for the currently logged in user.
+        adapter.initializeWorkspace();
+        throw new NotImplementedException("");
     }
 
     /**

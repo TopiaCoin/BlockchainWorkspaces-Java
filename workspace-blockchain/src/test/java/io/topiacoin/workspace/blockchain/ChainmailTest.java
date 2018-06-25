@@ -37,8 +37,8 @@ public abstract class ChainmailTest {
 		chainmail.start(manager);
 		chainmail.addBlockchainListener(callback);
 		String workspaceID = UUID.randomUUID().toString();
-		chainmail.createBlockchain(workspaceID);
-		chainmail.startBlockchain(workspaceID);
+		chainmail.createBlockchain("usera", workspaceID);
+		chainmail.startBlockchain("usera", workspaceID, null);
 		//This is the part where we do whatever it is we do with a running blockchain.
 		chainmail.stopBlockchain(workspaceID);
 		chainmail.destroyBlockchain(workspaceID);
@@ -98,10 +98,10 @@ public abstract class ChainmailTest {
 		String workspaceID = UUID.randomUUID().toString();
 		String workspaceID2 = UUID.randomUUID().toString();
 		try {
-			chainmail.createBlockchain(workspaceID);
-			chainmail.startBlockchain(workspaceID);
-			chainmail.createBlockchain(workspaceID2);
-			chainmail.startBlockchain(workspaceID2);
+			chainmail.createBlockchain("usera", workspaceID);
+			chainmail.startBlockchain("usera", workspaceID, null);
+			chainmail.createBlockchain("usera", workspaceID2);
+			chainmail.startBlockchain("usera", workspaceID2, null);
 			Assert.assertFalse(chainmail.stopBlockchain(workspaceID));
 			Assert.assertTrue(chainmail.stopBlockchain(workspaceID2));
 		} finally {
@@ -120,18 +120,18 @@ public abstract class ChainmailTest {
 		String workspaceID2 = UUID.randomUUID().toString();
 		String workspaceID3 = UUID.randomUUID().toString();
 		try {
-			chainmail.createBlockchain(workspaceID);
-			chainmail.startBlockchain(workspaceID);
+			chainmail.createBlockchain("usera", workspaceID);
+			chainmail.startBlockchain("usera", workspaceID, null);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
 			Thread.sleep(1);
-			chainmail.createBlockchain(workspaceID2);
-			chainmail.startBlockchain(workspaceID2);
+			chainmail.createBlockchain("usera", workspaceID2);
+			chainmail.startBlockchain("usera", workspaceID2, null);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID2));
 			Thread.sleep(1);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
 			Thread.sleep(1);
-			chainmail.createBlockchain(workspaceID3);
-			chainmail.startBlockchain(workspaceID3);
+			chainmail.createBlockchain("usera", workspaceID3);
+			chainmail.startBlockchain("usera", workspaceID3, null);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID3));
 			Assert.assertFalse(chainmail.stopBlockchain(workspaceID2)); //Because it should've already been stopped
 			Assert.assertTrue(chainmail.stopBlockchain(workspaceID));
@@ -152,18 +152,18 @@ public abstract class ChainmailTest {
 		String workspaceID = UUID.randomUUID().toString();
 		String workspaceID2 = UUID.randomUUID().toString();
 		try {
-			chainmail.createBlockchain(workspaceID);
-			chainmail.startBlockchain(workspaceID);
+			chainmail.createBlockchain("usera", workspaceID);
+			chainmail.startBlockchain("usera", workspaceID, null);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
 			Thread.sleep(1);
-			chainmail.createBlockchain(workspaceID2);
-			chainmail.startBlockchain(workspaceID2);
+			chainmail.createBlockchain("usera", workspaceID2);
+			chainmail.startBlockchain("usera", workspaceID2, null);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID2));
 			Thread.sleep(1);
 			updateRPCLastModified(manager.getRPCAdapter(workspaceID));
 			Thread.sleep(1);
 			//Ok, so since workspaceID2 has the older datestamp on it, if I start workspaceID again and it actually starts, LRU will kill workspaceID2.
-			chainmail.startBlockchain(workspaceID);
+			chainmail.startBlockchain("usera", workspaceID, null);
 			Assert.assertTrue(chainmail.stopBlockchain(workspaceID));
 			Assert.assertTrue(chainmail.stopBlockchain(workspaceID2));
 		} finally {

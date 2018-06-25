@@ -129,7 +129,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback);
+    void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) throws NotLoggedInException;
 
     /**
      * Updates the description of the specified workspace. It is an error to specify a non-existent workspace. To remove
