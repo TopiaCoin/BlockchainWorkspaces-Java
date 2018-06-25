@@ -69,7 +69,7 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) {
 
         // Instruct ChainMail to connect to the specified workspace's blockchain
-        _chainMail.startBlockchain(workspaceID);
+        //_chainMail.startBlockchain(workspaceID);
         EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
         // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
     }
