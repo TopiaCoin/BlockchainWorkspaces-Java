@@ -2,6 +2,7 @@ package io.topiacoin.sdk.impl;
 
 import io.topiacoin.core.Configuration;
 import io.topiacoin.core.EventsAPI;
+import io.topiacoin.core.exceptions.NotLoggedInException;
 import io.topiacoin.dht.DHT;
 import io.topiacoin.dht.SDFSDHTAccessor;
 import io.topiacoin.dht.config.DHTConfiguration;
@@ -126,7 +127,7 @@ public class DHTEventsAPI implements EventsAPI {
                 }
             } catch (InterruptedException e) {
                 //NOP
-            } catch (NoSuchUserException e) {
+            } catch (NotLoggedInException e) {
                 _log.warn("Stopping DHTEventFetch non-clean - it appears the User has logged out", e);
             }
             _isRunning = false;

@@ -1,7 +1,7 @@
 package io.topiacoin.workspace.blockchain;
 
-import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
-import io.topiacoin.chainmail.multichainstuff.exception.NoSuchChainException;
+import io.topiacoin.workspace.blockchain.exceptions.ChainAlreadyExistsException;
+import io.topiacoin.workspace.blockchain.exceptions.NoSuchChainException;
 
 import java.io.IOException;
 

@@ -66,8 +66,8 @@ public class DHTEventsAPITest {
 				}
 			}
 		}, "newWorkspace", null);
-		DHTEventsAPI api = new DHTEventsAPI(config, model);
-		api.startEventFetching();
+		DHTEventsAPI api = new DHTEventsAPI();
+		api.startEventFetching(config, model);
 		Assert.assertTrue(api.isRunning());
 
 		//Add workspaces for the user - make sure the Notifications fire. This is weirdly more of an emulation of the createWorkspace call,

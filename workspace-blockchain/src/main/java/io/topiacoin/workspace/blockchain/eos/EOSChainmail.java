@@ -1,12 +1,11 @@
 package io.topiacoin.workspace.blockchain.eos;
 
-import io.topiacoin.chainmail.multichainstuff.RPCAdapter;
-import io.topiacoin.chainmail.multichainstuff.exception.ChainAlreadyExistsException;
-import io.topiacoin.chainmail.multichainstuff.exception.NoSuchChainException;
 import io.topiacoin.workspace.blockchain.ChainInfo;
 import io.topiacoin.workspace.blockchain.Chainmail;
 import io.topiacoin.workspace.blockchain.ChainmailCallback;
 import io.topiacoin.workspace.blockchain.RPCAdapterManager;
+import io.topiacoin.workspace.blockchain.exceptions.ChainAlreadyExistsException;
+import io.topiacoin.workspace.blockchain.exceptions.NoSuchChainException;
 import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
