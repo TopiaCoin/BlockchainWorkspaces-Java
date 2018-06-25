@@ -286,6 +286,7 @@ public class SDFSDHTAccessorTest {
 					List<DHTWorkspaceEntry> entries = accessor1.fetchMyDHTWorkspaces();
 					Assert.assertEquals(1, entries.size());
 					Assert.assertTrue(entries.contains(entry));
+					Assert.assertEquals(entries.get(0), accessor1.fetchDHTWorkspace(workspace.getGuid()));
 
 					//Test that removing my Member Node is idempotent
 					Assert.assertTrue(!accessor1.removeMyMemberNode(entry));
@@ -536,6 +537,8 @@ public class SDFSDHTAccessorTest {
 			try {
 				//Make sure we start empty
 				Assert.assertEquals(0, accessor1.fetchMyWorkspaceIDs().size());
+				DHTWorkspaceEntry nullIThink = accessor1.fetchDHTWorkspace("blah");
+				Assert.assertNull(nullIThink);
 				try {
 					//Create Workspace
 					SecretKey nodeKey = accessor1.addNewWorkspaceToDHTInternal(workspace.getGuid());

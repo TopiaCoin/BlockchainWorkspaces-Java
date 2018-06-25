@@ -22,9 +22,11 @@ import io.topiacoin.core.callbacks.RemoveFolderCallback;
 import io.topiacoin.core.callbacks.RemoveUserCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.core.exceptions.NotLoggedInException;
 import io.topiacoin.model.File;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 
 /**
  * The Workspace API defines all of the operations that can be performed on a workspace. This documentation defines the
@@ -99,7 +101,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
      * will include the reason for the failure under the 'reason' key.
      */
-    void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback);
+    void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system

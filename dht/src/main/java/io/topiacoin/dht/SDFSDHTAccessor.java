@@ -111,6 +111,24 @@ public class SDFSDHTAccessor {
 	}
 
 	/**
+	 * Fetches the Workspace whose ID is specified (if it exists and I'm a member of it), according to the DHT, expressed through the {@link DHTWorkspaceEntry} model object
+	 * @return the Workspace whose ID is specified (if it exists and I'm a member of it), according to the DHT, or null
+	 * @throws NotLoggedInException If the current user cannot be ascertained (read: not logged in)
+	 */
+	public DHTWorkspaceEntry fetchDHTWorkspace(String workspaceID) throws NotLoggedInException {
+		try {
+			SecretKey nodeKey = fetchMyWorkspaceNodeKey(workspaceID);
+			if(nodeKey == null) {
+				return null;
+			}
+			List<MemberNode> nodes = fetchMemberNodes(workspaceID, nodeKey);
+			return new DHTWorkspaceEntry(workspaceID, nodeKey, nodes);
+		} catch (NoSuchUserException e) {
+			throw new NotLoggedInException(e);
+		}
+	}
+
+	/**
 	 * Adds a {@link MemberNode} for the given {@link DHTWorkspaceEntry}
 	 * The Blockchain subsystem should be able to produce a MemberNode for a Workspace Blockchain - once it does, it should
 	 * be added to the DHT via this method.
