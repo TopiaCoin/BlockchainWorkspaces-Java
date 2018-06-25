@@ -23,10 +23,14 @@ import io.topiacoin.core.callbacks.RemoveFolderCallback;
 import io.topiacoin.core.callbacks.RemoveUserCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.core.exceptions.NotLoggedInException;
+import io.topiacoin.dht.SDFSDHTAccessor;
+import io.topiacoin.model.DHTWorkspaceEntry;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.File;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
 import org.apache.commons.lang.NotImplementedException;
 
@@ -35,6 +39,7 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     private RPCAdapterManager _adapterManager ;
     private DataModel _dataModel;
     private Chainmail _chainMail;
+    private SDFSDHTAccessor _dhtAccessor;
 
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
@@ -66,9 +71,13 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) {
+    public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
 
         // Instruct ChainMail to connect to the specified workspace's blockchain
+        DHTWorkspaceEntry dhtWorkspace = _dhtAccessor.fetchDHTWorkspace(workspaceID);
+        if(dhtWorkspace == null) {
+            throw new NoSuchWorkspaceException();
+        }
         //_chainMail.startBlockchain(workspaceID);
         EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
         // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
