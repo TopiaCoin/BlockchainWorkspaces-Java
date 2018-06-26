@@ -39,6 +39,7 @@ import java.util.Map;
 
 public class EOSAdapter {
 
+    public static final String NULL_UINT128 = "0x00000000000000000000000000000000";
     private final Log _log = LogFactory.getLog(this.getClass());
 
     private String eosNodeURL;
@@ -629,10 +630,10 @@ public class EOSAdapter {
             Map<String, Object> args = new HashMap<>();
             args.put("guid", guid);
             args.put("uploader", user);
-            args.put("parentID", file.getParentID());
+            args.put("parentID", (file.getParentID() != null ? file.getParentID() : NULL_UINT128));
             args.put("fileID", file.getEntryID());
             List<FileVersion> versions = file.getVersions();
-            String versionID = "0x00000000000000000000000000000000";
+            String versionID = NULL_UINT128;
             List<String> ancestorVersionIDs = null;
             if (versions != null && versions.size() > 0) {
                 versionID = versions.get(0).getVersionID();
@@ -684,7 +685,7 @@ public class EOSAdapter {
             args.put("guid", guid);
             args.put("remover", user);
             args.put("fileID", fileID);
-            args.put("versionID", versionID);
+            args.put("versionID", (versionID != null ? versionID : NULL_UINT128));
 
             ChainInfo info = _eosRpcAdapter.chain().getInfo();
 
