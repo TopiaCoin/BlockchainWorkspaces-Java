@@ -623,7 +623,7 @@ public class EOSAdapter {
         }
     }
 
-    public void addFile(long guid, String user, File file, List<String> ancestorVersionIDs) throws NoSuchWorkspaceException, BlockchainException {
+    public void addFile(long guid, String user, File file) throws NoSuchWorkspaceException, BlockchainException {
 
         try {
             Map<String, Object> args = new HashMap<>();
@@ -633,8 +633,10 @@ public class EOSAdapter {
             args.put("fileID", file.getEntryID());
             List<FileVersion> versions = file.getVersions();
             String versionID = "0x00000000000000000000000000000000";
+            List<String> ancestorVersionIDs = null;
             if (versions != null && versions.size() > 0) {
                 versionID = versions.get(0).getVersionID();
+                ancestorVersionIDs = versions.get(0).getAncestorVersionIDs();
             }
             args.put("versionID", versionID);
             args.put("ancestorVersionID", ancestorVersionIDs);
