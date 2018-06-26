@@ -8,6 +8,7 @@ import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
 import io.topiacoin.workspace.blockchain.eos.Files;
 import io.topiacoin.workspace.blockchain.eos.Members;
 import io.topiacoin.workspace.blockchain.eos.Messages;
+import io.topiacoin.workspace.blockchain.eos.WorkspaceInfo;
 import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,20 +36,33 @@ public class EOSAdapterTest {
         String owner = "inita";
         String name = "Test Workspace";
         String description = "This is a Test Workspace";
+        String newDescription = "This is a Beta Workspace";
         String ownerKey = "fakeKey";
 
+        WorkspaceInfo workspaceInfo = null;
+
         try {
+            // Initialize the new workspace
             adapter.initializeWorkspace(guid, owner, name, description, ownerKey);
 
-            // TODO - Assert Something
+            // Verify that the workspace info matches what was passed in.
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertNotNull(workspaceInfo) ;
+            assertEquals(guid, workspaceInfo.getGuid());
+            assertEquals(name, workspaceInfo.getWorkspaceName());
+            assertEquals(description, workspaceInfo.getWorkspaceDescription());
+            assertEquals(owner, workspaceInfo.getOwner());
 
-            adapter.getWorkspaceInfo(guid);
+            // Set the workspace description.
+            adapter.setWorkspaceDescription(guid, owner, newDescription);
 
-            // TODO - Assert Something
-
-            adapter.setWorkspaceDescription(guid, owner, description);
-
-            // TODO - Assert Something
+            // Verify that the description is updated, but all other info remains the same.
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertNotNull(workspaceInfo) ;
+            assertEquals(guid, workspaceInfo.getGuid());
+            assertEquals(name, workspaceInfo.getWorkspaceName());
+            assertEquals(newDescription, workspaceInfo.getWorkspaceDescription());
+            assertEquals(owner, workspaceInfo.getOwner());
 
         } finally {
             adapter.destroy(guid, owner);
@@ -188,18 +202,22 @@ public class EOSAdapterTest {
         }
         String owner = "inita";
         String newOwner = "sampledb";
+        String currentOwner = owner;
 
         System.out.println("GUID: " + guid);
 
+        WorkspaceInfo workspaceInfo = null ;
         Members members = null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
 
         try {
-            // TODO - Verify that the workspace Info show the new owner
+            // Verify that the workspace Info show the original owner
             Thread.sleep(100);
-            adapter.getWorkspaceInfo(guid);
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertEquals(owner, workspaceInfo.getOwner());
+            currentOwner = workspaceInfo.getOwner();
 
             // Verify that the workspace has only one member
             Thread.sleep(100);
@@ -233,6 +251,14 @@ public class EOSAdapterTest {
             // Offer ownership to the other user, rescind the invitation, and then try to accept
             Thread.sleep(100);
             adapter.offerOwnership(guid, owner, newOwner);
+
+            // Verify that the workspace Info show the ownership offer
+            Thread.sleep(100);
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertEquals(owner, workspaceInfo.getOwner());
+            assertEquals(newOwner, workspaceInfo.getNewOwner());
+            currentOwner = workspaceInfo.getOwner();
+
             Thread.sleep(100);
             adapter.rescindOwnership(guid, owner);
             try {
@@ -245,7 +271,10 @@ public class EOSAdapterTest {
 
             // TODO - Verify that the workspace Info show the original owner
             Thread.sleep(100);
-            adapter.getWorkspaceInfo(guid);
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertEquals(owner, workspaceInfo.getOwner());
+            assertEquals("", workspaceInfo.getNewOwner());
+            currentOwner = workspaceInfo.getOwner();
 
             // Offer ownership to the other user and then accept it.
             Thread.sleep(100);
@@ -255,7 +284,10 @@ public class EOSAdapterTest {
 
             // TODO - Verify that the workspace Info show the new owner
             Thread.sleep(100);
-            adapter.getWorkspaceInfo(guid);
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertEquals(newOwner, workspaceInfo.getOwner());
+            assertEquals("", workspaceInfo.getNewOwner());
+            currentOwner = workspaceInfo.getOwner();
 
             // Give ownership back to the original owner.
             Thread.sleep(100);
@@ -265,10 +297,13 @@ public class EOSAdapterTest {
 
             // TODO - Verify that the workspace Info show the original owner
             Thread.sleep(100);
-            adapter.getWorkspaceInfo(guid);
+            workspaceInfo = adapter.getWorkspaceInfo(guid);
+            assertEquals(owner, workspaceInfo.getOwner());
+            assertEquals("", workspaceInfo.getNewOwner());
+            currentOwner = workspaceInfo.getOwner();
         } finally {
             Thread.sleep(100);
-            adapter.destroy(guid, owner);
+            adapter.destroy(guid, currentOwner);
         }
     }
 

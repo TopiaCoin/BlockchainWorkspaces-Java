@@ -108,7 +108,9 @@ public class EOSAdapter {
         }
     }
 
-    public void getWorkspaceInfo(long guid) throws NoSuchWorkspaceException, BlockchainException {
+    public WorkspaceInfo getWorkspaceInfo(long guid) throws NoSuchWorkspaceException, BlockchainException {
+
+        WorkspaceInfo workspaceInfo = null ;
 
         try {
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "workspaces", 100, true);
@@ -116,9 +118,17 @@ public class EOSAdapter {
             if (rows.rows.size() == 0) {
                 throw new NoSuchWorkspaceException("The requested workspace does not exist");
             }
+
+            String name = (String) rows.rows.get(0).get("name");
+            String description = (String) rows.rows.get(0).get("description");
+            String owner = (String) rows.rows.get(0).get("owner");
+            String newOwner = (String) rows.rows.get(0).get("newowner");
+            workspaceInfo = new WorkspaceInfo(guid, name, description, owner, newOwner);
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
+
+        return workspaceInfo;
     }
 
     public void setWorkspaceDescription(long guid, String owner, String description) throws NoSuchWorkspaceException, BlockchainException {
