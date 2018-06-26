@@ -1,5 +1,7 @@
 package io.topiacoin.workspace.blockchain.eos;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.topiacoin.eosrpcadapter.EOSRPCAdapter;
 import io.topiacoin.eosrpcadapter.exceptions.ChainException;
 import io.topiacoin.eosrpcadapter.exceptions.WalletException;
@@ -10,6 +12,7 @@ import io.topiacoin.eosrpcadapter.messages.SignedTransaction;
 import io.topiacoin.eosrpcadapter.messages.TableRows;
 import io.topiacoin.eosrpcadapter.messages.Transaction;
 import io.topiacoin.model.File;
+import io.topiacoin.model.FileVersion;
 import io.topiacoin.model.Member;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.exceptions.NoSuchFileException;
@@ -18,10 +21,14 @@ import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.util.TextUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EOSAdapter {
+
+    private final Log _log = LogFactory.getLog(this.getClass());
 
     private String eosNodeURL;
     private String eosWalletURL;
@@ -110,7 +119,7 @@ public class EOSAdapter {
 
     public WorkspaceInfo getWorkspaceInfo(long guid) throws NoSuchWorkspaceException, BlockchainException {
 
-        WorkspaceInfo workspaceInfo = null ;
+        WorkspaceInfo workspaceInfo = null;
 
         try {
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "workspaces", 100, true);
@@ -614,16 +623,24 @@ public class EOSAdapter {
         }
     }
 
-    public void addFile(long guid, String user, String fileID, String versionID, String parentID, List<String> ancestorVersionIDs, String metadata) throws NoSuchWorkspaceException, BlockchainException {
+    public void addFile(long guid, String user, File file, List<String> ancestorVersionIDs) throws NoSuchWorkspaceException, BlockchainException {
 
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("guid", guid);
             args.put("uploader", user);
-            args.put("parentID", parentID);
-            args.put("fileID", fileID);
+            args.put("parentID", file.getParentID());
+            args.put("fileID", file.getEntryID());
+            List<FileVersion> versions = file.getVersions();
+            String versionID = "0x00000000000000000000000000000000";
+            if (versions != null && versions.size() > 0) {
+                versionID = versions.get(0).getVersionID();
+            }
             args.put("versionID", versionID);
             args.put("ancestorVersionID", ancestorVersionIDs);
+
+            String metadata = convertFileToRow(file);
+
             args.put("fileMetadata", metadata);
 
             ChainInfo info = _eosRpcAdapter.chain().getInfo();
@@ -706,7 +723,7 @@ public class EOSAdapter {
     public Files getFiles(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<File> files = new ArrayList<>();
-        boolean hasMore = false ;
+        boolean hasMore = false;
         long newContinuationToken = -1;
 
         try {
@@ -724,16 +741,10 @@ public class EOSAdapter {
             hasMore = rows.more;
 
             for (Map<String, Object> row : rows.rows) {
-                String name = null;
-                String mimeType = null;
-                String entryID = (String) row.get("fileID");
-                String parentID = (String) row.get("parentID");
-                boolean isFolder = false;
-                int status = (Integer) row.get("status");
-                String lockOwner = null;
-                File file = new File(name, mimeType, entryID, Long.toString(guid), parentID, isFolder, status, lockOwner, null);
+                String metadata = (String) row.get("metadata");
+                File file = convertRowToFile(guid, metadata);
                 files.add(file);
-                newContinuationToken = (Integer)row.get("id");
+                newContinuationToken = (Integer) row.get("id");
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
@@ -744,7 +755,7 @@ public class EOSAdapter {
 
     public File getFile(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
-        if ( true){
+        if (true) {
             throw new NotImplementedException("Awaiting bug fix in EOS RPC Interface");
         }
 
@@ -863,7 +874,7 @@ public class EOSAdapter {
     public Messages getMessages(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<Message> messages = new ArrayList<>();
-        boolean hasMore = false ;
+        boolean hasMore = false;
         long newContinuationToken = -1;
 
         try {
@@ -882,7 +893,7 @@ public class EOSAdapter {
                 byte[] digSig = null;
                 Message message = new Message(author, Long.toString(guid), msgID, seq, timestamp, text, mimeType, digSig);
                 messages.add(message);
-                newContinuationToken = (Integer)row.get("id");
+                newContinuationToken = (Integer) row.get("id");
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
@@ -1208,6 +1219,32 @@ public class EOSAdapter {
         }
 
         return res;
+    }
+
+    @NotNull
+    private File convertRowToFile(long guid, String metadata) {
+        try {
+            // Unmarshall the metadata JSON String to a Map and start pulling info out.
+            ObjectMapper mapper = new ObjectMapper();
+
+            return mapper.readValue(metadata, File.class);
+        } catch (IOException e) {
+            _log.warn("Error Unmarshalling File data: ", e);
+            return null;
+        }
+    }
+
+    private String convertFileToRow(File file) {
+        try {
+            // Marshall the object into a JSON String
+            ObjectMapper mapper = new ObjectMapper();
+            String metadata = mapper.writeValueAsString(file);
+
+            return metadata;
+        } catch (JsonProcessingException e) {
+            _log.warn("Error Marshalling File object ", e);
+            return null;
+        }
     }
 
 

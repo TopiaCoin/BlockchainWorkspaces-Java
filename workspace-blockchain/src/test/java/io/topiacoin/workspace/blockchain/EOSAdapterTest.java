@@ -2,6 +2,7 @@ package io.topiacoin.workspace.blockchain;
 
 import io.topiacoin.eosrpcadapter.exceptions.ChainException;
 import io.topiacoin.model.File;
+import io.topiacoin.model.FileVersion;
 import io.topiacoin.model.Member;
 import io.topiacoin.model.Message;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
@@ -389,12 +390,28 @@ public class EOSAdapterTest {
         String owner = "inita";
         String otherMember = "sampledb";
 
+        String name = "Example.jpg";
+        String mimeType = "application/octet-stream";
         String parentID = "0x00000000000000000000000000000000";
         String fileID = "0x0123456789abcdef0000000000000000";
         String versionID = "0x0123456789abcdef0000000000000001";
         String noVersionID = "0x00000000000000000000000000000000";
         List<String> ancestorIDs = new ArrayList<>();
         String metadata = "Fake Metadata";
+
+        FileVersion version = new FileVersion(fileID,
+                versionID,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version));
 
         System.out.println("GUID: " + guid);
 
@@ -413,7 +430,7 @@ public class EOSAdapterTest {
 
             // Add a new File
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID, parentID, ancestorIDs, metadata);
+            adapter.addFile(guid, owner, file, ancestorIDs);
 
             // Verify that there is one file in the workspace
             Thread.sleep(100);
@@ -450,6 +467,9 @@ public class EOSAdapterTest {
         String owner = "inita";
         String otherMember = "sampledb";
 
+        String name = "Example.jpg";
+        String mimeType = "application/octet-stream";
+
         String parentID = "0x00000000000000000000000000000000";
         String fileID = "0x0123456789abcdef0000000000000000";
         String versionID1 = "0x0123456789abcdef0000000000000001";
@@ -458,6 +478,48 @@ public class EOSAdapterTest {
         String noVersionID = "0x00000000000000000000000000000000";
         List<String> ancestorIDs = new ArrayList<>();
         String metadata = "Fake Metadata";
+
+        FileVersion version1 = new FileVersion(fileID,
+                versionID1,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file1 = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version1));
+
+        FileVersion version2 = new FileVersion(fileID,
+                versionID2,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file2 = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version2));
+
+        FileVersion version3 = new FileVersion(fileID,
+                versionID3,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file3 = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version3));
 
         System.out.println("GUID: " + guid);
 
@@ -475,7 +537,7 @@ public class EOSAdapterTest {
 
             // Add a new File
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID1, parentID, ancestorIDs, metadata);
+            adapter.addFile(guid, owner, file1, ancestorIDs);
 
             // Verify that there is one file in the workspace
             Thread.sleep(100);
@@ -485,7 +547,7 @@ public class EOSAdapterTest {
 
             // Add a new File Version
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID2, parentID, Arrays.asList(versionID1), metadata);
+            adapter.addFile(guid, owner, file2, Arrays.asList(versionID1));
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
@@ -505,7 +567,7 @@ public class EOSAdapterTest {
 
             // Add a new File Version
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID3, parentID, Arrays.asList(versionID2), metadata);
+            adapter.addFile(guid, owner, file3, Arrays.asList(versionID2));
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
@@ -606,12 +668,29 @@ public class EOSAdapterTest {
         String owner = "inita";
         String otherMember = "sampledb";
 
+        String name = "Example.jpg";
+        String mimeType = "application/octet-stream";
+
         String parentID = "0x00000000000000000000000000000000";
         String fileID = "0x0123456789abcdef0000000000000000";
         String versionID = "0x0123456789abcdef0000000000000001";
         String noVersionID = "0x00000000000000000000000000000000";
         List<String> ancestorIDs = new ArrayList<>();
         String metadata = "Fake Metadata";
+
+        FileVersion version = new FileVersion(fileID,
+                versionID,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version));
 
         System.out.println("GUID: " + guid);
 
@@ -623,7 +702,7 @@ public class EOSAdapterTest {
         try {
             // Add a new File
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID, parentID, ancestorIDs, metadata);
+            adapter.addFile(guid, owner, file, ancestorIDs);
 
             // Lock the File
             Thread.sleep(100);
@@ -673,12 +752,29 @@ public class EOSAdapterTest {
         String owner = "inita";
         String otherMember = "sampledb";
 
+        String name = "Example.jpg";
+        String mimeType = "application/octet-stream";
+
         String parentID = "0x00000000000000000000000000000000";
         String fileID = "0x0123456789abcdef0000000000000000";
         String versionID = "0x0123456789abcdef0000000000000001";
         String noVersionID = "0x00000000000000000000000000000000";
         List<String> ancestorIDs = new ArrayList<>();
         String metadata = "Fake Metadata";
+
+        FileVersion version = new FileVersion(fileID,
+                versionID,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version));
 
         System.out.println("GUID: " + guid);
 
@@ -690,7 +786,7 @@ public class EOSAdapterTest {
         try {
             // Add a new File
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID, parentID, ancestorIDs, metadata);
+            adapter.addFile(guid, owner, file, ancestorIDs);
 
             // Lock the File
             Thread.sleep(100);
@@ -740,12 +836,29 @@ public class EOSAdapterTest {
         String owner = "inita";
         String otherMember = "sampledb";
 
+        String name = "Example.jpg";
+        String mimeType = "application/octet-stream";
+
         String parentID = "0x00000000000000000000000000000000";
         String fileID = "0x0123456789abcdef0000000000000000";
         String versionID = "0x0123456789abcdef0000000000000001";
         String noVersionID = "0x00000000000000000000000000000000";
         List<String> ancestorIDs = new ArrayList<>();
         String metadata = "Fake Metadata";
+
+        FileVersion version = new FileVersion(fileID,
+                versionID,
+                owner,
+                1,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "foo",
+                "ACTIVE",
+                null,
+                null,
+                null,
+                null);
+        File file = new File(name, mimeType, fileID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version));
 
         String tagValue = "OogaBooga";
 
@@ -767,7 +880,7 @@ public class EOSAdapterTest {
 
             // Add a new File
             Thread.sleep(100);
-            adapter.addFile(guid, owner, fileID, versionID, parentID, ancestorIDs, metadata);
+            adapter.addFile(guid, owner, file, ancestorIDs);
 
             // Add Tag to File
             Thread.sleep(100);
