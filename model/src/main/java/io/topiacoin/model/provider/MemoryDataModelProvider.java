@@ -482,8 +482,6 @@ public class MemoryDataModelProvider implements DataModelProvider {
 
 	// -------- File Version Accessor Methods --------
 
-	// TODO Implement File Versions
-
 	public List<String> getAvailableVersionsOfFile(String fileID)
 			throws NoSuchFileException {
 
@@ -777,8 +775,6 @@ public class MemoryDataModelProvider implements DataModelProvider {
 	}
 
 	// -------- File Chunk Accessor Methods --------
-
-	// TODO - Work on File Chunks!
 
 	public List<FileChunk> getChunksForFileVersion(String fileID, String versionID)
 			throws NoSuchFileException, NoSuchFileVersionException {

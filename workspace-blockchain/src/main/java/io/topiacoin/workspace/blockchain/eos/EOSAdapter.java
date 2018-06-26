@@ -397,16 +397,32 @@ public class EOSAdapter {
         }
     }
 
-    public List<Member> getMembers(long guid) throws NoSuchWorkspaceException, BlockchainException {
+    public Members getMembers(long guid) throws NoSuchWorkspaceException, BlockchainException {
+        return getMembers(guid, null);
+    }
+
+    public Members getMembers(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<Member> members = new ArrayList<>();
+        boolean hasMore = false;
+        long newContinuationToken = -1;
 
         try {
-            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "membership", 100, true);
+            long lowerBound = (continuationToken != null ? continuationToken : 0);
+            long upperBound = -1;
+            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                    Long.toString(guid),
+                    "membership",
+                    Long.toString(lowerBound),
+                    Long.toString(upperBound),
+                    100,
+                    true);
             System.out.println("rows: " + rows);
             if (rows.rows.size() == 0) {
                 throw new NoSuchWorkspaceException("The requested workspace does not exist");
             }
+
+            hasMore = rows.more;
 
             for (Map<String, Object> row : rows.rows) {
                 String userID = (String) row.get("user");
@@ -416,12 +432,18 @@ public class EOSAdapter {
                 String authToken = null;
                 Member member = new Member(userID, status, inviteDate, inviterID, authToken);
                 members.add(member);
+                newContinuationToken = (Integer) row.get("id");
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return members;
+        return new Members(members, hasMore, (hasMore ? newContinuationToken : -1));
+    }
+
+    public Member getMember(long guid, String member) {
+        throw new NotImplementedException("Awaiting bug fix in EOS");
+//        return null ;
     }
 
     public void acceptInvitation(long guid, String invitee) throws NoSuchWorkspaceException, BlockchainException {
@@ -667,13 +689,29 @@ public class EOSAdapter {
         }
     }
 
-    public List<File> getFiles(long guid) throws NoSuchWorkspaceException, BlockchainException {
+    public Files getFiles(long guid) throws NoSuchWorkspaceException, BlockchainException {
+        return getFiles(guid, null);
+    }
+
+    public Files getFiles(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<File> files = new ArrayList<>();
+        boolean hasMore = false ;
+        long newContinuationToken = -1;
 
         try {
-            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "files", 100, true);
+            long lower_bound = (continuationToken != null ? continuationToken : 0);
+            long upper_bound = -1;
+            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                    Long.toString(guid),
+                    "files",
+                    Long.toString(lower_bound),
+                    Long.toString(upper_bound),
+                    100,
+                    true);
             System.out.println("rows: " + rows);
+
+            hasMore = rows.more;
 
             for (Map<String, Object> row : rows.rows) {
                 String name = null;
@@ -685,15 +723,20 @@ public class EOSAdapter {
                 String lockOwner = null;
                 File file = new File(name, mimeType, entryID, Long.toString(guid), parentID, isFolder, status, lockOwner, null);
                 files.add(file);
+                newContinuationToken = (Integer)row.get("id");
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return files;
+        return new Files(files, hasMore, (hasMore ? newContinuationToken : -1));
     }
 
     public File getFile(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
+
+        if ( true){
+            throw new NotImplementedException("Awaiting bug fix in EOS RPC Interface");
+        }
 
         File file = null;
 
@@ -803,11 +846,19 @@ public class EOSAdapter {
         }
     }
 
-    public List<Message> getMessages(long guid) throws NoSuchWorkspaceException, BlockchainException {
+    public Messages getMessages(long guid) throws NoSuchWorkspaceException, BlockchainException {
+        return getMessages(guid, null);
+    }
+
+    public Messages getMessages(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<Message> messages = new ArrayList<>();
+        boolean hasMore = false ;
+        long newContinuationToken = -1;
 
         try {
+            long lower_bound = (continuationToken != null ? continuationToken : 0);
+            long upper_bound = -1;
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "messages", 100, true);
             System.out.println("rows: " + rows);
 
@@ -821,12 +872,13 @@ public class EOSAdapter {
                 byte[] digSig = null;
                 Message message = new Message(author, Long.toString(guid), msgID, seq, timestamp, text, mimeType, digSig);
                 messages.add(message);
+                newContinuationToken = (Integer)row.get("id");
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return messages;
+        return new Messages(messages, hasMore, (hasMore ? newContinuationToken : -1));
     }
 
     public void getMessage() {

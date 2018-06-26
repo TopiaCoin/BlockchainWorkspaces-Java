@@ -99,16 +99,9 @@ public class CommunicationServer {
                 byte[] pubKey = new byte[pubKeyLength];
                 packetBuffer.get(pubKey);
 
-                // TODO Reconstruct the Public Key from the Buffer
-
+                // Reconstruct the Public Key from the Buffer
                 KeyFactory keyFactory = KeyFactory.getInstance("EC");
                 PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(pubKey)) ;
-
-//                System.out.println ( "public key: " + Arrays.toString(keyPair.getPublic().getEncoded()));
-//                System.out.println ( "signature length: " + signature.length);
-//                System.out.println ( "packet buffer.length with Signature: " + packetBuffer.limit() ) ;
-//
-//                System.out.println ("packet buffer: " + Arrays.toString(packetBuffer.array())) ;
 
                 int messageLength = packetBuffer.getInt();
 

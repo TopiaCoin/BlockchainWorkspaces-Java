@@ -190,7 +190,7 @@ public class NodeID implements Comparable<NodeID> {
             }
         }
 
-        //  TODO Generate the node id value
+        // Generate the node id value
 
         NodeID nodeID = new NodeID(result);
 

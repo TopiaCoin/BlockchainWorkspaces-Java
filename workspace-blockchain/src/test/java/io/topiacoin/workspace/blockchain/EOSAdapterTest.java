@@ -5,6 +5,9 @@ import io.topiacoin.model.File;
 import io.topiacoin.model.Member;
 import io.topiacoin.model.Message;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
+import io.topiacoin.workspace.blockchain.eos.Files;
+import io.topiacoin.workspace.blockchain.eos.Members;
+import io.topiacoin.workspace.blockchain.eos.Messages;
 import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -67,7 +70,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-        List<Member> members = null;
+        Members members = null ;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -77,7 +80,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(1, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(1, members.getMembers().size());
 
             // Add the New Owner
             Thread.sleep(100);
@@ -86,9 +90,9 @@ public class EOSAdapterTest {
             // Verify that the workspace has two members, and that the invitee is pending
             Thread.sleep(100);
             members = adapter.getMembers(guid);
-            assertEquals(2, members.size());
-            assertEquals(1, members.get(0).getStatus());
-            assertEquals(0, members.get(1).getStatus());
+            assertEquals(2, members.getMembers().size());
+            assertEquals(1, members.getMembers().get(0).getStatus());
+            assertEquals(0, members.getMembers().get(1).getStatus());
 
             // Have new owner accept invitation
             Thread.sleep(100);
@@ -97,9 +101,9 @@ public class EOSAdapterTest {
             // Verify that the workspace has two members, and that both are active
             Thread.sleep(100);
             members = adapter.getMembers(guid);
-            assertEquals(2, members.size());
-            assertEquals(1, members.get(0).getStatus());
-            assertEquals(1, members.get(1).getStatus());
+            assertEquals(2, members.getMembers().size());
+            assertEquals(1, members.getMembers().get(0).getStatus());
+            assertEquals(1, members.getMembers().get(1).getStatus());
 
             // Remove the second member
             Thread.sleep(100);
@@ -109,7 +113,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(1, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(1, members.getMembers().size());
         } finally {
             Thread.sleep(100);
             adapter.destroy(guid, owner);
@@ -131,7 +136,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-        List<Member> members = null;
+        Members members = null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -141,7 +146,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(1, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(1, members.getMembers().size());
 
             // Add the New Owner
             Thread.sleep(100);
@@ -150,9 +156,9 @@ public class EOSAdapterTest {
             // Verify that the workspace has two members, and that the invitee is pending
             Thread.sleep(100);
             members = adapter.getMembers(guid);
-            assertEquals(2, members.size());
-            assertEquals(1, members.get(0).getStatus());
-            assertEquals(0, members.get(1).getStatus());
+            assertEquals(2, members.getMembers().size());
+            assertEquals(1, members.getMembers().get(0).getStatus());
+            assertEquals(0, members.getMembers().get(1).getStatus());
 
             // Have new owner accept invitation
             Thread.sleep(100);
@@ -162,7 +168,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(1, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(1, members.getMembers().size());
         } finally {
             Thread.sleep(100);
             adapter.destroy(guid, owner);
@@ -184,7 +191,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-        List<Member> members = null;
+        Members members = null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -198,7 +205,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(1, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(1, members.getMembers().size());
 
             // Add the New Owner
             Thread.sleep(100);
@@ -207,9 +215,9 @@ public class EOSAdapterTest {
             // Verify that the workspace has two members, and that the invitee is pending
             Thread.sleep(100);
             members = adapter.getMembers(guid);
-            assertEquals(2, members.size());
-            assertEquals(1, members.get(0).getStatus());
-            assertEquals(0, members.get(1).getStatus());
+            assertEquals(2, members.getMembers().size());
+            assertEquals(1, members.getMembers().get(0).getStatus());
+            assertEquals(0, members.getMembers().get(1).getStatus());
 
             // Have new owner accept invitation
             Thread.sleep(100);
@@ -218,9 +226,9 @@ public class EOSAdapterTest {
             // Verify that the workspace has two members, and that both are active
             Thread.sleep(100);
             members = adapter.getMembers(guid);
-            assertEquals(2, members.size());
-            assertEquals(1, members.get(0).getStatus());
-            assertEquals(1, members.get(1).getStatus());
+            assertEquals(2, members.getMembers().size());
+            assertEquals(1, members.getMembers().get(0).getStatus());
+            assertEquals(1, members.getMembers().get(1).getStatus());
 
             // Offer ownership to the other user, rescind the invitation, and then try to accept
             Thread.sleep(100);
@@ -279,7 +287,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-        List<Member> members = null;
+        Members members = null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -310,7 +318,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(2, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(2, members.getMembers().size());
 
             // Unlock the new Member
             Thread.sleep(100);
@@ -324,7 +333,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             members = adapter.getMembers(guid);
             assertNotNull(members);
-            assertEquals(1, members.size());
+            assertNotNull(members.getMembers());
+            assertEquals(1, members.getMembers().size());
         } finally {
             Thread.sleep(100);
             adapter.destroy(guid, owner);
@@ -353,7 +363,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-        List<File> files = null;
+        Files files = null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -363,7 +373,8 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(0, files.size());
+            assertNotNull(files.getFiles());
+            assertEquals(0, files.getFiles().size());
 
             // Add a new File
             Thread.sleep(100);
@@ -373,7 +384,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(1, files.size());
+            assertEquals(1, files.getFiles().size());
 
             // Remove the file
             Thread.sleep(100);
@@ -383,7 +394,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(0, files.size());
+            assertEquals(0, files.getFiles().size());
 
         } finally {
             Thread.sleep(100);
@@ -415,7 +426,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-        List<File> files = null;
+        Files files = null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -425,7 +436,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(0, files.size());
+            assertEquals(0, files.getFiles().size());
 
             // Add a new File
             Thread.sleep(100);
@@ -435,7 +446,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(1, files.size());
+            assertEquals(1, files.getFiles().size());
 
             // Add a new File Version
             Thread.sleep(100);
@@ -445,7 +456,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(2, files.size());
+            assertEquals(2, files.getFiles().size());
 
             // Remove the file
             Thread.sleep(100);
@@ -455,7 +466,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(1, files.size());
+            assertEquals(1, files.getFiles().size());
 
             // Add a new File Version
             Thread.sleep(100);
@@ -465,7 +476,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(2, files.size());
+            assertEquals(2, files.getFiles().size());
 
             // Get a specific file version
             Thread.sleep(100);
@@ -480,7 +491,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             files = adapter.getFiles(guid);
             assertNotNull(files);
-            assertEquals(0, files.size());
+            assertEquals(0, files.getFiles().size());
 
         } finally {
             Thread.sleep(100);
@@ -512,7 +523,7 @@ public class EOSAdapterTest {
 
         System.out.println("GUID: " + guid);
 
-            List<Message> messages =null;
+        Messages messages =null;
 
         // Create the new workspace
         adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
@@ -522,7 +533,7 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             messages = adapter.getMessages(guid);
             assertNotNull(messages);
-            assertEquals ( 0, messages.size());
+            assertEquals ( 0, messages.getMessages().size());
 
             // Add a Message
             Thread.sleep(100);
@@ -534,9 +545,9 @@ public class EOSAdapterTest {
             Thread.sleep(100);
             messages = adapter.getMessages(guid);
             assertNotNull(messages);
-            assertEquals ( 1, messages.size());
+            assertEquals ( 1, messages.getMessages().size());
 
-            String msgID = messages.get(0).getGuid();
+            String msgID = messages.getMessages().get(0).getGuid();
 
             // Acknowledge the Message
             Thread.sleep(100);
@@ -745,6 +756,7 @@ public class EOSAdapterTest {
             // TODO - Implement this at some point
 
             // Attempt to Remove Private Tag from File using other Member
+            adapter.removeFileTag(guid, owner, fileID, versionID, tagValue, false);
             try {
                 Thread.sleep(100);
                 adapter.removeFileTag(guid, otherMember, fileID, versionID, tagValue, false);
