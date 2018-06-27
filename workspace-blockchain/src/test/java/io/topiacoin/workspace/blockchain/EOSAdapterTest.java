@@ -1,9 +1,7 @@
 package io.topiacoin.workspace.blockchain;
 
-import io.topiacoin.eosrpcadapter.exceptions.ChainException;
 import io.topiacoin.model.File;
 import io.topiacoin.model.FileVersion;
-import io.topiacoin.model.Member;
 import io.topiacoin.model.Message;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
 import io.topiacoin.workspace.blockchain.eos.Files;
@@ -16,6 +14,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -455,6 +454,102 @@ public class EOSAdapterTest {
     }
 
     @Test
+    public void testGetLargeNumberOfFiles() throws Exception {
+        EOSAdapter adapter = new EOSAdapter("http://localhost:8889/", "http://localhost:8899/");
+        adapter.initialize();
+
+        long guid = 0;
+        while (guid <= 0) {
+            // We want the GUID to be positive for ease of management later.
+            guid = new Random().nextLong();
+        }
+        String owner = "inita";
+        String otherMember = "sampledb";
+
+        String name = "Example.jpg";
+        String mimeType = "application/octet-stream";
+        String parentID = "0x00000000000000000000000000000000";
+        String fileID = "0x0123456789abcdef0000000000000"; // 3 charaters short to account for the loop index being added in below
+        String versionID = "0x0123456789abcdef0000000000000001";
+        String noVersionID = "0x00000000000000000000000000000000";
+        List<String> ancestorIDs = new ArrayList<>();
+        String metadata = "Fake Metadata";
+
+        List<String> fileIDs = new LinkedList<>();
+
+        System.out.println("GUID: " + guid);
+
+        Files files = null;
+
+        // Create the new workspace
+        adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
+
+        try {
+            // Verify that there are no files in the workspace
+            Thread.sleep(100);
+            files = adapter.getFiles(guid);
+            assertNotNull(files);
+            assertNotNull(files.getFiles());
+            assertEquals(0, files.getFiles().size());
+
+            // Add 250 new Files
+            for ( int i = 0 ; i < 250 ; i++) {
+                String fID = fileID + String.format("%03d", i);
+                FileVersion version = new FileVersion(fID,
+                        versionID,
+                        owner,
+                        1,
+                        System.currentTimeMillis(),
+                        System.currentTimeMillis(),
+                        "foo",
+                        "ACTIVE",
+                        null,
+                        null,
+                        null,
+                        null);
+                File file = new File(name, mimeType, fID, Long.toString(guid), parentID, false, 1, null, Arrays.asList(version));
+
+                Thread.sleep(5);
+                adapter.addFile(guid, owner, file, ancestorIDs);
+
+                fileIDs.add(fID);
+            }
+
+            // Fetch the first set of files
+            Thread.sleep(100);
+            files = adapter.getFiles(guid);
+            assertNotNull(files);
+            assertEquals(100, files.getFiles().size());
+
+            // Fetch the second set of files
+            files = adapter.getFiles(guid, files.getContinuationToken());
+            assertNotNull(files);
+            assertEquals(100, files.getFiles().size());
+
+            // Fetch the third set of files
+            files = adapter.getFiles(guid, files.getContinuationToken());
+            assertNotNull(files);
+            assertEquals(50, files.getFiles().size());
+
+            // Fetch each file individually by its fileID
+            long start = System.currentTimeMillis();
+            for ( String fID : fileIDs ) {
+                File file = adapter.getFile(guid, fID, versionID);
+                assertNotNull(file) ;
+                assertEquals(fID, file.getEntryID());
+            }
+            long stop = System.currentTimeMillis();
+            long elapsedTime = stop - start ;
+            float averageTime = ((float)elapsedTime / fileIDs.size());
+
+            System.out.println ( "Fetching Individual Files - total time: " + elapsedTime + "ms, average: " + averageTime + "ms");
+        } finally {
+            Thread.sleep(100);
+//            adapter.destroy(guid, owner);
+        }
+    }
+
+    @Test
     public void testAddRemoveFileVersions() throws Exception {
         EOSAdapter adapter = new EOSAdapter("http://localhost:8889/", "http://localhost:8899/");
         adapter.initialize();
@@ -577,7 +672,7 @@ public class EOSAdapterTest {
 
             // Get a specific file version
             Thread.sleep(100);
-            File file = adapter.getFile(guid, owner, fileID, versionID3);
+            File file = adapter.getFile(guid, fileID, versionID3);
             assertNotNull ( file ) ;
 
             // Remove the file
@@ -786,9 +881,111 @@ public class EOSAdapterTest {
 
             String msgID = messages.getMessages().get(0).getGuid();
 
+            // Get the Message directly
+            Message fetchedMessage = adapter.getMessage(guid, msgID) ;
+            assertNotNull ( fetchedMessage) ;
+            assertEquals (msgID, fetchedMessage.getGuid());
+            assertEquals(message, fetchedMessage.getText());
+            assertEquals(mimeType, fetchedMessage.getMimeType());
+
             // Acknowledge the Message
             Thread.sleep(100);
             adapter.acknowledgeMessage(guid, owner, msgID);
+        } finally {
+            Thread.sleep(100);
+            adapter.destroy(guid, owner);
+        }
+    }
+
+    @Test
+    public void testGettingLargeNumberOfMessages() throws Exception {
+        EOSAdapter adapter = new EOSAdapter("http://localhost:8889/", "http://localhost:8899/");
+        adapter.initialize();
+
+        long guid = 0;
+        while (guid <= 0) {
+            // We want the GUID to be positive for ease of management later.
+            guid = new Random().nextLong();
+        }
+        String owner = "inita";
+        String otherMember = "sampledb";
+
+        String parentID = "0x00000000000000000000000000000000";
+        String fileID = "0x0123456789abcdef0000000000000000";
+        String versionID1 = "0x0123456789abcdef0000000000000001";
+        String versionID2 = "0x0123456789abcdef0000000000000002";
+        String versionID3 = "0x0123456789abcdef0000000000000003";
+        String noVersionID = "0x00000000000000000000000000000000";
+        List<String> ancestorIDs = new ArrayList<>();
+        String metadata = "Fake Metadata";
+
+        System.out.println("GUID: " + guid);
+
+        List<String> msgIDs = new LinkedList<>();
+
+        Messages messages =null;
+
+        // Create the new workspace
+        adapter.initializeWorkspace(guid, owner, "Test Workspace", "Test Workspace", "fakeKey");
+
+        try {
+            // Get Messages and verify there are none
+            Thread.sleep(100);
+            messages = adapter.getMessages(guid);
+            assertNotNull(messages);
+            assertEquals ( 0, messages.getMessages().size());
+
+            // Add Messages
+            for ( int i = 0 ; i < 250 ; i++ ) {
+                Thread.sleep(5);
+                String message = "Four Square and Seven Circles Ago - " + System.currentTimeMillis();
+                String mimeType = "text/plain";
+                adapter.addMessage(guid, owner, message, mimeType);
+            }
+
+            // Get Messages and verify we get 100 back.
+            Thread.sleep(100);
+            messages = adapter.getMessages(guid);
+            assertNotNull(messages);
+            assertEquals ( 100, messages.getMessages().size());
+            assertTrue(messages.isHasMore());
+            assertNotNull(messages.getContinuationToken());
+
+            // Collect the MsgIDs of each of the messages
+            for (Message m : messages.getMessages() ) {
+                msgIDs.add(m.getGuid());
+            }
+
+            // Get the next batch of messages and verify we get 100 back.
+            messages = adapter.getMessages(guid, messages.getContinuationToken());
+            assertNotNull(messages);
+            assertEquals ( 100, messages.getMessages().size());
+            assertTrue(messages.isHasMore());
+            assertNotNull(messages.getContinuationToken());
+
+            // Collect the MsgIDs of each of the messages
+            for (Message m : messages.getMessages() ) {
+                msgIDs.add(m.getGuid());
+            }
+
+            // Get the final batch of 50 messages
+            messages = adapter.getMessages(guid, messages.getContinuationToken());
+            assertNotNull(messages);
+            assertEquals ( 50, messages.getMessages().size());
+            assertFalse(messages.isHasMore());
+            assertNull(messages.getContinuationToken());
+
+            // Collect the MsgIDs of each of the messages
+            for (Message m : messages.getMessages() ) {
+                msgIDs.add(m.getGuid());
+            }
+
+            // Individually fetch each of the messages by ID
+            for ( String msgID : msgIDs) {
+                Message message = adapter.getMessage(guid, msgID) ;
+                assertEquals(msgID, message.getGuid());
+            }
+
         } finally {
             Thread.sleep(100);
             adapter.destroy(guid, owner);

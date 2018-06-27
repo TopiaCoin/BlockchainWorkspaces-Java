@@ -23,12 +23,12 @@ import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.util.TextUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -421,20 +421,20 @@ public class EOSAdapter {
         return getMembers(guid, null);
     }
 
-    public Members getMembers(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
+    public Members getMembers(long guid, Object continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<Member> members = new ArrayList<>();
         boolean hasMore = false;
-        long newContinuationToken = -1;
+        Object newContinuationToken = null;
 
         try {
-            long lowerBound = (continuationToken != null ? continuationToken : 0);
-            long upperBound = -1;
+            String lowerBound = (continuationToken != null ? continuationToken.toString() : "0");
+            String upperBound = "-1";
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
                     Long.toString(guid),
                     "membership",
-                    Long.toString(lowerBound),
-                    Long.toString(upperBound),
+                    lowerBound,
+                    upperBound,
                     100,
                     true);
             System.out.println("rows: " + rows);
@@ -452,18 +452,35 @@ public class EOSAdapter {
                 String authToken = null;
                 Member member = new Member(userID, status, inviteDate, inviterID, authToken);
                 members.add(member);
-                newContinuationToken = (Integer) row.get("id");
+                newContinuationToken = getNextToken(row.get("id"));
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return new Members(members, hasMore, (hasMore ? newContinuationToken : -1));
+        return new Members(members, hasMore, (hasMore ? newContinuationToken : null));
     }
 
-    public Member getMember(long guid, String member) {
-        throw new NotImplementedException("Awaiting bug fix in EOS");
-//        return null ;
+    public Member getMember(long guid, String member) throws NoSuchWorkspaceException, BlockchainException {
+
+        // TODO - Rewrite this method once the EOS bug that prevents usage of secondary indexes is fixed.
+        Member foundMember = null ;
+        Members members = null;
+        Object continuationToken = null ;
+
+        do {
+            members = getMembers(guid, continuationToken);
+            for ( Member curMember : members.getMembers() ) {
+                if ( curMember.getUserID().equals(member) ) {
+                    foundMember = curMember ;
+                    break ;
+                }
+            }
+            continuationToken = members.getContinuationToken();
+        } while ( foundMember == null && members.isHasMore());
+
+//        throw new NotImplementedException("Awaiting bug fix in EOS");
+        return foundMember ;
     }
 
     public void acceptInvitation(long guid, String invitee) throws NoSuchWorkspaceException, BlockchainException {
@@ -721,20 +738,20 @@ public class EOSAdapter {
         return getFiles(guid, null);
     }
 
-    public Files getFiles(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
+    public Files getFiles(long guid, Object continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<File> files = new ArrayList<>();
         boolean hasMore = false;
-        long newContinuationToken = -1;
+        Object newContinuationToken = null;
 
         try {
-            long lower_bound = (continuationToken != null ? continuationToken : 0);
-            long upper_bound = -1;
+            String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
+            String upper_bound = "-1";
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
                     Long.toString(guid),
                     "files",
-                    Long.toString(lower_bound),
-                    Long.toString(upper_bound),
+                    lower_bound,
+                    upper_bound,
                     100,
                     true);
             System.out.println("rows: " + rows);
@@ -745,23 +762,39 @@ public class EOSAdapter {
                 String metadata = (String) row.get("metadata");
                 File file = convertRowToFile(guid, metadata);
                 files.add(file);
-                newContinuationToken = (Integer) row.get("id");
+                newContinuationToken = getNextToken(row.get("id"));
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return new Files(files, hasMore, (hasMore ? newContinuationToken : -1));
+        return new Files(files, hasMore, (hasMore ? newContinuationToken : null));
     }
 
-    public File getFile(long guid, String user, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
-
-        if (true) {
-            throw new NotImplementedException("Awaiting bug fix in EOS RPC Interface");
-        }
+    public File getFile(long guid, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
         File file = null;
 
+        Files files = null ;
+        Object continuationToken = null;
+
+        do {
+            files = getFiles(guid, continuationToken);
+            for ( File curFile : files.getFiles()) {
+                if ( curFile.getEntryID().equals(fileID) && (versionID == null || curFile.getVersions().get(0).getVersionID().equals(versionID))) {
+                    file = curFile;
+                    break ;
+                }
+            }
+            continuationToken = files.getContinuationToken();
+        } while (file == null && files.isHasMore()) ;
+
+        if ( file == null ) {
+            throw new NoSuchFileException("Unable to find the specified file");
+        }
+
+        // TODO - Switch back to using this code once the EOS bug that prevents the use of secondary indexes is fixed
+        /*
         try {
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "files", "fileID", fileID, fileID, 100, true);
             System.out.println("rows: " + rows);
@@ -782,7 +815,7 @@ public class EOSAdapter {
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
-
+*/
         return file;
     }
 
@@ -872,17 +905,25 @@ public class EOSAdapter {
         return getMessages(guid, null);
     }
 
-    public Messages getMessages(long guid, Long continuationToken) throws NoSuchWorkspaceException, BlockchainException {
+    public Messages getMessages(long guid, Object continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<Message> messages = new ArrayList<>();
         boolean hasMore = false;
-        long newContinuationToken = -1;
+        Object newContinuationToken = null;
 
         try {
-            long lower_bound = (continuationToken != null ? continuationToken : 0);
-            long upper_bound = -1;
-            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount, Long.toString(guid), "messages", 100, true);
+            String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
+            String upper_bound = "-1";
+            TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                    Long.toString(guid),
+                    "messages",
+                    lower_bound,
+                    upper_bound,
+                    100,
+                    true);
             System.out.println("rows: " + rows);
+
+            hasMore = rows.more;
 
             for (Map<String, Object> row : rows.rows) {
                 String author = (String) row.get("author");
@@ -894,17 +935,38 @@ public class EOSAdapter {
                 byte[] digSig = null;
                 Message message = new Message(author, Long.toString(guid), msgID, seq, timestamp, text, mimeType, digSig);
                 messages.add(message);
-                newContinuationToken = (Integer) row.get("id");
+                newContinuationToken = getNextToken(row.get("id"));
             }
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return new Messages(messages, hasMore, (hasMore ? newContinuationToken : -1));
+        return new Messages(messages, hasMore, (hasMore ? newContinuationToken : null));
     }
 
-    public void getMessage() {
-        throw new NotImplementedException("This method does not work due to bugs in the EOS software");
+    public Message getMessage(long guid, String msgID) throws NoSuchWorkspaceException, NoSuchMessageException, BlockchainException {
+
+        // TODO - Rewrite this method once the EOS bug that prevents usage of secondary indexes is fixed.
+        Message message = null ;
+        Messages messages = null ;
+        Object continuationToken = null ;
+
+        do {
+            messages = getMessages(guid, continuationToken);
+            for ( Message curMessage : messages.getMessages()) {
+                if ( curMessage.getGuid().equals(msgID)) {
+                    message = curMessage;
+                    break;
+                }
+            }
+            continuationToken = messages.getContinuationToken();
+        } while ( message == null && messages.isHasMore() );
+
+        if ( message == null ) {
+            throw new NoSuchMessageException("The specified message does not exist") ;
+        }
+
+        return message ;
     }
 
     public void acknowledgeMessage(long guid, String user, String msgID) throws NoSuchWorkspaceException, NoSuchMessageException, BlockchainException {
@@ -1246,6 +1308,15 @@ public class EOSAdapter {
             _log.warn("Error Marshalling File object ", e);
             return null;
         }
+    }
+
+    private Object getNextToken(Object token) {
+        Object newToken = null;
+
+        BigInteger bi = new BigInteger(token.toString());
+        newToken = bi.add(BigInteger.valueOf(1)).toString();
+
+        return newToken;
     }
 
 

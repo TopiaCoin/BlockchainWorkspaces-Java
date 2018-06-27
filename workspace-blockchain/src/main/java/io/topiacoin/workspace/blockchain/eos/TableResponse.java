@@ -5,9 +5,9 @@ import java.util.List;
 public class TableResponse<T> {
     private List<T> items;
     private boolean hasMore;
-    private long continuationToken;
+    private Object continuationToken;
 
-    public TableResponse(List<T> items, boolean hasMore, long continuationToken) {
+    public TableResponse(List<T> items, boolean hasMore, Object continuationToken) {
         this.items = items;
         this.hasMore = hasMore;
         this.continuationToken = continuationToken;
@@ -21,7 +21,7 @@ public class TableResponse<T> {
         return hasMore;
     }
 
-    public long getContinuationToken() {
+    public Object getContinuationToken() {
         return continuationToken;
     }
 }

@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Members extends TableResponse<Member> {
 
-    public Members(List<Member> members, boolean hasMore, long continuationToken) {
+    public Members(List<Member> members, boolean hasMore, Object continuationToken) {
         super(members, hasMore, continuationToken);
     }
 

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Files extends TableResponse<File>{
 
-    public Files(List<File> files, boolean hasMore, long continuationToken) {
+    public Files(List<File> files, boolean hasMore, Object continuationToken) {
         super(files, hasMore, continuationToken);
     }
 
