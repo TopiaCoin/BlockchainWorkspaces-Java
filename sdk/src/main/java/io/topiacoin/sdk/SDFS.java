@@ -182,7 +182,7 @@ public class SDFS {
      * @param workspaceDescription
      */
     public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) throws NotLoggedInException {
-        String workspaceID = "howeverThisGetsGenerated";
+        long workspaceID = 0L; //Generate this somehow
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = accessor.addNewWorkspaceToDHT(workspaceID);
         //Not sure what to do with this Entry. Should we store it in the model?
@@ -337,7 +337,7 @@ public class SDFS {
      * @param worksapceGUID
      * @param memberID
      */
-    public void removeUserFromWorkspace(String worksapceGUID, String memberID, RemoveMemberCallback callback) throws NoSuchUserException, NoSuchWorkspaceException, NoSuchMemberException {
+    public void removeUserFromWorkspace(long worksapceGUID, String memberID, RemoveMemberCallback callback) throws NoSuchUserException, NoSuchWorkspaceException, NoSuchMemberException {
         SDFSDHTAccessor accessor = SDFSDHTAccessor.getInstance(_configuration, _dataModel);
         DHTWorkspaceEntry dhtEntry = null; //Where does this come from?
         Member member = _dataModel.getMemberInWorkspace(worksapceGUID, memberID);
@@ -385,7 +385,7 @@ public class SDFS {
      * @param folderGUID
      * @param fileToBeAdded
      */
-    public void addFile(final String workspaceGUID,
+    public void addFile(final long workspaceGUID,
                         final String folderGUID,
                         final java.io.File fileToBeAdded,
                         final AddFileCallback callback) {
@@ -767,7 +767,7 @@ public class SDFS {
      * @param fileVersionGUID
      * @param callback
      */
-    public void downloadFileVersion(final String workspaceGUID,
+    public void downloadFileVersion(final long workspaceGUID,
                                     final String fileGUID,
                                     final String fileVersionGUID,
                                     final DownloadFileVersionCallback callback)
@@ -780,7 +780,7 @@ public class SDFS {
 
             // Verify that the file version requested actually exists and is in the specified workspace.
             File file = _dataModel.getFile(fileGUID);
-            if (!file.getContainerID().equals(workspaceGUID)) {
+            if (file.getContainerID() != workspaceGUID) {
                 throw new NoSuchFileException("The requested file does not exist in the specified workspace");
             }
             FileVersion fileVersion = _dataModel.getFileVersion(fileGUID, fileVersionGUID);
@@ -845,7 +845,7 @@ public class SDFS {
      * @throws IOException                If there is an error accessing the target location, or decrypting the file
      *                                    version's chunk data.
      */
-    public void saveFileVersion(final String workspaceGUID,
+    public void saveFileVersion(final long workspaceGUID,
                                 final String fileGUID,
                                 final String fileVersionGUID,
                                 final String targetDirectory,
@@ -855,7 +855,7 @@ public class SDFS {
         try {
             // Verify that the file version requested actually exists and is in the specified workspace.
             File file = _dataModel.getFile(fileGUID);
-            if (!file.getContainerID().equals(workspaceGUID)) {
+            if (file.getContainerID() != workspaceGUID) {
                 throw new NoSuchFileException("The requested file does not exist in the specified workspace");
             }
 

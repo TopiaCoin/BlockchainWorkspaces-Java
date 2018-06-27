@@ -40,11 +40,11 @@ import java.util.Set;
 
 public class MemoryDataModelProvider implements DataModelProvider {
 
-	private Map<String, Workspace> _workspaceMap;
-	private Map<String, List<Member>> _workspaceMemberMap;
-	private Map<String, List<Message>> _workspaceMessageMap;
-	private Map<String, List<File>> _workspaceFileMap;
-	private Map<String, Message> _masterMessageMap;
+	private Map<Long, Workspace> _workspaceMap;
+	private Map<Long, List<Member>> _workspaceMemberMap;
+	private Map<Long, List<Message>> _workspaceMessageMap;
+	private Map<Long, List<File>> _workspaceFileMap;
+	private Map<Long, Message> _masterMessageMap;
 	private Map<String, File> _masterFileMap;
 	private Map<String, List<FileVersion>> _fileVersionsMap;
 	private Map<String, List<FileVersionReceipt>> _fileVersionsReceiptMap;
@@ -56,11 +56,11 @@ public class MemoryDataModelProvider implements DataModelProvider {
 	private CurrentUser _currentUser = null;
 
 	public MemoryDataModelProvider() {
-		_workspaceMap = new HashMap<String, Workspace>();
-		_workspaceMemberMap = new HashMap<String, List<Member>>();
-		_workspaceMessageMap = new HashMap<String, List<Message>>();
-		_workspaceFileMap = new HashMap<String, List<File>>();
-		_masterMessageMap = new HashMap<String, Message>();
+		_workspaceMap = new HashMap<>();
+		_workspaceMemberMap = new HashMap<>();
+		_workspaceMessageMap = new HashMap<>();
+		_workspaceFileMap = new HashMap<>();
+		_masterMessageMap = new HashMap<>();
 		_masterFileMap = new HashMap<String, File>();
 		_fileVersionsMap = new HashMap<String, List<FileVersion>>();
 		_fileVersionsReceiptMap = new HashMap<String, List<FileVersionReceipt>>();
@@ -94,7 +94,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return workspaces;
 	}
 
-	public Workspace getWorkspace(String workspaceID)
+	public Workspace getWorkspace(long workspaceID)
 			throws NoSuchWorkspaceException {
 		if (!_workspaceMap.containsKey(workspaceID)) {
 			throw new NoSuchWorkspaceException("No workspace exists with the requested ID");
@@ -126,7 +126,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		_workspaceMap.put(workspace.getGuid(), workspaceToSave);
 	}
 
-	public void removeWorkspace(String workspaceID)
+	public void removeWorkspace(long workspaceID)
 			throws NoSuchWorkspaceException {
 		if (!_workspaceMap.containsKey(workspaceID)) {
 			throw new NoSuchWorkspaceException("No workspace exists with the requested ID");
@@ -137,7 +137,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 
 	// -------- Member Accessor Methods --------
 
-	public List<Member> getMembersInWorkspace(String workspaceID)
+	public List<Member> getMembersInWorkspace(long workspaceID)
 			throws NoSuchWorkspaceException {
 		List<Member> retMembers = new ArrayList<Member>();
 
@@ -153,7 +153,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return retMembers;
 	}
 
-	public Member getMemberInWorkspace(String workspaceID, String userID)
+	public Member getMemberInWorkspace(long workspaceID, String userID)
 			throws NoSuchWorkspaceException, NoSuchMemberException {
 
 		Member retMember = null;
@@ -181,7 +181,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return new Member(retMember);
 	}
 
-	public void addMemberToWorkspace(String workspaceID, Member member)
+	public void addMemberToWorkspace(long workspaceID, Member member)
 			throws NoSuchWorkspaceException, MemberAlreadyExistsException {
 		List<Member> members = _workspaceMemberMap.get(workspaceID);
 		if (members == null) {
@@ -195,7 +195,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		members.add(new Member(member));
 	}
 
-	public void updateMemberInWorkspace(String workspaceID, Member member)
+	public void updateMemberInWorkspace(long workspaceID, Member member)
 			throws NoSuchWorkspaceException, NoSuchMemberException {
 		boolean memberFound = false;
 
@@ -221,7 +221,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 
 	}
 
-	public void removeMemberFromWorkspace(String workspaceID, Member member)
+	public void removeMemberFromWorkspace(long workspaceID, Member member)
 			throws NoSuchWorkspaceException, NoSuchMemberException {
 		boolean memberFound = false;
 
@@ -247,7 +247,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 
 	// -------- Message Accessor Methods --------
 
-	public List<Message> getMessagesInWorkspace(String workspaceID)
+	public List<Message> getMessagesInWorkspace(long workspaceID)
 			throws NoSuchWorkspaceException {
 		List<Message> messages = _workspaceMessageMap.get(workspaceID);
 		if (messages == null) {
@@ -264,7 +264,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return retMessages;
 	}
 
-	public Message getMessage(String messageID)
+	public Message getMessage(long messageID)
 			throws NoSuchMessageException {
 
 		if (!_masterMessageMap.containsKey(messageID)) {
@@ -274,7 +274,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return new Message(_masterMessageMap.get(messageID));
 	}
 
-	public void addMessageToWorkspace(String workspaceID, Message message)
+	public void addMessageToWorkspace(long workspaceID, Message message)
 			throws NoSuchWorkspaceException, MessageAlreadyExistsException {
 
 		List<Message> messages = _workspaceMessageMap.get(workspaceID);
@@ -291,7 +291,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		messages.add(messageToAdd);
 	}
 
-	public void updateMessageInWorkspace(String workspaceID, Message message)
+	public void updateMessageInWorkspace(long workspaceID, Message message)
 			throws NoSuchWorkspaceException, NoSuchMessageException {
 
 		List<Message> messages = _workspaceMessageMap.get(workspaceID);
@@ -303,7 +303,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		Iterator<Message> iterator = messages.iterator();
 		while (iterator.hasNext()) {
 			Message curMessage = iterator.next();
-			if (curMessage.getGuid().equals(message.getGuid())) {
+			if (curMessage.getGuid() == message.getGuid()) {
 				iterator.remove();
 				Message messageToAdd = new Message(message);
 				_masterMessageMap.put(message.getGuid(), messageToAdd);
@@ -318,7 +318,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		}
 	}
 
-	public void removeMessageFromWorkspace(String workspaceID, Message message)
+	public void removeMessageFromWorkspace(long workspaceID, Message message)
 			throws NoSuchWorkspaceException, NoSuchMessageException {
 		List<Message> messages = _workspaceMessageMap.get(workspaceID);
 		if (messages == null) {
@@ -335,7 +335,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 
 	// -------- File Accessor Methods --------
 
-	public List<File> getFilesInWorkspace(String workspaceID)
+	public List<File> getFilesInWorkspace(long workspaceID)
 			throws NoSuchWorkspaceException {
 
 		List<File> files = _workspaceFileMap.get(workspaceID);
@@ -351,7 +351,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return retFiles;
 	}
 
-	public List<File> getFilesInWorkspace(String workspaceID, String parentID)
+	public List<File> getFilesInWorkspace(long workspaceID, String parentID)
 			throws NoSuchWorkspaceException {
 		List<File> files = _workspaceFileMap.get(workspaceID);
 		if (files == null) {
@@ -382,7 +382,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return retFile;
 	}
 
-	public void addFileToWorkspace(String workspaceID, File file)
+	public void addFileToWorkspace(long workspaceID, File file)
 			throws NoSuchWorkspaceException, FileAlreadyExistsException {
 		List<File> files = _workspaceFileMap.get(workspaceID);
 		if (files == null) {
@@ -399,7 +399,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		_fileVersionsMap.put(file.getEntryID(), new ArrayList<FileVersion>());
 	}
 
-	public void updateFileInWorkspace(String workspaceID, File file)
+	public void updateFileInWorkspace(long workspaceID, File file)
 			throws NoSuchWorkspaceException, NoSuchFileException {
 		List<File> files = _workspaceFileMap.get(workspaceID);
 		if (files == null) {
@@ -426,7 +426,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		}
 	}
 
-	public void removeFileFromWorkspace(String workspaceID, String fileID)
+	public void removeFileFromWorkspace(long workspaceID, String fileID)
 			throws NoSuchWorkspaceException, NoSuchFileException {
 		List<File> files = _workspaceFileMap.get(workspaceID);
 		if (files == null) {
@@ -455,7 +455,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		}
 	}
 
-	public void removeFileFromWorkspace(String workspaceID, File file)
+	public void removeFileFromWorkspace(long workspaceID, File file)
 			throws NoSuchWorkspaceException, NoSuchFileException {
 		List<File> files = _workspaceFileMap.get(workspaceID);
 		if (files == null) {
@@ -1119,7 +1119,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 	}
 
 	@Override public Workspace getWorkspaceByMyAuthToken(String authToken) throws BadAuthTokenException {
-		for (String workspace : _workspaceMemberMap.keySet()) {
+		for (Long workspace : _workspaceMemberMap.keySet()) {
 			for (Member m : _workspaceMemberMap.get(workspace)) {
 				if (m.getAuthToken().equals(authToken) && m.getUserID().equals(_currentUser.getUserID())) {
 					try {
@@ -1133,7 +1133,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		throw new BadAuthTokenException();
 	}
 
-	@Override public boolean hasChunkInWorkspace(String chunkID, String workspaceGuid) {
+	@Override public boolean hasChunkInWorkspace(String chunkID, long workspaceGuid) {
 		try {
 			List<File> files = getFilesInWorkspace(workspaceGuid);
 			for (File file : files) {
@@ -1153,7 +1153,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return false;
 	}
 
-	@Override public List<String> hasChunksInWorkspace(List<String> chunkIDs, String workspaceGuid) {
+	@Override public List<String> hasChunksInWorkspace(List<String> chunkIDs, long workspaceGuid) {
 		Set<String> allChunkIDsIHave = new HashSet<String>();
 		try {
 			List<File> files = getFilesInWorkspace(workspaceGuid);

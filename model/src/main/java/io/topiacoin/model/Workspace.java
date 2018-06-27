@@ -10,7 +10,7 @@ public class Workspace {
     private String description;
     private int status;
     private SecretKey workspaceKey;
-    private String guid;
+    private long guid;
     private long lastModified;
 
     private List<Member> members;
@@ -25,7 +25,7 @@ public class Workspace {
         this.messages = new ArrayList<Message>();
     }
 
-    public Workspace(String name, String description, int status, SecretKey workspaceKey, String guid, long lastModified, List<Member> members, List<File> files, List<Message> messages) {
+    public Workspace(String name, String description, int status, SecretKey workspaceKey, long guid, long lastModified, List<Member> members, List<File> files, List<Message> messages) {
         this.name = name;
         this.description = description;
         this.status = status;
@@ -81,11 +81,11 @@ public class Workspace {
         this.workspaceKey = workspaceKey;
     }
 
-    public String getGuid() {
+    public long getGuid() {
         return guid;
     }
 
-    public void setGuid(String guid) {
+    public void setGuid(long guid) {
         this.guid = guid;
     }
 
@@ -144,7 +144,7 @@ public class Workspace {
             return false;
         if (workspaceKey != null ? !workspaceKey.equals(workspace.workspaceKey) : workspace.workspaceKey != null)
             return false;
-        if (guid != null ? !guid.equals(workspace.guid) : workspace.guid != null) return false;
+        if (guid != workspace.guid) return false;
         if (!members.equals(workspace.members)) return false;
         if (!files.equals(workspace.files)) return false;
         return messages.equals(workspace.messages);
@@ -156,7 +156,7 @@ public class Workspace {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + status;
         result = 31 * result + (workspaceKey != null ? workspaceKey.hashCode() : 0);
-        result = 31 * result + (guid != null ? guid.hashCode() : 0);
+        result = 31 * result + (int) (guid ^ (guid >>> 32));
         result = 31 * result + (int) (lastModified ^ (lastModified >>> 32));
         result = 31 * result + members.hashCode();
         result = 31 * result + files.hashCode();

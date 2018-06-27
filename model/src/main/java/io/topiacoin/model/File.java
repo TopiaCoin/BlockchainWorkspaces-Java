@@ -8,7 +8,7 @@ public class File {
     private String name ;
     private String mimeType ;
     private String entryID ;
-    private String containerID ;
+    private long containerID ;
     private String parentID ;
     private boolean isFolder;
     private int status;
@@ -20,7 +20,7 @@ public class File {
         versions = new ArrayList<FileVersion>();
     }
 
-    public File(String name, String mimeType, String entryID, String containerID,String parentID, boolean isFolder, int status, String lockOwner, List<FileVersion> versions) {
+    public File(String name, String mimeType, String entryID, long containerID,String parentID, boolean isFolder, int status, String lockOwner, List<FileVersion> versions) {
         this.name = name;
         this.mimeType = mimeType;
         this.entryID = entryID;
@@ -76,11 +76,11 @@ public class File {
         this.entryID = entryID;
     }
 
-    public String getContainerID() {
+    public long getContainerID() {
         return containerID;
     }
 
-    public void setContainerID(String containerID) {
+    public void setContainerID(long containerID) {
         this.containerID = containerID;
     }
 
@@ -139,7 +139,7 @@ public class File {
         if (name != null ? !name.equals(file.name) : file.name != null) return false;
         if (mimeType != null ? !mimeType.equals(file.mimeType) : file.mimeType != null) return false;
         if (entryID != null ? !entryID.equals(file.entryID) : file.entryID != null) return false;
-        if (containerID != null ? !containerID.equals(file.containerID) : file.containerID != null) return false;
+        if (containerID != file.containerID) return false;
         if (parentID != null ? !parentID.equals(file.parentID) : file.parentID != null) return false;
         if (lockOwner != null ? !lockOwner.equals(file.lockOwner) : file.lockOwner != null) return false;
         return versions != null ? versions.equals(file.versions) : file.versions == null;
@@ -150,7 +150,7 @@ public class File {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (mimeType != null ? mimeType.hashCode() : 0);
         result = 31 * result + (entryID != null ? entryID.hashCode() : 0);
-        result = 31 * result + (containerID != null ? containerID.hashCode() : 0);
+        result = 31 * result + (int) (containerID ^ (containerID >>> 32));
         result = 31 * result + (parentID != null ? parentID.hashCode() : 0);
         result = 31 * result + (isFolder ? 1 : 0);
         result = 31 * result + status;

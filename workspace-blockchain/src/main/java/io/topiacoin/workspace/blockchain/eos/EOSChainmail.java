@@ -1,5 +1,6 @@
 package io.topiacoin.workspace.blockchain.eos;
 
+import io.topiacoin.core.Configuration;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.workspace.blockchain.ChainInfo;
 import io.topiacoin.workspace.blockchain.Chainmail;
@@ -30,34 +31,44 @@ import java.util.Stack;
 
 public class EOSChainmail implements Chainmail {
 
-	private final String EOSExe;
-	private final String KeyOSExe;
-	private final File EOSConfigBaseDir;
-	private final String EOSConfigBaseDirButInLinuxStyle;
-	private final int PORT_RANGE_START;
-	private final int PORT_RANGE_END;
+	private String nodeOSExecutable;
+	private String KeosExecutable;
+	private File EOSConfigBaseDir;
+	private String EOSConfigBaseDirButInLinuxStyle;
+	private int PORT_RANGE_START;
+	private int PORT_RANGE_END;
 	private Process keosTerm;
 	private Process cmdTerm;
-	private final ProcessBuilder termBuilder;
+	private ProcessBuilder termBuilder;
 
 	private final Stack<Integer> availablePorts = new Stack<>();
-	private final Map<String, Integer> portsInUse = new HashMap<>();
-	private final Map<String, ChainInfo> chainInfo = new HashMap<>();
+	private final Map<Long, Integer> portsInUse = new HashMap<>();
+	private final Map<Long, ChainInfo> chainInfo = new HashMap<>();
 	private final Set<ChainmailCallback> blockchainListeners = new HashSet<>();
 	private RPCAdapterManager _rpcManager;
 	private static final DateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-	public EOSChainmail() {
+	public EOSChainmail(Configuration config) {
+		String nodeOSexe = config.getConfigurationOption("nodeos_install_dir");
+		String keosEXE = config.getConfigurationOption("keos_install_dir");
+		String blockchain_storage_dir = config.getConfigurationOption("blockchain_storage_dir");
+		String blockchain_storage_dir_linux = config.getConfigurationOption("blockchain_storage_dir_linux");
+		int portRangeStart = config.getConfigurationOption("chainmail_port_range_start", Integer.class);
+		int portRangeEnd = config.getConfigurationOption("chainmail_port_range_end", Integer.class);
+		init(nodeOSexe, keosEXE, blockchain_storage_dir, blockchain_storage_dir_linux, portRangeStart, portRangeEnd);
+	}
+
+	EOSChainmail() {
 		this(9240, 9250);
 	}
 
-	public EOSChainmail(int portRangeStart, int portRangeEnd) {
-		this("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "/mnt/c/EOS/eos/build/programs/keosd/keosd", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", portRangeStart, portRangeEnd);
+	EOSChainmail(int portRangeStart, int portRangeEnd) {
+		init("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "/mnt/c/EOS/eos/build/programs/keosd/keosd", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", portRangeStart, portRangeEnd);
 	}
 
-	EOSChainmail(String nodeOSexe, String keosEXE, String baseDir, String baseDirLinux, int portRangeStart, int portRangeEnd) {
-		EOSExe = nodeOSexe;
-		KeyOSExe = keosEXE;
+	private void init(String nodeOSexe, String keosEXE, String baseDir, String baseDirLinux, int portRangeStart, int portRangeEnd) {
+		nodeOSExecutable = nodeOSexe;
+		KeosExecutable = keosEXE;
 		EOSConfigBaseDir = new File(baseDir);
 		EOSConfigBaseDirButInLinuxStyle = baseDirLinux;
 		termBuilder = new ProcessBuilder("wsl");
@@ -92,7 +103,7 @@ public class EOSChainmail implements Chainmail {
 		}
 		OutputStreamWriter writer = new OutputStreamWriter(keosTerm.getOutputStream());
 		String walletStartCmd =
-				KeyOSExe + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir "
+				KeosExecutable + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir "
 						+ EOSConfigBaseDirButInLinuxStyle + "/wallet" + "\n";
 		writer.write(walletStartCmd);
 		writer.flush();
@@ -107,8 +118,8 @@ public class EOSChainmail implements Chainmail {
 	}
 
 	@Override public void stop() {
-		Set<String> blockchains = portsInUse.keySet();
-		for (String blockchain : blockchains) {
+		Set<Long> blockchains = portsInUse.keySet();
+		for (Long blockchain : blockchains) {
 			try {
 				stopBlockchain(blockchain);
 			} catch (IOException e) {
@@ -119,12 +130,12 @@ public class EOSChainmail implements Chainmail {
 		keosTerm.destroy();
 	}
 
-	@Override public boolean createBlockchain(String currentUserID, String workspaceID) throws ChainAlreadyExistsException {
+	@Override public boolean createBlockchain(String currentUserID, long workspaceID) throws ChainAlreadyExistsException {
 		if (chainExists(workspaceID)) {
 			throw new ChainAlreadyExistsException();
 		}
 		try {
-			File configDir = new File(EOSConfigBaseDir, workspaceID);
+			File configDir = new File(EOSConfigBaseDir, "" + workspaceID);
 			if (!configDir.mkdir()) {
 				throw new IOException();
 			}
@@ -249,11 +260,11 @@ public class EOSChainmail implements Chainmail {
 		return false;
 	}
 
-	@Override public boolean startBlockchain(String currentUserID, String workspaceID, List<MemberNode> memberNodes) throws IOException, NoSuchChainException {
+	@Override public boolean startBlockchain(String currentUserID, long workspaceID, List<MemberNode> memberNodes) throws IOException, NoSuchChainException {
 		return startBlockchain(false, currentUserID, workspaceID, memberNodes);
 	}
 
-	private boolean startBlockchain(boolean firstTimeStartup, String userID, String workspaceID, List<MemberNode> memberNodes) throws IOException, NoSuchChainException {
+	private boolean startBlockchain(boolean firstTimeStartup, String userID, long workspaceID, List<MemberNode> memberNodes) throws IOException, NoSuchChainException {
 		if (!firstTimeStartup && !chainExists(workspaceID)) {
 			throw new NoSuchChainException("Cannot start Blockchain with ID " + workspaceID + " - no such blockchain");
 		}
@@ -283,7 +294,7 @@ public class EOSChainmail implements Chainmail {
 				}
 				OutputStreamWriter writer = new OutputStreamWriter(proc.getOutputStream());
 				String startCmd =
-						"echo $$\n" + EOSExe + " -e -p " + userID + " --config-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + (firstTimeStartup ?
+						"echo $$\n" + nodeOSExecutable + " -e -p " + userID + " --config-dir " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + (firstTimeStartup ?
 								" --genesis-json " + EOSConfigBaseDirButInLinuxStyle + "/" + workspaceID + "/genesis.json" : "")
 								+ " --http-server-address 127.0.0.1:" + rpcPort + " --p2p-listen-endpoint 0.0.0.0:" + nodePort
 								+ memberNodeString.toString()
@@ -343,7 +354,7 @@ public class EOSChainmail implements Chainmail {
 		stopBlockchain(chains[0].workspaceId);
 	}
 
-	@Override public boolean stopBlockchain(String workspaceID) throws IOException {
+	@Override public boolean stopBlockchain(long workspaceID) throws IOException {
 		if (chainInfo.containsKey(workspaceID)) {
 			OutputStreamWriter cmdWriter = new OutputStreamWriter(cmdTerm.getOutputStream());
 			BufferedReader in = new BufferedReader(new InputStreamReader(cmdTerm.getInputStream()));
@@ -386,18 +397,18 @@ public class EOSChainmail implements Chainmail {
 		blockchainListeners.add(callback);
 	}
 
-	@Override public void destroyBlockchain(String workspaceID) throws IOException {
+	@Override public void destroyBlockchain(long workspaceID) throws IOException {
 		if (chainExists(workspaceID)) {
 			stopBlockchain(workspaceID);
-			FileUtils.deleteDirectory(new File(EOSConfigBaseDir, workspaceID));
+			FileUtils.deleteDirectory(new File(EOSConfigBaseDir, "" + workspaceID));
 		}
 	}
 
-	private boolean chainExists(String workspaceID) {
-		return new File(EOSConfigBaseDir, workspaceID).exists();
+	private boolean chainExists(long workspaceID) {
+		return new File(EOSConfigBaseDir, "" + workspaceID).exists();
 	}
 
-	private boolean chainIsRunning(String workspaceID) {
+	private boolean chainIsRunning(long workspaceID) {
 		return chainInfo.containsKey(workspaceID);
 	}
 }

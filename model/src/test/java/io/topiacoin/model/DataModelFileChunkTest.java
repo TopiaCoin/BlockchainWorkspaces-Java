@@ -7,6 +7,7 @@ import io.topiacoin.model.exceptions.NoSuchFileVersionException;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -18,7 +19,7 @@ public class DataModelFileChunkTest {
 
     @Test
     public void testFileChunkCRUD() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -77,7 +78,7 @@ public class DataModelFileChunkTest {
 
     @Test
     public void testChangingAddedFileChunkDoesNotChangeModel() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -119,7 +120,7 @@ public class DataModelFileChunkTest {
 
     @Test
     public void testChangingFetchedFileChunkDoesNotChangeModel() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -164,7 +165,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetFileChunksForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -196,7 +197,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testGetFileChunksForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -229,7 +230,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testAddFileChunkForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -259,7 +260,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testAddFileChunkForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -290,7 +291,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = FileChunkAlreadyExistsException.class)
     public void testAddDuplicateFileChunk() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -324,7 +325,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testUpdateFileChunkForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -354,7 +355,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testUpdateFileChunkForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -385,7 +386,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileChunkException.class)
     public void testUpdateNonExistentFileChunk() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -418,7 +419,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveFileChunkForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -448,7 +449,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testRemoveFileChunkForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
@@ -479,7 +480,7 @@ public class DataModelFileChunkTest {
 
     @Test(expected = NoSuchFileChunkException.class)
     public void testRemoveNonExistentFileChunk() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String chunkID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();

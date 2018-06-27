@@ -6,6 +6,7 @@ import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -16,7 +17,7 @@ public class DataModelMemberTest {
 
     @Test
     public void testMemberCRUD() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -67,7 +68,7 @@ public class DataModelMemberTest {
 
     @Test
     public void testChangingAddedMemberDoesNotChangeModel() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -99,7 +100,7 @@ public class DataModelMemberTest {
 
     @Test
     public void testChangingFetchedMemberDoesNotChangeModel() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -133,7 +134,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testFetchMembersFromNonExistentWorkspace() throws Exception {
-        String fakeID = UUID.randomUUID().toString();
+        long fakeID = 12345L;
 
         DataModel dataModel = new DataModel();
         List<Member> members;
@@ -144,7 +145,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testFetchMemberFromNonExistentWorkspace() throws Exception {
-        String fakeID = UUID.randomUUID().toString();
+        long fakeID = 12345L;
         String userID = UUID.randomUUID().toString();
 
         DataModel dataModel = new DataModel();
@@ -156,7 +157,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchMemberException.class)
     public void testFetchNonExistentMemberFromWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -175,7 +176,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testCreateMemberInNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -194,7 +195,7 @@ public class DataModelMemberTest {
 
     @Test(expected = MemberAlreadyExistsException.class)
     public void testCreateDuplicateMemberInWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -221,7 +222,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testUpdateMemberInNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -240,7 +241,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchMemberException.class)
     public void testUpdateNonExistentMemberInWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -265,7 +266,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testRemoveMemberFromNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 
@@ -284,7 +285,7 @@ public class DataModelMemberTest {
 
     @Test(expected = NoSuchMemberException.class)
     public void testRemoveNonExistentMemberFromWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String userID = UUID.randomUUID().toString();
         String inviterID = UUID.randomUUID().toString();
 

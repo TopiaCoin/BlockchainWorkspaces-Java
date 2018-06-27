@@ -50,7 +50,7 @@ public class SDFSTest {
 
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -128,7 +128,7 @@ public class SDFSTest {
 
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID1 = "chunk-id-1";
@@ -210,8 +210,8 @@ public class SDFSTest {
 
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
-        final String workspaceID = "workspace-id";
-        final String otherWorkspaceID = "other-workspace-id";
+        final long workspaceID = 12345L;
+        final long otherWorkspaceID = 45678L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -272,8 +272,8 @@ public class SDFSTest {
 
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
-        final String workspaceID = "workspace-id";
-        final String nonExistentWorkspaceID = "non-existent-workspace-id";
+        final long workspaceID = 12345L;
+        final long nonExistentWorkspaceID = 9999L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -330,7 +330,7 @@ public class SDFSTest {
 
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String nonExistentVersionID = "non-existent-version-id";
@@ -388,7 +388,7 @@ public class SDFSTest {
 
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -470,7 +470,7 @@ public class SDFSTest {
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
         String fileName = "TestFile.txt";
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -572,7 +572,7 @@ public class SDFSTest {
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
         String fileName = "TestFile.txt";
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID1 = "chunk-id-1";
@@ -697,7 +697,7 @@ public class SDFSTest {
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
         String fileName = "TestFile.txt";
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -771,7 +771,7 @@ public class SDFSTest {
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
         String fileName = "TestFile.txt";
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -834,8 +834,8 @@ public class SDFSTest {
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
         String fileName = "TestFile.txt";
-        final String workspaceID = "workspace-id";
-        final String otherWorkspaceID = "other-workspace-id";
+        final long workspaceID = 12345L;
+        final long otherWorkspaceID = 45678L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -902,7 +902,7 @@ public class SDFSTest {
         final KeyPair keyPair = KeyPairGenerator.getInstance("EC").generateKeyPair();
         final Configuration configuration = new DefaultConfiguration();
         String fileName = "TestFile.txt";
-        final String workspaceID = "workspace-id";
+        final long workspaceID = 12345L;
         final String fileID = "file-id";
         final String versionID = "version-id";
         final String chunkID = "chunk-id";
@@ -954,7 +954,7 @@ public class SDFSTest {
     @Test
     public void testAddFile() throws Exception {
 
-        String workspaceID = "workspace-id";
+        long workspaceID = 12345L;
         String parentID = null ;
         String userID = "user-id" ;
         String fileContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus ullamcorper interdum dolor, in rhoncus orci sagittis id. Proin commodo eros quis nulla iaculis, nec commodo tellus rutrum. Fusce convallis et turpis consectetur maximus. Proin quis vestibulum ante, sit amet venenatis eros. Fusce finibus elit commodo sodales laoreet. Nulla lacus mauris, lacinia at commodo nec, ultricies at ipsum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc rhoncus suscipit neque, a imperdiet massa scelerisque lobortis. Praesent tempor massa magna.";
@@ -1039,7 +1039,7 @@ public class SDFSTest {
     @Test
     public void testAddFileWhenAddFails() throws Exception {
 
-        String workspaceID = "workspace-id";
+        long workspaceID = 12345L;
         String parentID = null ;
         String userID = "user-id" ;
         String fileContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus ullamcorper interdum dolor, in rhoncus orci sagittis id. Proin commodo eros quis nulla iaculis, nec commodo tellus rutrum. Fusce convallis et turpis consectetur maximus. Proin quis vestibulum ante, sit amet venenatis eros. Fusce finibus elit commodo sodales laoreet. Nulla lacus mauris, lacinia at commodo nec, ultricies at ipsum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nunc rhoncus suscipit neque, a imperdiet massa scelerisque lobortis. Praesent tempor massa magna.";

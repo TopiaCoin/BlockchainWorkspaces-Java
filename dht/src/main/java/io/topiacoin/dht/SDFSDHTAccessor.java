@@ -35,7 +35,7 @@ import java.util.Set;
  * 1) fetch the list of workspaces they belong to from the DHT via {@link #fetchMyDHTWorkspaces()}, which returns a list of {@link DHTWorkspaceEntry}
  * 2) Externally, they should connect to the blockchains and sync the workspaces' metadata using nodes found in {@link DHTWorkspaceEntry#getMemberNodes()}
  * 3) If they are a full member of the Workspace, they should add their Member Node to the DHT, via {@link #addMyMemberNode(DHTWorkspaceEntry, MemberNode)}
- * When the User wants to create a workspace, the {@link #addNewWorkspaceToDHT(String)} function should be called (which returns a {@link DHTWorkspaceEntry})
+ * When the User wants to create a workspace, the {@link #addNewWorkspaceToDHT(long)} function should be called (which returns a {@link DHTWorkspaceEntry})
  * When the User wishes to invite another user to the Workspace, the {@link #addInvitation(DHTWorkspaceEntry, User)} function should be called
  * When the User wishes to remove a Member from the Workspace, the {@link #removeMemberFromWorkspace(DHTWorkspaceEntry, Member)} function should be called
  * When the User wishes to leave a Workspace, the {@link #leaveWorkspace(DHTWorkspaceEntry)} function should be called
@@ -97,9 +97,9 @@ public class SDFSDHTAccessor {
 	 */
 	public List<DHTWorkspaceEntry> fetchMyDHTWorkspaces() throws NotLoggedInException {
 		try {
-			List<String> ids = fetchMyWorkspaceIDs();
+			List<Long> ids = fetchMyWorkspaceIDs();
 			List<DHTWorkspaceEntry> tr = new ArrayList<>(ids.size());
-			for (String id : ids) {
+			for (long id : ids) {
 				SecretKey nodeKey = fetchMyWorkspaceNodeKey(id);
 				List<MemberNode> nodes = fetchMemberNodes(id, nodeKey);
 				tr.add(new DHTWorkspaceEntry(id, nodeKey, nodes));
@@ -115,7 +115,7 @@ public class SDFSDHTAccessor {
 	 * @return the Workspace whose ID is specified (if it exists and I'm a member of it), according to the DHT, or null
 	 * @throws NotLoggedInException If the current user cannot be ascertained (read: not logged in)
 	 */
-	public DHTWorkspaceEntry fetchDHTWorkspace(String workspaceID) throws NotLoggedInException {
+	public DHTWorkspaceEntry fetchDHTWorkspace(long workspaceID) throws NotLoggedInException {
 		try {
 			SecretKey nodeKey = fetchMyWorkspaceNodeKey(workspaceID);
 			if(nodeKey == null) {
@@ -167,7 +167,7 @@ public class SDFSDHTAccessor {
 	 * @return the DHTWorkspaceEntry that was pushed onto the DHT
 	 * @throws NotLoggedInException If the current user cannot be ascertained (read: not logged in)
 	 */
-	public DHTWorkspaceEntry addNewWorkspaceToDHT(String workspaceID) throws NotLoggedInException {
+	public DHTWorkspaceEntry addNewWorkspaceToDHT(long workspaceID) throws NotLoggedInException {
 		try {
 			SecretKey dhtKey = addNewWorkspaceToDHTInternal(workspaceID);
 			List<MemberNode> nodes = fetchMemberNodes(workspaceID, dhtKey);
@@ -217,15 +217,15 @@ public class SDFSDHTAccessor {
 		removeMemberFromWorkspace(dhtWorkspace.getWorkspaceID(), member);
 	}
 
-	List<String> fetchMyWorkspaceIDs() throws NoSuchUserException {
+	List<Long> fetchMyWorkspaceIDs() throws NoSuchUserException {
 		CurrentUser me = _model.getCurrentUser();
 		String dhtKey = HashUtils.sha256String(me.getUserID());
 		Set<String> encryptedWorkspaceIDs = _dht.fetchContent(dhtKey);
-		List<String> workspaceIDs = new ArrayList<>();
+		List<Long> workspaceIDs = new ArrayList<>();
 		for (String encryptedWksID : encryptedWorkspaceIDs) {
 			try {
 				String wID = new String(CryptoUtils.decryptWithPrivateKey(encryptedWksID.split("\n")[1], me.getPrivateKey()));
-				workspaceIDs.add(wID);
+				workspaceIDs.add(Long.parseLong(wID));
 			} catch (CryptographicException e) {
 				_log.warn("Could not decrypt a WorkspaceID - removing it");
 				_dht.removeContent(dhtKey, encryptedWksID);
@@ -234,7 +234,7 @@ public class SDFSDHTAccessor {
 		return workspaceIDs;
 	}
 
-	SecretKey addNewWorkspaceToDHTInternal(String workspaceID) throws NoSuchUserException {
+	SecretKey addNewWorkspaceToDHTInternal(long workspaceID) throws NoSuchUserException {
 		CurrentUser me = _model.getCurrentUser();
 		try {
 			SecretKey newWorkspaceNodeKey = CryptoUtils.generateAESKey();
@@ -246,19 +246,19 @@ public class SDFSDHTAccessor {
 		}
 	}
 
-	void addInvitation(String workspaceID, User invitee, SecretKey workspaceNodeKey) throws CryptographicException {
+	void addInvitation(long workspaceID, User invitee, SecretKey workspaceNodeKey) throws CryptographicException {
 		//Store the nodeKey for the new user
 		String dhtKey = buildWorkspaceNodeKeyDHTKey(workspaceID, invitee);
 		String dhtValue = Base64.getEncoder().encodeToString(CryptoUtils.encryptWithPublicKey(workspaceNodeKey.getEncoded(), invitee.getPublicKey()));
 		_dht.storeContent(dhtKey, dhtValue);
 		//Store the workspaceID for the user
 		dhtKey = HashUtils.sha256String(invitee.getUserID());
-		dhtValue = CryptoUtils.encryptWithPublicKeyToString(workspaceID, invitee.getPublicKey());
-		String hash = HashUtils.sha256String(HashUtils.sha256String(workspaceID));
+		dhtValue = CryptoUtils.encryptWithPublicKeyToString("" + workspaceID, invitee.getPublicKey());
+		String hash = HashUtils.sha256String(HashUtils.sha256String("" + workspaceID));
 		_dht.storeContent(dhtKey, hash + "\n" + dhtValue);
 	}
 
-	void leaveWorkspace(String workspaceID) throws NoSuchUserException {
+	void leaveWorkspace(long workspaceID) throws NoSuchUserException {
 		User me = _model.getCurrentUser();
 		try {
 			removeMemberFromWorkspace(workspaceID, _model.getMemberInWorkspace(workspaceID, me.getUserID()));
@@ -268,11 +268,11 @@ public class SDFSDHTAccessor {
 		}
 	}
 
-	void removeMemberFromWorkspace(String workspaceID, Member member) throws NoSuchUserException {
+	void removeMemberFromWorkspace(long workspaceID, Member member) throws NoSuchUserException {
 		//Fetch the User's workspaceIDs and remove this workspace from the list
 		User user = _model.getUserByID(member.getUserID());
 		String dhtKey = HashUtils.sha256String(user.getUserID());
-		String hash = HashUtils.sha256String(HashUtils.sha256String(workspaceID));
+		String hash = HashUtils.sha256String(HashUtils.sha256String("" + workspaceID));
 		Set<String> values = _dht.fetchContent(dhtKey);
 		for (String value : values) {
 			String[] split = value.split("\n");
@@ -295,8 +295,8 @@ public class SDFSDHTAccessor {
 		removeUserMemberNode(workspaceID, user);
 	}
 
-	List<MemberNode> fetchMemberNodes(String workspaceID, SecretKey workspaceNodeKey) {
-		String dhtKey = HashUtils.sha256String(workspaceID);
+	List<MemberNode> fetchMemberNodes(long workspaceID, SecretKey workspaceNodeKey) {
+		String dhtKey = HashUtils.sha256String("" + workspaceID);
 		Set<String> encryptedMemberNodes = _dht.fetchContent(dhtKey);
 		List<MemberNode> memberNodes = new ArrayList<>();
 		for (String encryptedMemberNode : encryptedMemberNodes) {
@@ -310,13 +310,13 @@ public class SDFSDHTAccessor {
 		return memberNodes;
 	}
 
-	boolean addMyMemberNode(String workspaceID, MemberNode memberNode, SecretKey workspaceNodeKey) throws NoSuchUserException {
+	boolean addMyMemberNode(long workspaceID, MemberNode memberNode, SecretKey workspaceNodeKey) throws NoSuchUserException {
 		CurrentUser me = _model.getCurrentUser();
 		if (!me.getUserID().equals(memberNode.getUserID())) {
 			throw new IllegalArgumentException("Will not add a MemberNode for somebody other than myself - THAT WOULD BE EVIL");
 		}
 		if (!fetchMemberNodes(workspaceID, workspaceNodeKey).contains(memberNode)) {
-			String dhtKey = HashUtils.sha256String(workspaceID);
+			String dhtKey = HashUtils.sha256String("" + workspaceID);
 			String hash = HashUtils.sha256String(HashUtils.sha256String(me.getUserID()));
 			try {
 				String encryptedMemberNode = CryptoUtils.encryptStringWithSecretKey(memberNode.toDHTString(), workspaceNodeKey);
@@ -329,13 +329,13 @@ public class SDFSDHTAccessor {
 		return false;
 	}
 
-	boolean removeMyMemberNode(String workspaceID) throws NoSuchUserException {
+	boolean removeMyMemberNode(long workspaceID) throws NoSuchUserException {
 		return removeUserMemberNode(workspaceID, _model.getCurrentUser());
 	}
 
-	private boolean removeUserMemberNode(String workspaceID, User user) {
+	private boolean removeUserMemberNode(long workspaceID, User user) {
 		boolean tr = false;
-		String dhtKey = HashUtils.sha256String(workspaceID);
+		String dhtKey = HashUtils.sha256String("" + workspaceID);
 		String hash = HashUtils.sha256String(HashUtils.sha256String(user.getUserID()));
 		Set<String> values = _dht.fetchContent(dhtKey);
 		for (String value : values) {
@@ -353,7 +353,7 @@ public class SDFSDHTAccessor {
 		return tr;
 	}
 
-	public SecretKey fetchMyWorkspaceNodeKey(String workspaceID) throws NoSuchUserException {
+	public SecretKey fetchMyWorkspaceNodeKey(long workspaceID) throws NoSuchUserException {
 		CurrentUser me = _model.getCurrentUser();
 		String dhtKey = buildWorkspaceNodeKeyDHTKey(workspaceID, _model.getCurrentUser());
 		Set<String> encWksNodeKeyStrs = _dht.fetchContent(dhtKey);
@@ -369,8 +369,8 @@ public class SDFSDHTAccessor {
 		return null;
 	}
 
-	private String buildWorkspaceNodeKeyDHTKey(String workspaceID, User user) {
+	private String buildWorkspaceNodeKeyDHTKey(long workspaceID, User user) {
 		String pkString = Base64.getEncoder().encodeToString(user.getPublicKey().getEncoded());
-		return HashUtils.sha256String(workspaceID + pkString);
+		return HashUtils.sha256String("" + workspaceID + pkString);
 	}
 }

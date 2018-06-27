@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class RPCAdapterManager {
 
-	private Map<String, EOSAdapter> _eosrpcAdapterMap;
+	private Map<Long, EOSAdapter> _eosrpcAdapterMap;
 	private ChainmailCallback _chainmailCallback;
 
 	public RPCAdapterManager(Chainmail chainmail) {
@@ -29,11 +29,11 @@ public class RPCAdapterManager {
 	private RPCAdapterManager() {
 		_eosrpcAdapterMap = new HashMap<>();
 		_chainmailCallback = new ChainmailCallback() {
-			@Override public void onBlockchainStarted(String workspaceId, String nodeURL, String walletURL) {
+			@Override public void onBlockchainStarted(long workspaceId, String nodeURL, String walletURL) {
 				didStartBlockchain(workspaceId, nodeURL, walletURL);
 			}
 
-			@Override public void onBlockchainStopped(String workspaceId) {
+			@Override public void onBlockchainStopped(long workspaceId) {
 				didStopBlockchain(workspaceId);
 			}
 		};
@@ -46,18 +46,18 @@ public class RPCAdapterManager {
 	 *
 	 * @return The RPC Adapter associated with the specified workspace ID, or null if no such Adapter exists.
 	 */
-	public EOSAdapter getRPCAdapter(String workspaceID) {
+	public EOSAdapter getRPCAdapter(long workspaceID) {
 		return _eosrpcAdapterMap.get(workspaceID);
 	}
 
 	// ======== Chainmail Callback Methods ========
 
-	public void didStartBlockchain(String workspaceID, String nodeURL, String walletURL) {
+	public void didStartBlockchain(long workspaceID, String nodeURL, String walletURL) {
 		EOSAdapter adapter = new EOSAdapter(nodeURL, walletURL);
 		_eosrpcAdapterMap.put(workspaceID, adapter);
 	}
 
-	public void didStopBlockchain(String worksapceID) {
+	public void didStopBlockchain(long worksapceID) {
 		_eosrpcAdapterMap.remove(worksapceID);
 	}
 }

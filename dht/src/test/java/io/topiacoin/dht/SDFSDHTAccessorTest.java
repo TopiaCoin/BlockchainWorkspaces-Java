@@ -51,14 +51,14 @@ public class SDFSDHTAccessorTest {
 		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
 		List<Member> members = new ArrayList<>();
 		members.add(member1);
-		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), "wks1", System.currentTimeMillis(), null, null, null);
+		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
 		model1.addUser(new User(member1.getUserID(), "foo@bar.com", kp1.getPublic()));
 
 		MemberNode user1Node1 = new MemberNode("user1-63HzRNRH7h", "user1-63HzRNRH7h.ms.edu", 1);
 
-		Map<String, SecretKey> workspaceNodeKeys = new HashMap<>();
+		Map<Long, SecretKey> workspaceNodeKeys = new HashMap<>();
 
 		File configDir = new File(dhtconfig.getNodeDataFolder());
 		File routingTable = new File(configDir, "routingTable");
@@ -100,9 +100,9 @@ public class SDFSDHTAccessorTest {
 					Assert.assertEquals(1, memberNodes.size());
 					Assert.assertEquals(user1Node1, memberNodes.get(0));
 					//I should have a workspaceID now.
-					List<String> workspaceIDs = accessor1.fetchMyWorkspaceIDs();
+					List<Long> workspaceIDs = accessor1.fetchMyWorkspaceIDs();
 					Assert.assertEquals(1, workspaceIDs.size());
-					Assert.assertEquals(workspace.getGuid(), workspaceIDs.get(0));
+					Assert.assertTrue(workspace.getGuid() == workspaceIDs.get(0));
 					//I should be able to fetch the Workspace Node Key, which should contain the one I stored in the map
 					SecretKey key = accessor1.fetchMyWorkspaceNodeKey(workspace.getGuid());
 					Assert.assertNotNull(key);
@@ -147,7 +147,7 @@ public class SDFSDHTAccessorTest {
 		model2.setCurrentUser(new CurrentUser("user2-f7zql0bn25", "user2-f7zql0bn25@hotmail.com", kp2.getPublic(), kp2.getPrivate()));
 		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
 		Member memberToInvite = new Member("user2-f7zql0bn25", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken2");
-		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), "wks1", System.currentTimeMillis(), null, null, null);
+		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
 		model1.addUser(new User(member1.getUserID(), "foo@bar.com", kp1.getPublic()));
@@ -158,8 +158,8 @@ public class SDFSDHTAccessorTest {
 		MemberNode user1Node1 = new MemberNode("user1-63HzRNRH7h", "user1-63HzRNRH7h.ms.edu", 1);
 		MemberNode user2Node1 = new MemberNode("user2-f7zql0bn25", "uuser2-f7zql0bn25.whatever.gov", 2);
 
-		Map<String, SecretKey> workspaceNodeKeys1 = new HashMap<>();
-		Map<String, SecretKey> workspaceNodeKeys2 = new HashMap<>();
+		Map<Long, SecretKey> workspaceNodeKeys1 = new HashMap<>();
+		Map<Long, SecretKey> workspaceNodeKeys2 = new HashMap<>();
 
 		File configDir = new File(dhtconfig.getNodeDataFolder());
 		File routingTable = new File(configDir, "routingTable");
@@ -178,9 +178,9 @@ public class SDFSDHTAccessorTest {
 					SecretKey nodeKey = accessor1.addNewWorkspaceToDHTInternal(workspace.getGuid());
 					workspaceNodeKeys1.put(workspace.getGuid(), nodeKey);
 					//I should have a workspaceID now.
-					List<String> workspaceIDs = accessor1.fetchMyWorkspaceIDs();
+					List<Long> workspaceIDs = accessor1.fetchMyWorkspaceIDs();
 					Assert.assertEquals(1, workspaceIDs.size());
-					Assert.assertEquals(workspace.getGuid(), workspaceIDs.get(0));
+					Assert.assertTrue(workspace.getGuid() == workspaceIDs.get(0));
 					//I should be able to fetch the Workspace Node Key, which should contain the one I stored in the map
 					SecretKey key = accessor1.fetchMyWorkspaceNodeKey(workspace.getGuid());
 					Assert.assertNotNull(key);
@@ -198,7 +198,7 @@ public class SDFSDHTAccessorTest {
 
 					workspaceIDs = accessor2.fetchMyWorkspaceIDs();
 					Assert.assertEquals(1, workspaceIDs.size());
-					Assert.assertEquals(workspace.getGuid(), workspaceIDs.get(0));
+					Assert.assertTrue(workspace.getGuid() == workspaceIDs.get(0));
 					//I should be able to fetch the Workspace Node Key, which should contain the one I stored in the map
 					key = accessor2.fetchMyWorkspaceNodeKey(workspace.getGuid());
 					Assert.assertNotNull(key);
@@ -260,7 +260,7 @@ public class SDFSDHTAccessorTest {
 		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
 		List<Member> members = new ArrayList<>();
 		members.add(member1);
-		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), "wks1", System.currentTimeMillis(), null, null, null);
+		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
 		model1.addUser(new User(member1.getUserID(), "foo@bar.com", kp1.getPublic()));
@@ -355,7 +355,7 @@ public class SDFSDHTAccessorTest {
 		model2.setCurrentUser(new CurrentUser("user2-f7zql0bn25", "user2-f7zql0bn25@hotmail.com", kp2.getPublic(), kp2.getPrivate()));
 		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
 		Member memberToInvite = new Member("user2-f7zql0bn25", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken2");
-		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), "wks1", System.currentTimeMillis(), null, null, null);
+		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
 		User user1 = new User(member1.getUserID(), "foo@bar.com", kp1.getPublic());
@@ -517,7 +517,7 @@ public class SDFSDHTAccessorTest {
 		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
 		List<Member> members = new ArrayList<>();
 		members.add(member1);
-		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), "wks1", System.currentTimeMillis(), null, null, null);
+		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
 		model1.addUser(new User(member1.getUserID(), "foo@bar.com", kp1.getPublic()));
@@ -525,7 +525,7 @@ public class SDFSDHTAccessorTest {
 		MemberNode user1Node1 = new MemberNode("user1-63HzRNRH7h", "user1-63HzRNRH7h.ms.edu", 1);
 		MemberNode user2Node1 = new MemberNode("user2-f7zql0bn25", "uuser2-f7zql0bn25.whatever.gov", 2);
 
-		Map<String, SecretKey> workspaceNodeKeys = new HashMap<>();
+		Map<Long, SecretKey> workspaceNodeKeys = new HashMap<>();
 
 		File configDir = new File(dhtconfig.getNodeDataFolder());
 		File routingTable = new File(configDir, "routingTable");
@@ -537,7 +537,7 @@ public class SDFSDHTAccessorTest {
 			try {
 				//Make sure we start empty
 				Assert.assertEquals(0, accessor1.fetchMyWorkspaceIDs().size());
-				DHTWorkspaceEntry nullIThink = accessor1.fetchDHTWorkspace("blah");
+				DHTWorkspaceEntry nullIThink = accessor1.fetchDHTWorkspace(1111L);
 				Assert.assertNull(nullIThink);
 				try {
 					//Create Workspace

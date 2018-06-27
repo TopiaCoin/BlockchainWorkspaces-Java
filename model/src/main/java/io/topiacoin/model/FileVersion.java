@@ -19,16 +19,17 @@ public class FileVersion {
     private List<FileChunk> fileChunks;
 
     private List<FileVersionReceipt> receipts;
-
+    private List<String> ancestorVersionIDs;
 
     public FileVersion() {
         this.userTags = new ArrayList<FileTag>();
         this.systemTags = new ArrayList<FileTag>();
         this.fileChunks = new ArrayList<FileChunk>();
         this.receipts = new ArrayList<FileVersionReceipt>();
+        this.ancestorVersionIDs = new ArrayList<String>();
     }
 
-    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileTag> systemTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts) {
+    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileTag> systemTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts, List<String> ancestorVersionIDs) {
         this.entryID = entryID;
         this.versionID = versionID;
         this.ownerID = ownerID;
@@ -41,6 +42,7 @@ public class FileVersion {
         this.systemTags = (systemTags != null ? new ArrayList<FileTag>(systemTags) : new ArrayList<FileTag>());
         this.fileChunks = (fileChunks != null ? new ArrayList<FileChunk>(fileChunks) : new ArrayList<FileChunk>());
         this.receipts = (receipts != null ? new ArrayList<FileVersionReceipt>(receipts) : new ArrayList<FileVersionReceipt>());
+        this.ancestorVersionIDs = (ancestorVersionIDs != null ? new ArrayList<String>(ancestorVersionIDs) : new ArrayList<String>());
     }
 
     public FileVersion(FileVersion other) {
@@ -56,6 +58,7 @@ public class FileVersion {
         this.systemTags = (other.systemTags != null ? new ArrayList<FileTag>(other.systemTags) : new ArrayList<FileTag>());
         this.fileChunks = (other.fileChunks != null ? new ArrayList<FileChunk>(other.fileChunks) : new ArrayList<FileChunk>());
         this.receipts = (other.receipts != null ? new ArrayList<FileVersionReceipt>(other.receipts) : new ArrayList<FileVersionReceipt>());
+        this.ancestorVersionIDs = other.ancestorVersionIDs;
     }
 
     public String getEntryID() {
@@ -168,6 +171,10 @@ public class FileVersion {
         }
     }
 
+    public List<String> getAncestorVersionIDs() { return this.ancestorVersionIDs; }
+
+    public void setAncestorVersionIDs(List<String> ancestorVersionIDs) { this.ancestorVersionIDs = ancestorVersionIDs; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -186,6 +193,7 @@ public class FileVersion {
         if (!systemTags.equals(that.systemTags)) return false;
         if (status != null ? !status.equals(that.status) : that.status != null) return false;
         if (!fileChunks.equals(that.fileChunks)) return false;
+        if(!ancestorVersionIDs.equals(that.ancestorVersionIDs)) return false;
         return receipts.equals(that.receipts);
     }
 
@@ -203,6 +211,7 @@ public class FileVersion {
         result = 31 * result + (status != null ? status.hashCode() : 0);
         result = 31 * result + fileChunks.hashCode();
         result = 31 * result + receipts.hashCode();
+        result = 31 * result + ancestorVersionIDs.hashCode();
         return result;
     }
 
@@ -221,6 +230,7 @@ public class FileVersion {
                 ", status='" + status + '\'' +
                 ", fileChunks=" + fileChunks +
                 ", receipts=" + receipts +
+                ", receipts=" + ancestorVersionIDs +
                 '}';
     }
 }

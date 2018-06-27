@@ -19,7 +19,6 @@ public class WorkspaceTest {
 
         assertNull ( workspace.getName()) ;
         assertNull(workspace.getDescription());
-        assertNull(workspace.getGuid());
         assertEquals(0, workspace.getLastModified());
         assertEquals(0, workspace.getStatus());
         assertNull(workspace.getWorkspaceKey());
@@ -36,7 +35,7 @@ public class WorkspaceTest {
         String description = "Return to the Shining Isle";
         int status = 56;
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
-        String guid = "oogabooga";
+        long guid = 12345L;
         long lastModified = 123452465;
         List<Member> members = new ArrayList<Member>();
         List<File> files = new ArrayList<File>();
@@ -66,7 +65,7 @@ public class WorkspaceTest {
         String description = "Return to the Shining Isle";
         int status = 56;
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
-        String guid = "oogabooga";
+        long guid = 12345L;
         long lastModified = 123452465;
         List<Member> members = null;
         List<File> files = null;
@@ -93,7 +92,7 @@ public class WorkspaceTest {
         String description = "Return to the Shining Isle";
         int status = 56;
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
-        String guid = "oogabooga";
+        long guid = 12345L;
         long lastModified = 123452465;
 
         Workspace workspace = new Workspace();
@@ -122,11 +121,8 @@ public class WorkspaceTest {
         workspace.setWorkspaceKey(null);
         assertNull(workspace.getWorkspaceKey());
 
-        assertNull(workspace.getGuid());
         workspace.setGuid(guid);
         assertEquals(guid, workspace.getGuid());
-        workspace.setGuid(null);
-        assertNull(workspace.getGuid());
 
         assertEquals(0, workspace.getLastModified());
         workspace.setLastModified(lastModified);
@@ -140,7 +136,7 @@ public class WorkspaceTest {
 
         String name = "Reclaiming Anniera";
         int status = 56;
-        String guid = "oogabooga";
+        long guid = 12345L;
         String userID = "NeahWingfeather";
         String authToken = "NeahAuthToken";
         long date = 12346723435L;
@@ -151,7 +147,7 @@ public class WorkspaceTest {
         boolean isFolder = false;
         String lockOwner = "" ;
         List<FileVersion> versions = new ArrayList<FileVersion>();
-        String messageID = "abcde1234";
+        long messageID = 45678L;
         long seqNum = 43562;
         String message = "On the Dark Sea of Darkness" ;
         byte[] digSig = new byte[128] ;
@@ -164,7 +160,7 @@ public class WorkspaceTest {
 
         files.add(new File(name, mimeType, entryID,guid, parentID, isFolder, status, lockOwner, versions)) ;
 
-        messages.add(new Message(userID, guid, messageID, seqNum, date, message, mimeType, digSig));
+        messages.add(new Message(userID, messageID, guid, seqNum, date, message, mimeType, digSig));
 
         Workspace workspace = new Workspace();
 
@@ -197,7 +193,7 @@ public class WorkspaceTest {
         String description = "Return to the Shining Isle";
         int status = 56;
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
-        String guid = "oogabooga";
+        long guid = 12345L;
         long lastModified = 123452465;
         List<Member> members = new ArrayList<Member>();
         List<File> files = new ArrayList<File>();

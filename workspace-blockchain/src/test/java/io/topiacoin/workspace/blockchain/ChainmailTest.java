@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 import static junit.framework.TestCase.fail;
@@ -24,11 +24,11 @@ public abstract class ChainmailTest {
 	public void testToSeeIfItWorks() throws Exception {
 		CountDownLatch latch = new CountDownLatch(2);
 		ChainmailCallback callback = new ChainmailCallback() {
-			@Override public void onBlockchainStarted(String workspaceId, String nodeURL, String walletURL) {
+			@Override public void onBlockchainStarted(long workspaceId, String nodeURL, String walletURL) {
 				latch.countDown();
 			}
 
-			@Override public void onBlockchainStopped(String workspaceId) {
+			@Override public void onBlockchainStopped(long workspaceId) {
 				latch.countDown();
 			}
 		};
@@ -36,7 +36,7 @@ public abstract class ChainmailTest {
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
 		chainmail.addBlockchainListener(callback);
-		String workspaceID = UUID.randomUUID().toString();
+		long workspaceID = new Random().nextLong();
 		chainmail.createBlockchain("usera", workspaceID);
 		chainmail.startBlockchain("usera", workspaceID, null);
 		//This is the part where we do whatever it is we do with a running blockchain.
@@ -95,8 +95,8 @@ public abstract class ChainmailTest {
 		Chainmail chainmail = getChainmailInstance(9240, 9242);
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
-		String workspaceID = UUID.randomUUID().toString();
-		String workspaceID2 = UUID.randomUUID().toString();
+		long workspaceID = new Random().nextLong();
+		long workspaceID2 = new Random().nextLong();
 		try {
 			chainmail.createBlockchain("usera", workspaceID);
 			chainmail.startBlockchain("usera", workspaceID, null);
@@ -116,9 +116,9 @@ public abstract class ChainmailTest {
 		Chainmail chainmail = getChainmailInstance(9240, 9244);
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
-		String workspaceID = UUID.randomUUID().toString();
-		String workspaceID2 = UUID.randomUUID().toString();
-		String workspaceID3 = UUID.randomUUID().toString();
+		long workspaceID = new Random().nextLong();
+		long workspaceID2 = new Random().nextLong();
+		long workspaceID3 = new Random().nextLong();
 		try {
 			chainmail.createBlockchain("usera", workspaceID);
 			chainmail.startBlockchain("usera", workspaceID, null);
@@ -149,8 +149,8 @@ public abstract class ChainmailTest {
 		Chainmail chainmail = getChainmailInstance(9240, 9244);
 		RPCAdapterManager manager = new RPCAdapterManager(chainmail);
 		chainmail.start(manager);
-		String workspaceID = UUID.randomUUID().toString();
-		String workspaceID2 = UUID.randomUUID().toString();
+		long workspaceID = new Random().nextLong();
+		long workspaceID2 = new Random().nextLong();
 		try {
 			chainmail.createBlockchain("usera", workspaceID);
 			chainmail.startBlockchain("usera", workspaceID, null);

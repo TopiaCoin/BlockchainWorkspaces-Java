@@ -52,7 +52,7 @@ public class DataModel {
         return _provider.getWorkspacesWithStatus(workspaceStatus);
     }
 
-    public Workspace getWorkspace(String workspaceID)
+    public Workspace getWorkspace(long workspaceID)
             throws NoSuchWorkspaceException {
         return _provider.getWorkspace(workspaceID);
     }
@@ -67,7 +67,7 @@ public class DataModel {
         _provider.updateWorkspace(workspace);
     }
 
-    public void removeWorkspace(String workspaceID)
+    public void removeWorkspace(long workspaceID)
             throws NoSuchWorkspaceException {
         _provider.removeWorkspace(workspaceID);
     }
@@ -75,27 +75,27 @@ public class DataModel {
 
     // -------- Member Accessor Methods --------
 
-    public List<Member> getMembersInWorkspace(String workspaceID)
+    public List<Member> getMembersInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException {
         return _provider.getMembersInWorkspace(workspaceID);
     }
 
-    public Member getMemberInWorkspace(String workspaceID, String userID)
+    public Member getMemberInWorkspace(long workspaceID, String userID)
             throws NoSuchWorkspaceException, NoSuchMemberException {
         return _provider.getMemberInWorkspace(workspaceID, userID);
     }
 
-    public void addMemberToWorkspace(String workspaceID, Member member)
+    public void addMemberToWorkspace(long workspaceID, Member member)
             throws NoSuchWorkspaceException, MemberAlreadyExistsException {
         _provider.addMemberToWorkspace(workspaceID, member);
     }
 
-    public void updateMemberInWorkspace(String workspaceID, Member member)
+    public void updateMemberInWorkspace(long workspaceID, Member member)
             throws NoSuchWorkspaceException, NoSuchMemberException {
         _provider.updateMemberInWorkspace(workspaceID, member);
     }
 
-    public void removeMemberFromWorkspace(String workspaceID, Member member)
+    public void removeMemberFromWorkspace(long workspaceID, Member member)
             throws NoSuchWorkspaceException, NoSuchMemberException {
         _provider.removeMemberFromWorkspace(workspaceID, member);
     }
@@ -103,27 +103,27 @@ public class DataModel {
 
     // -------- Message Accessor Methods --------
 
-    public List<Message> getMessagesInWorkspace(String workspaceID)
+    public List<Message> getMessagesInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException {
         return _provider.getMessagesInWorkspace(workspaceID);
     }
 
-    public Message getMessage(String messageID)
+    public Message getMessage(long messageID)
             throws NoSuchMessageException {
         return _provider.getMessage(messageID);
     }
 
-    public void addMessageToWorkspace(String workspaceID, Message message)
+    public void addMessageToWorkspace(long workspaceID, Message message)
             throws NoSuchWorkspaceException, MessageAlreadyExistsException {
         _provider.addMessageToWorkspace(workspaceID, message);
     }
 
-    public void updateMessageInWorkspace(String workspaceID, Message message)
+    public void updateMessageInWorkspace(long workspaceID, Message message)
             throws NoSuchWorkspaceException, NoSuchMessageException {
         _provider.updateMessageInWorkspace(workspaceID, message);
     }
 
-    public void removeMessageFromWorkspace(String workspaceID, Message message)
+    public void removeMessageFromWorkspace(long workspaceID, Message message)
             throws NoSuchWorkspaceException, NoSuchMessageException {
         _provider.removeMessageFromWorkspace(workspaceID, message);
     }
@@ -131,12 +131,12 @@ public class DataModel {
 
     // -------- File Accessor Methods --------
 
-    public List<File> getFilesInWorkspace(String workspaceID)
+    public List<File> getFilesInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException {
         return _provider.getFilesInWorkspace(workspaceID);
     }
 
-    public List<File> getFilesInWorkspace(String workspaceID, String parentID)
+    public List<File> getFilesInWorkspace(long workspaceID, String parentID)
             throws NoSuchWorkspaceException {
         return _provider.getFilesInWorkspace(workspaceID, parentID);
     }
@@ -146,22 +146,22 @@ public class DataModel {
         return _provider.getFile(fileID);
     }
 
-    public void addFileToWorkspace(String workspaceID, File file)
+    public void addFileToWorkspace(long workspaceID, File file)
             throws NoSuchWorkspaceException, FileAlreadyExistsException {
         _provider.addFileToWorkspace(workspaceID, file);
     }
 
-    public void updateFileInWorkspace(String workspaceID, File file)
+    public void updateFileInWorkspace(long workspaceID, File file)
             throws NoSuchWorkspaceException, NoSuchFileException {
         _provider.updateFileInWorkspace(workspaceID, file);
     }
 
-    public void removeFileFromWorkspace(String workspaceID, String fileID)
+    public void removeFileFromWorkspace(long workspaceID, String fileID)
             throws NoSuchWorkspaceException, NoSuchFileException {
         _provider.removeFileFromWorkspace(workspaceID, fileID);
     }
 
-    public void removeFileFromWorkspace(String workspaceID, File file)
+    public void removeFileFromWorkspace(long workspaceID, File file)
             throws NoSuchWorkspaceException, NoSuchFileException {
         _provider.removeFileFromWorkspace(workspaceID, file);
     }
@@ -337,11 +337,11 @@ public class DataModel {
         return _provider.getWorkspaceByMyAuthToken(authToken);
     }
 
-    public boolean hasChunkInWorkspace(String chunkID, String workspaceGuid) {
+    public boolean hasChunkInWorkspace(String chunkID, long workspaceGuid) {
         return _provider.hasChunkInWorkspace(chunkID, workspaceGuid);
     }
 
-    public List<String> hasChunksInWorkspace(List<String> chunkIDs, String workspaceGuid) {
+    public List<String> hasChunksInWorkspace(List<String> chunkIDs, long workspaceGuid) {
         return _provider.hasChunksInWorkspace(chunkIDs, workspaceGuid);
     }
 }

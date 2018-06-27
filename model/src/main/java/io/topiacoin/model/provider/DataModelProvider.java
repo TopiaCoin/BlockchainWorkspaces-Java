@@ -40,7 +40,7 @@ public interface DataModelProvider {
 
     List<Workspace> getWorkspacesWithStatus(int workspaceStatus);
 
-    Workspace getWorkspace(String workspaceID)
+    Workspace getWorkspace(long workspaceID)
             throws NoSuchWorkspaceException;
 
     void addWorkspace(Workspace workspace)
@@ -49,70 +49,70 @@ public interface DataModelProvider {
     void updateWorkspace(Workspace workspace)
             throws NoSuchWorkspaceException;
 
-    void removeWorkspace(String workspaceID)
+    void removeWorkspace(long workspaceID)
             throws NoSuchWorkspaceException;
 
 
 
     // -------- Member Accessor Methods --------
 
-    List<Member> getMembersInWorkspace(String workspaceID)
+    List<Member> getMembersInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException;
 
-    Member getMemberInWorkspace(String workspaceID, String userID)
+    Member getMemberInWorkspace(long workspaceID, String userID)
             throws NoSuchWorkspaceException, NoSuchMemberException;
 
-    void addMemberToWorkspace(String workspaceID, Member member)
+    void addMemberToWorkspace(long workspaceID, Member member)
             throws NoSuchWorkspaceException, MemberAlreadyExistsException;
 
-    void updateMemberInWorkspace(String workspaceID, Member member)
+    void updateMemberInWorkspace(long workspaceID, Member member)
             throws NoSuchWorkspaceException, NoSuchMemberException;
 
-    void removeMemberFromWorkspace(String workspaceID, Member member)
+    void removeMemberFromWorkspace(long workspaceID, Member member)
             throws NoSuchWorkspaceException, NoSuchMemberException;
 
 
 
     // -------- Message Accessor Methods --------
 
-    List<Message> getMessagesInWorkspace(String workspaceID)
+    List<Message> getMessagesInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException;
 
-    Message getMessage(String messageID)
+    Message getMessage(long messageID)
             throws NoSuchMessageException;
 
-    void addMessageToWorkspace(String workspaceID, Message message)
+    void addMessageToWorkspace(long workspaceID, Message message)
             throws NoSuchWorkspaceException, MessageAlreadyExistsException;
 
-    void updateMessageInWorkspace(String workspaceID, Message message)
+    void updateMessageInWorkspace(long workspaceID, Message message)
             throws NoSuchWorkspaceException, NoSuchMessageException;
 
-    void removeMessageFromWorkspace(String workspaceID, Message message)
+    void removeMessageFromWorkspace(long workspaceID, Message message)
             throws NoSuchWorkspaceException, NoSuchMessageException;
 
 
 
     // -------- File Accessor Methods --------
 
-    List<File> getFilesInWorkspace(String workspaceID)
+    List<File> getFilesInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException;
 
-    List<File> getFilesInWorkspace(String workspaceID, String parentID)
+    List<File> getFilesInWorkspace(long workspaceID, String parentID)
             throws NoSuchWorkspaceException;
 
     File getFile(String fileID)
             throws NoSuchFileException;
 
-    void addFileToWorkspace(String workspaceID, File file)
+    void addFileToWorkspace(long workspaceID, File file)
             throws NoSuchWorkspaceException, FileAlreadyExistsException;
 
-    void updateFileInWorkspace(String workspaceID, File file)
+    void updateFileInWorkspace(long workspaceID, File file)
             throws NoSuchWorkspaceException, NoSuchFileException;
 
-    void removeFileFromWorkspace(String workspaceID, String fileID)
+    void removeFileFromWorkspace(long workspaceID, String fileID)
             throws NoSuchWorkspaceException, NoSuchFileException;
 
-    void removeFileFromWorkspace(String workspaceID, File file)
+    void removeFileFromWorkspace(long workspaceID, File file)
             throws NoSuchWorkspaceException, NoSuchFileException;
 
 
@@ -223,7 +223,7 @@ public interface DataModelProvider {
 
     Workspace getWorkspaceByMyAuthToken(String authToken) throws BadAuthTokenException;
 
-    boolean hasChunkInWorkspace(String chunkID, String workspaceGuid);
+    boolean hasChunkInWorkspace(String chunkID, long workspaceGuid);
 
-    List<String> hasChunksInWorkspace(List<String> chunkIDs, String workspaceGuid);
+    List<String> hasChunksInWorkspace(List<String> chunkIDs, long workspaceGuid);
 }

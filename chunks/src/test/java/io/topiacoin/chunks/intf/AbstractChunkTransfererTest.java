@@ -58,7 +58,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(testChunks.keySet().size() + 1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -84,7 +84,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -107,9 +107,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -120,9 +120,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -195,7 +195,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(testChunks.keySet().size() + 1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -221,7 +221,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk fooChunk = new FileChunk();
 			fooChunk.setChunkID("foo");
@@ -248,9 +248,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
@@ -263,9 +263,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", fooChunk);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", barChunk);
@@ -345,7 +345,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userCChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userDChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(testChunks.keySet().size() + 1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			int userCPort = 7779;
@@ -391,7 +391,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk chunkFoo = new FileChunk();
 			chunkFoo.setChunkID("foo");
@@ -428,11 +428,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userDMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addMemberToWorkspace("containerA", memberC);
-			modelA.addMemberToWorkspace("containerA", memberD);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addMemberToWorkspace(12345L, memberC);
+			modelA.addMemberToWorkspace(12345L, memberD);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", chunkFoo);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
@@ -449,11 +449,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userDMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addMemberToWorkspace("containerA", memberC);
-			modelB.addMemberToWorkspace("containerA", memberD);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addMemberToWorkspace(12345L, memberC);
+			modelB.addMemberToWorkspace(12345L, memberD);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", chunkFoo);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
@@ -470,11 +470,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelC.addUserNode(userDMemberNode);
 			modelC.setCurrentUser(currentUserC);
 			modelC.addWorkspace(workspace);
-			modelC.addMemberToWorkspace("containerA", memberA);
-			modelC.addMemberToWorkspace("containerA", memberB);
-			modelC.addMemberToWorkspace("containerA", memberC);
-			modelC.addMemberToWorkspace("containerA", memberD);
-			modelC.addFileToWorkspace("containerA", f);
+			modelC.addMemberToWorkspace(12345L, memberA);
+			modelC.addMemberToWorkspace(12345L, memberB);
+			modelC.addMemberToWorkspace(12345L, memberC);
+			modelC.addMemberToWorkspace(12345L, memberD);
+			modelC.addFileToWorkspace(12345L, f);
 			modelC.addFileVersion("FileFoo", v);
 			modelC.addChunkForFile("FileFoo", "VersionFoo", chunkFoo);
 			modelC.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
@@ -491,11 +491,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelD.addUserNode(userDMemberNode);
 			modelD.setCurrentUser(currentUserD);
 			modelD.addWorkspace(workspace);
-			modelD.addMemberToWorkspace("containerA", memberA);
-			modelD.addMemberToWorkspace("containerA", memberB);
-			modelD.addMemberToWorkspace("containerA", memberC);
-			modelD.addMemberToWorkspace("containerA", memberD);
-			modelD.addFileToWorkspace("containerA", f);
+			modelD.addMemberToWorkspace(12345L, memberA);
+			modelD.addMemberToWorkspace(12345L, memberB);
+			modelD.addMemberToWorkspace(12345L, memberC);
+			modelD.addMemberToWorkspace(12345L, memberD);
+			modelD.addFileToWorkspace(12345L, f);
 			modelD.addFileVersion("FileFoo", v);
 			modelD.addChunkForFile("FileFoo", "VersionFoo", chunkFoo);
 			modelD.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
@@ -584,7 +584,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userCChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userDChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			int userCPort = 7779;
@@ -630,7 +630,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -663,11 +663,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userDMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addMemberToWorkspace("containerA", memberC);
-			modelA.addMemberToWorkspace("containerA", memberD);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addMemberToWorkspace(12345L, memberC);
+			modelA.addMemberToWorkspace(12345L, memberD);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -682,11 +682,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userDMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addMemberToWorkspace("containerA", memberC);
-			modelB.addMemberToWorkspace("containerA", memberD);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addMemberToWorkspace(12345L, memberC);
+			modelB.addMemberToWorkspace(12345L, memberD);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -701,11 +701,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelC.addUserNode(userDMemberNode);
 			modelC.setCurrentUser(currentUserC);
 			modelC.addWorkspace(workspace);
-			modelC.addMemberToWorkspace("containerA", memberA);
-			modelC.addMemberToWorkspace("containerA", memberB);
-			modelC.addMemberToWorkspace("containerA", memberC);
-			modelC.addMemberToWorkspace("containerA", memberD);
-			modelC.addFileToWorkspace("containerA", f);
+			modelC.addMemberToWorkspace(12345L, memberA);
+			modelC.addMemberToWorkspace(12345L, memberB);
+			modelC.addMemberToWorkspace(12345L, memberC);
+			modelC.addMemberToWorkspace(12345L, memberD);
+			modelC.addFileToWorkspace(12345L, f);
 			modelC.addFileVersion("FileFoo", v);
 			modelC.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -720,11 +720,11 @@ public abstract class AbstractChunkTransfererTest {
 			modelD.addUserNode(userDMemberNode);
 			modelD.setCurrentUser(currentUserD);
 			modelD.addWorkspace(workspace);
-			modelD.addMemberToWorkspace("containerA", memberA);
-			modelD.addMemberToWorkspace("containerA", memberB);
-			modelD.addMemberToWorkspace("containerA", memberC);
-			modelD.addMemberToWorkspace("containerA", memberD);
-			modelD.addFileToWorkspace("containerA", f);
+			modelD.addMemberToWorkspace(12345L, memberA);
+			modelD.addMemberToWorkspace(12345L, memberB);
+			modelD.addMemberToWorkspace(12345L, memberC);
+			modelD.addMemberToWorkspace(12345L, memberD);
+			modelD.addFileToWorkspace(12345L, f);
 			modelD.addFileVersion("FileFoo", v);
 			modelD.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -792,7 +792,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -822,7 +822,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -845,9 +845,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberBWrong);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberBWrong);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -858,9 +858,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -960,7 +960,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(2);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -986,7 +986,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -1009,9 +1009,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1022,9 +1022,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1127,7 +1127,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -1153,7 +1153,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -1176,9 +1176,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1189,9 +1189,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1293,7 +1293,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(2);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -1319,7 +1319,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -1342,9 +1342,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1355,9 +1355,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1418,7 +1418,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -1446,7 +1446,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -1469,9 +1469,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(jackedUpUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1482,9 +1482,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1545,7 +1545,7 @@ public abstract class AbstractChunkTransfererTest {
 			final KeyPair userAChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final KeyPair userBChunkTransferKeyPair = CryptoUtils.generateECKeyPair();
 			final CountDownLatch lock = new CountDownLatch(1);
-			String testContainerId = "containerA";
+			long testContainerId = 12345L;
 			int userAPort = 7777;
 			int userBPort = 7778;
 			String userAAuthToken = "potawto";
@@ -1571,7 +1571,7 @@ public abstract class AbstractChunkTransfererTest {
 			Workspace workspace = new Workspace();
 			workspace.setMembers(members);
 			List<Workspace> workspaces = new ArrayList<Workspace>();
-			workspace.setGuid("containerA");
+			workspace.setGuid(12345L);
 			workspaces.add(workspace);
 			FileChunk c = new FileChunk();
 			c.setChunkID("foo");
@@ -1594,9 +1594,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addUserNode(userBMemberNode);
 			modelA.setCurrentUser(currentUserA);
 			modelA.addWorkspace(workspace);
-			modelA.addMemberToWorkspace("containerA", memberA);
-			modelA.addMemberToWorkspace("containerA", memberB);
-			modelA.addFileToWorkspace("containerA", f);
+			modelA.addMemberToWorkspace(12345L, memberA);
+			modelA.addMemberToWorkspace(12345L, memberB);
+			modelA.addFileToWorkspace(12345L, f);
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
@@ -1607,9 +1607,9 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addUserNode(userBMemberNode);
 			modelB.setCurrentUser(currentUserB);
 			modelB.addWorkspace(workspace);
-			//modelB.addMemberToWorkspace("containerA", memberA);
-			modelB.addMemberToWorkspace("containerA", memberB);
-			modelB.addFileToWorkspace("containerA", f);
+			//modelB.addMemberToWorkspace(12345L, memberA);
+			modelB.addMemberToWorkspace(12345L, memberB);
+			modelB.addFileToWorkspace(12345L, f);
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 

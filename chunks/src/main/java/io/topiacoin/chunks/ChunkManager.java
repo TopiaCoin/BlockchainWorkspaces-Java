@@ -190,8 +190,8 @@ public class ChunkManager {
 	 *                    be used to carry state between the initiator of the fetch and the handler.
 	 * @throws IllegalArgumentException If chunkIDs or containerID is null or empty
 	 */
-	public void fetchChunks(final List<String> chunkIDs, final String containerID, final ChunksFetchHandler handler, final Object state) {
-		if (chunkIDs == null || chunkIDs.isEmpty() || containerID == null || containerID.isEmpty()) {
+	public void fetchChunks(final List<String> chunkIDs, final long containerID, final ChunksFetchHandler handler, final Object state) {
+		if (chunkIDs == null || chunkIDs.isEmpty()) {
 			throw new IllegalArgumentException();
 		}
 		final List<String> successfulChunks = new ArrayList<>();

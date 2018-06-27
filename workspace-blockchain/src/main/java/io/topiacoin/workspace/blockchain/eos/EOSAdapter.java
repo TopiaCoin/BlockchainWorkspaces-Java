@@ -776,7 +776,7 @@ public class EOSAdapter {
                 boolean isFolder = false;
                 int status = (Integer) row.get("status");
                 String lockOwner = null;
-                file = new File(name, mimeType, entryID, Long.toString(guid), parentID, isFolder, status, lockOwner, null);
+                file = new File(name, mimeType, entryID, guid, parentID, isFolder, status, lockOwner, null);
                 if (TextUtils.isEmpty(versionID) || row.get("versionID").equals(versionID)) {
                     break;
                 }
@@ -888,13 +888,13 @@ public class EOSAdapter {
 
             for (Map<String, Object> row : rows.rows) {
                 String author = (String) row.get("author");
-                String msgID = (String) row.get("msgID");
+                long msgID = (Integer) row.get("msgID");
                 long seq = (Integer) row.get("id");
                 long timestamp = (Integer) row.get("timestamp");
                 String text = (String) row.get("text");
                 String mimeType = (String) row.get("mimeType");
                 byte[] digSig = null;
-                Message message = new Message(author, Long.toString(guid), msgID, seq, timestamp, text, mimeType, digSig);
+                Message message = new Message(author, msgID, guid, seq, timestamp, text, mimeType, digSig);
                 messages.add(message);
                 newContinuationToken = (Integer) row.get("id");
             }
@@ -909,7 +909,7 @@ public class EOSAdapter {
         throw new NotImplementedException("This method does not work due to bugs in the EOS software");
     }
 
-    public void acknowledgeMessage(long guid, String user, String msgID) throws NoSuchWorkspaceException, NoSuchMessageException, BlockchainException {
+    public void acknowledgeMessage(long guid, String user, long msgID) throws NoSuchWorkspaceException, NoSuchMessageException, BlockchainException {
 
         try {
             Map<String, Object> args = new HashMap<>();

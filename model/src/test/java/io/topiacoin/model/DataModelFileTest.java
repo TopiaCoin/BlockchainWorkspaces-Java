@@ -6,6 +6,7 @@ import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -17,7 +18,7 @@ public class DataModelFileTest {
 
     @Test
     public void testFileCRUD() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -70,7 +71,7 @@ public class DataModelFileTest {
 
     @Test
     public void testGetFilesFromWorkspaceWithParentID() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID1 = UUID.randomUUID().toString();
         String fileID2 = UUID.randomUUID().toString();
         String parentID = UUID.randomUUID().toString();
@@ -113,7 +114,7 @@ public class DataModelFileTest {
 
     @Test
     public void testRemoveFilesFromWorkspaceByFileID() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID1 = UUID.randomUUID().toString();
         String fileID2 = UUID.randomUUID().toString();
         String parentID = UUID.randomUUID().toString();
@@ -153,7 +154,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testGetFilesFromNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -170,7 +171,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testGetFilesWithParentFromNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -187,7 +188,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -208,7 +209,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testAddFileToNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -223,7 +224,7 @@ public class DataModelFileTest {
 
     @Test(expected = FileAlreadyExistsException.class)
     public void testAddDuplicateFileToWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -245,7 +246,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testUpdateFileInNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -260,7 +261,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testUpdateNonExistentFileInWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -280,7 +281,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testRemoveFileFromNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -295,7 +296,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchWorkspaceException.class)
     public void testRemoveFileIDFromNonExistentWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
@@ -306,7 +307,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveNonExistentFileFromWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -326,7 +327,7 @@ public class DataModelFileTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveNonExistentFileIDFromWorkspace() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();

@@ -5,8 +5,8 @@ import java.util.Arrays;
 public class Message {
 
     private String authorID;
-    private String entityID;
-    private String guid;
+    private long entityID;
+    private long guid;
     private long seq;
     private long timestamp;
     private String text;
@@ -17,7 +17,7 @@ public class Message {
     public Message() {
     }
 
-    public Message(String authorID, String entityID, String guid, long seq, long timestamp, String text, String mimeType, byte[] digitalSignature) {
+    public Message(String authorID, long entityID, long guid, long seq, long timestamp, String text, String mimeType, byte[] digitalSignature) {
         this.authorID = authorID;
         this.entityID = entityID;
         this.guid = guid;
@@ -47,19 +47,19 @@ public class Message {
         this.authorID = authorID;
     }
 
-    public String getEntityID() {
+    public long getEntityID() {
         return entityID;
     }
 
-    public void setEntityID(String entityID) {
+    public void setEntityID(long entityID) {
         this.entityID = entityID;
     }
 
-    public String getGuid() {
+    public long getGuid() {
         return guid;
     }
 
-    public void setGuid(String guid) {
+    public void setGuid(long guid) {
         this.guid = guid;
     }
 
@@ -113,8 +113,8 @@ public class Message {
         if (seq != message.seq) return false;
         if (timestamp != message.timestamp) return false;
         if (authorID != null ? !authorID.equals(message.authorID) : message.authorID != null) return false;
-        if (entityID != null ? !entityID.equals(message.entityID) : message.entityID != null) return false;
-        if (guid != null ? !guid.equals(message.guid) : message.guid != null) return false;
+		if (entityID != message.entityID) return false;
+        if (guid != message.getGuid()) return false;
         if (text != null ? !text.equals(message.text) : message.text != null) return false;
         if (mimeType != null ? !mimeType.equals(message.mimeType) : message.mimeType != null) return false;
         return Arrays.equals(digitalSignature, message.digitalSignature);
@@ -123,8 +123,8 @@ public class Message {
     @Override
     public int hashCode() {
         int result = authorID != null ? authorID.hashCode() : 0;
-        result = 31 * result + (entityID != null ? entityID.hashCode() : 0);
-        result = 31 * result + (guid != null ? guid.hashCode() : 0);
+		result = 31 * result + (int) (entityID ^ (entityID >>> 32));
+        result = 31 * result + (int) (guid ^ (guid >>> 32));
         result = 31 * result + (int) (seq ^ (seq >>> 32));
         result = 31 * result + (int) (timestamp ^ (timestamp >>> 32));
         result = 31 * result + (text != null ? text.hashCode() : 0);

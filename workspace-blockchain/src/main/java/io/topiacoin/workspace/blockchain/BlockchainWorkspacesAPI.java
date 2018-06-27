@@ -24,8 +24,11 @@ import io.topiacoin.core.callbacks.RemoveFolderCallback;
 import io.topiacoin.core.callbacks.RemoveUserCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
+import io.topiacoin.core.exceptions.NotLoggedInException;
+import io.topiacoin.model.File;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 
 public class BlockchainWorkspacesAPI implements WorkspacesAPI {
 
@@ -50,7 +53,7 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) {
+    public void connectWorkspace(long workspaceID, ConnectWorkspaceCallback callback) {
 
     }
 
@@ -354,7 +357,7 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) {
+    public void removeFileVersion(long workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) {
 
     }
 
@@ -376,29 +379,29 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) {
+    public void acknowledgeFileVersion(long workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) {
 
     }
 
     /**
      * @param fileToTag
      * @param tagName
-     * @param isPrivate
+     * @param isPublic
      * @param callback
      */
     @Override
-    public void addFileTag(io.topiacoin.model.File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback) {
+    public void addFileTag(io.topiacoin.model.File fileToTag, String tagName, boolean isPublic, AddFileTagCallback callback) {
 
     }
 
     /**
      * @param fileToUntag
      * @param tagName
-     * @param isPrivate
+     * @param isPublic
      * @param callback
      */
     @Override
-    public void removeFileTag(io.topiacoin.model.File fileToUntag, String tagName, boolean isPrivate, RemoveFileTagCallback callback) {
+    public void removeFileTag(io.topiacoin.model.File fileToUntag, String tagName, boolean isPublic, RemoveFileTagCallback callback) {
 
     }
 
@@ -483,7 +486,49 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
 
     }
 
-    /**
+	/**
+	 * Locks the specified file version.  Locking a file version prevents other users from deleting the version or the
+	 * file.  It is an error to specify a non-existent workspace GUID, or a non-existent file GUID, or a non-existant version GUID.
+	 * <p>
+	 * Note: Not sure how we enforce this in a decentralized, blockchain based workspace.
+	 * <p>
+	 * On successful locking of the file version, a notification of type 'lockFileVersionComplete' will be posted to the notification
+	 * center.  The classifier of this notification will be the workspace ID.  The notification info will contain the
+	 * file ID under the 'fileID' key and version ID under the 'versionID' key
+	 * <p>
+	 * On failure to lock the file version, a notification of type 'lockFileVersionFailed' will be posted to the notification center.
+	 * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
+	 * under the 'fileID' key, the version ID under the 'versionID' key, and the reason for failure under the 'reason' key.
+	 *
+	 * @param fileToLock
+	 * @param callback
+	 */
+	@Override public void lockFileVersion(File fileToLock, LockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+
+	}
+
+	/**
+	 * Unlocks the specified file version.  Unlocking a file version allows other users to once again delete the version of
+	 * the file or the file itself. It is an error to specify a non-existent workspace GUID, or a non-existent file GUID, or a non-existent version GUID
+	 * <p>
+	 * Note: Not sure how we enforce this in a decentralized, blockchain based workspace.
+	 * <p>
+	 * On successful unlocking of the file version, a notification of type 'unlockFileVersionComplete' will be posted to the
+	 * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
+	 * contain the file ID under the 'fileID' key and the version ID under the 'versionID' key.
+	 * <p>
+	 * On failure to unlock the file version, a notification of type 'unlockFileVersionFailed' will be posted to the notification center.
+	 * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
+	 * under the 'fileID' key, the version ID under the 'versionID' key, and the reason for failure under the 'reason' key.
+	 *
+	 * @param fileToUnlock
+	 * @param callback
+	 */
+	@Override public void unlockFileVersion(File fileToUnlock, UnlockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+
+	}
+
+	/**
      * Creates a new folder in the specified workspace with the specified parent. It is an error to specify a
      * non-existent workspace GUID, a non-existent parent GUID, or a null or blank folderName. If the parentID is null
      * or blank, the folder will be created at the root of the workspace.
@@ -545,7 +590,7 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addMessage(String workspaceGUID, String message, AddMessageCallback callback) {
+    public void addMessage(long workspaceGUID, String message, String mimeType, AddMessageCallback callback) {
 
     }
 

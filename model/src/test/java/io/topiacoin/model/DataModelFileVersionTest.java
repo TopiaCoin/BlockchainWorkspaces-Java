@@ -9,6 +9,7 @@ import io.topiacoin.model.exceptions.NoSuchFileVersionReceiptException;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -19,7 +20,7 @@ public class DataModelFileVersionTest {
 
     @Test
     public void testFileVersionCRUD() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -95,7 +96,7 @@ public class DataModelFileVersionTest {
 
     @Test
     public void testRemoveFileVersionByID() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -128,7 +129,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetAvailableVersionsForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -156,7 +157,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetFileVersionsForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -184,7 +185,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetFileVersionForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -212,7 +213,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testGetNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -241,7 +242,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testAddFileVersionForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -269,7 +270,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = FileVersionAlreadyExistsException.class)
     public void testAddDuplicateFileVersionForFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -300,7 +301,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testUpdateFileFileVersionForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -328,7 +329,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testUpdateNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -357,7 +358,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveFileVersionForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -385,7 +386,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveFileVersionByIDForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -413,7 +414,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testRemoveNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -442,7 +443,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testRemoveNonExistentFileVersionByID() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -474,7 +475,7 @@ public class DataModelFileVersionTest {
 
     @Test
     public void testFileVersionReceiptCRUD() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -533,7 +534,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetFileVersionReceiptsForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -565,7 +566,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testGetFileVersionReceiptForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -598,7 +599,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testAddFileVersionReceiptForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -628,7 +629,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testAddFileVersionReceiptForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -659,7 +660,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testUpdateFileVersionReceiptForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -689,7 +690,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testUpdateFileVersionReceiptForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -720,7 +721,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionReceiptException.class)
     public void testUpdateNonExistentFileVersionReceipt() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -752,7 +753,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveFileVersionReceiptForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -782,7 +783,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testRemoveFileVersionReceiptForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -813,7 +814,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionReceiptException.class)
     public void testRemoveNonExistentFileVersionReceipt() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -847,7 +848,7 @@ public class DataModelFileVersionTest {
 
     @Test
     public void testFileTagCRUD() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -896,7 +897,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testGetFileTagsForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -927,7 +928,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testGetFileTagsForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -959,7 +960,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testAddFileTagForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -988,7 +989,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testAddFileTagForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -1018,7 +1019,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = FileTagAlreadyExistsException.class)
     public void testAddDuplicateFileTag() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -1051,7 +1052,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileException.class)
     public void testRemoveFileTagForNonExistentFile() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -1080,7 +1081,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileVersionException.class)
     public void testRemoveFileTagForNonExistentFileVersion() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 
@@ -1110,7 +1111,7 @@ public class DataModelFileVersionTest {
 
     @Test(expected = NoSuchFileTagException.class)
     public void testRemoveNonExistentFileTag() throws Exception {
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = new Random().nextLong();
         String fileID = UUID.randomUUID().toString();
         String versionID = UUID.randomUUID().toString();
 

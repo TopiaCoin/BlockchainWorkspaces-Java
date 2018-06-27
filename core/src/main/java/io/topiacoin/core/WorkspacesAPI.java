@@ -101,7 +101,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
      * will include the reason for the failure under the 'reason' key.
      */
-    void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
+    void connectWorkspace(long workspaceID, ConnectWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
@@ -143,7 +143,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID. The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback);
+    void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Invites a user to a workspace, sending them the specified message along with the invitation. It is an error to
@@ -159,7 +159,7 @@ public interface WorkspacesAPI {
      * contain the user ID of the invited user under the 'userID' key, and the reason for the failure under the 'reason'
      * key.
      */
-    void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback);
+    void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Accepts an invitation to a workspace. It is an error to specify a non-existent workspace. It is an error to
@@ -173,7 +173,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback);
+    void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Declines an invitation to a workspace. It is an error to specify a non-existent workspace. Is is an error to
@@ -187,7 +187,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID. The notification info
      * will include the reason for the failure under the 'reason' key.
      */
-    void declineInvitation(Workspace workspace, DeclineInvitationCallback callback);
+    void declineInvitation(Workspace workspace, DeclineInvitationCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Sends an encrypted workspace key to a new workspace member. Normally, the inviter will send the encrypted
@@ -226,7 +226,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * include the reason for the failure under the 'reason' key.
      */
-    void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback);
+    void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Removes the specified member from the workspace. It is an error to specify a non-existent workspace GUID, or a
@@ -242,7 +242,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID. The notification info will
      * contain the user ID of the user under the 'userID' key, and the reason for the failure under the 'reason' key.
      */
-    void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback);
+    void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Adds a file to the specified workspace with the specified parent. If parentGUID is null or an empty string, then
@@ -270,7 +270,7 @@ public interface WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the file ID and version ID assigned to
      * this file.
      */
-    void addFile(File fileToAdd, AddFileCallback callback);
+    void addFile(File fileToAdd, AddFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Removes a file from the specified workspace. It is an error to specify a non-existent workspace GUID, or a
@@ -285,7 +285,7 @@ public interface WorkspacesAPI {
      * the notification center.  The classifier of this notification will be the workspace ID.  The notification info
      * will contain the file ID under the 'fileID' key, and the reason for the failure under the 'reason' key.
      */
-    void removeFile(File fileToRemove, RemoveFileCallback callback);
+    void removeFile(File fileToRemove, RemoveFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Adds a new version to an existing file. It is an error to specify a non-existent workspace GUID, a non-existent
@@ -314,7 +314,7 @@ public interface WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the version ID assigned to this
      * version.
      */
-    void addFileVersion(File fileToBeAdded, AddFileVersionCallback callback);
+    void addFileVersion(File fileToBeAdded, AddFileVersionCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Removes a file version from a file in a workspace. It is an error to specify a non-existent workspace GUID, a
@@ -332,7 +332,7 @@ public interface WorkspacesAPI {
      * notification info will contain the file ID under the 'fileID' key, and the reason for the failure under the
      * 'reason' key.
      */
-    void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback);
+    void removeFileVersion(long workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Acknowledges receipt of a version of a file. It is an error to specify a non-existent workspace GUID, a
@@ -346,17 +346,17 @@ public interface WorkspacesAPI {
      * contain the file ID of the acknowledged file under the 'fileID' key, and the version number that was acknowledged
      * under the 'versionNumber' key.
      */
-    void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback);
+    void acknowledgeFileVersion(long workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      *
      */
-    void addFileTag(File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback);
+    void addFileTag(File fileToTag, String tagName, boolean isPublic, AddFileTagCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      *
      */
-    void removeFileTag(File fileToUntag, String tagName, boolean isPrivate, RemoveFileTagCallback callback);
+    void removeFileTag(File fileToUntag, String tagName, boolean isPublic, RemoveFileTagCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Initiates a download of the specified file version. It is an error to specify a non-existent workspaceGUID, a
@@ -401,7 +401,7 @@ public interface WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      */
-    void lockFile(File fileToLock, LockFileCallback callback);
+    void lockFile(File fileToLock, LockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Unlocks the specified file.  Unlocking a file allows other users to once again delete or upload new version of
@@ -417,7 +417,45 @@ public interface WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      */
-    void unlockFile(File fileToUnlock, UnlockFileCallback callback);
+    void unlockFile(File fileToUnlock, UnlockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
+
+    /**
+     * Locks the specified file version.  Locking a file version prevents other users from deleting the version or the
+     * file.  It is an error to specify a non-existent workspace GUID, or a non-existent file GUID, or a non-existant version GUID.
+     * <p>
+     * Note: Not sure how we enforce this in a decentralized, blockchain based workspace.
+     * <p>
+     * On successful locking of the file version, a notification of type 'lockFileVersionComplete' will be posted to the notification
+     * center.  The classifier of this notification will be the workspace ID.  The notification info will contain the
+     * file ID under the 'fileID' key and version ID under the 'versionID' key
+     * <p>
+     * On failure to lock the file version, a notification of type 'lockFileVersionFailed' will be posted to the notification center.
+     * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
+     * under the 'fileID' key, the version ID under the 'versionID' key, and the reason for failure under the 'reason' key.
+     *
+     * @param fileToLock
+     * @param callback
+     */
+    public void lockFileVersion(File fileToLock, LockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
+
+    /**
+     * Unlocks the specified file version.  Unlocking a file version allows other users to once again delete the version of
+     * the file or the file itself. It is an error to specify a non-existent workspace GUID, or a non-existent file GUID, or a non-existent version GUID
+     * <p>
+     * Note: Not sure how we enforce this in a decentralized, blockchain based workspace.
+     * <p>
+     * On successful unlocking of the file version, a notification of type 'unlockFileVersionComplete' will be posted to the
+     * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
+     * contain the file ID under the 'fileID' key and the version ID under the 'versionID' key.
+     * <p>
+     * On failure to unlock the file version, a notification of type 'unlockFileVersionFailed' will be posted to the notification center.
+     * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
+     * under the 'fileID' key, the version ID under the 'versionID' key, and the reason for failure under the 'reason' key.
+     *
+     * @param fileToUnlock
+     * @param callback
+     */
+    public void unlockFileVersion(File fileToUnlock, UnlockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Creates a new folder in the specified workspace with the specified parent. It is an error to specify a
@@ -434,7 +472,7 @@ public interface WorkspacesAPI {
      * The classifier of this notification will be the workspace ID.  The notification info will contain the the reason
      * for the failure under the 'reason' key.
      */
-    void addFolder(File folderToAdd, AddFolderCallback callback);
+    void addFolder(File folderToAdd, AddFolderCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Removes the specified folder from workspace. All content contained within the folder is also removed. It is an
@@ -448,7 +486,7 @@ public interface WorkspacesAPI {
      * center.  The classifier of this notification will be the workspace ID.  The notification info will contain the
      * folder ID of the folder under the 'folderID' key, and the reason for the failure under the 'reason' key.
      */
-    void removeFolder(File folderToRemove, RemoveFolderCallback callback);
+    void removeFolder(File folderToRemove, RemoveFolderCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
 
     /**
@@ -465,7 +503,7 @@ public interface WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * contain the reason for the failure under the 'reason' key.
      */
-    void addMessage(String workspaceGUID, String message, AddMessageCallback callback);
+    void addMessage(long workspaceGUID, String message, String mimeType, AddMessageCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
 
     /**
@@ -476,6 +514,6 @@ public interface WorkspacesAPI {
      * notification center. The classifier of this notification will be the workspace ID. The notification info will
      * contain the message ID under the key 'messageID'.
      */
-    void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback);
+    void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
 }
