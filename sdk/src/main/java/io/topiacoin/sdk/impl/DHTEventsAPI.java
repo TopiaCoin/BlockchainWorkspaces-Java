@@ -111,7 +111,7 @@ public class DHTEventsAPI implements EventsAPI {
                         List<DHTWorkspaceEntry> addedWorkspaces = new ArrayList<>(theseEntries);
                         addedWorkspaces.removeAll(_cachedEntries);
                         for(DHTWorkspaceEntry addedWorkspace : addedWorkspaces) {
-                            _notificationCenter.postNotification("newWorkspace", addedWorkspace.getWorkspaceID(), null);
+                            _notificationCenter.postNotification("newWorkspace", "" + addedWorkspace.getWorkspaceID(), null);
                         }
                     }
                     if(!theseEntries.containsAll(_cachedEntries)) {
@@ -119,7 +119,7 @@ public class DHTEventsAPI implements EventsAPI {
                         List<DHTWorkspaceEntry> removedWorkspaces = new ArrayList<>(_cachedEntries);
                         removedWorkspaces.removeAll(theseEntries);
                         for(DHTWorkspaceEntry removedWorkspace : removedWorkspaces) {
-                            _notificationCenter.postNotification("removedFromWorkspace", removedWorkspace.getWorkspaceID(), null);
+                            _notificationCenter.postNotification("removedFromWorkspace", "" + removedWorkspace.getWorkspaceID(), null);
                         }
                     }
                     _cachedEntries = theseEntries;

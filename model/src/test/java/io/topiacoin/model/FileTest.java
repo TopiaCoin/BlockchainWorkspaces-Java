@@ -17,7 +17,6 @@ public class FileTest {
         assertNull(file.getName());
         assertNull(file.getMimeType());
         assertNull(file.getEntryID());
-        assertNull(file.getContainerID());
         assertNull(file.getParentID());
         assertFalse(file.isFolder()) ;
         assertEquals ( 0, file.getStatus());
@@ -31,7 +30,7 @@ public class FileTest {
         String name = "MrMagoo";
         String mimeType = "person/dottering";
         String entryID = "1234567";
-        String containerID = "deadbeef";
+        long containerID = 45678L;
         String parentID = "feed";
         boolean isFolder = true;
         int status = 765;
@@ -57,7 +56,7 @@ public class FileTest {
         String name = "MrMagoo";
         String mimeType = "person/dottering";
         String entryID = "1234567";
-        String containerID = "deadbeef";
+        long containerID = 45678L;
         String parentID = "feed";
         boolean isFolder = true;
         int status = 765;
@@ -85,7 +84,7 @@ public class FileTest {
         String name = "MrMagoo";
         String mimeType = "person/dottering";
         String entryID = "1234567";
-        String containerID = "deadbeef";
+        long containerID = 45678L;
         String parentID = "feed";
         int status = 765;
         String lockOwner = "IAmTheOwner";
@@ -114,11 +113,8 @@ public class FileTest {
         assertNull(file.getEntryID());
 
         // Check the Container ID Accessor
-        assertNull(file.getContainerID());
         file.setContainerID(containerID);
         assertEquals(containerID, file.getContainerID());
-        file.setContainerID(null);
-        assertNull(file.getContainerID());
 
         // Check the Parent ID Accessor
         assertNull(file.getParentID());
@@ -181,7 +177,7 @@ public class FileTest {
         String name = "MrMagoo";
         String mimeType = "person/dottering";
         String entryID = "1234567";
-        String containerID = "deadbeef";
+        long containerID = 45678L;
         String parentID = "feed";
         boolean isFolder = true;
         int status = 765;

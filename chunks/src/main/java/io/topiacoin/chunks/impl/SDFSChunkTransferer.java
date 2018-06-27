@@ -80,7 +80,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 	 * @param state An opaque object that will be passed to the handler on fetch operation completion.  This can be used to carry state between the initiator of the fetch and the handler.
 	 * @throws IllegalStateException if the data model doesn't contain any member nodes, or if I can't infer the current logged in user
 	 */
-	@Override public void fetchChunksRemotely(List<String> chunkIDs, String containerID, final ChunksTransferHandler chunksHandler, final Object state) {
+	@Override public void fetchChunksRemotely(List<String> chunkIDs, long containerID, final ChunksTransferHandler chunksHandler, final Object state) {
 		CurrentUser me;
 		try {
 			me = _model.getCurrentUser();
@@ -165,7 +165,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		}
 	}
 
-	private List<UserNode> fetchMemberUserNodes(String containerID, String currentUserID) {
+	private List<UserNode> fetchMemberUserNodes(long containerID, String currentUserID) {
 		List<UserNode> toReturn = new ArrayList<UserNode>();
 		try {
 			List<Member> members = _model.getMembersInWorkspace(containerID);
@@ -199,7 +199,7 @@ public class SDFSChunkTransferer implements ChunkTransferer {
 		_comms.stop();
 	}
 
-	private void executeStrategy(ChunkRetrievalStrategy strategy, ChunksTransferHandler chunksHandler, Object state, CurrentUser me, String containerID) {
+	private void executeStrategy(ChunkRetrievalStrategy strategy, ChunksTransferHandler chunksHandler, Object state, CurrentUser me, long containerID) {
 		final ChunkRetrievalPlan plan = strategy.getPlan();
 		final Map<MessageID, String> chunkRequests = new HashMap<>();
 		ChunkRetrievalPlan.PlanTask task;

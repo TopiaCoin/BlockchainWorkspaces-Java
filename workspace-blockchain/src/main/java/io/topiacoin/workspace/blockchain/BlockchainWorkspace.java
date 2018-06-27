@@ -1,5 +1,6 @@
 package io.topiacoin.workspace.blockchain;
 
+import io.topiacoin.core.Configuration;
 import io.topiacoin.core.WorkspacesAPI;
 import io.topiacoin.core.callbacks.AcceptInvitationCallback;
 import io.topiacoin.core.callbacks.AcknowledgeFileCallback;
@@ -24,21 +25,33 @@ import io.topiacoin.core.callbacks.RemoveUserCallback;
 import io.topiacoin.core.callbacks.UnlockFileCallback;
 import io.topiacoin.core.callbacks.UpdateWorkspaceDescriptionCallback;
 import io.topiacoin.core.exceptions.NotLoggedInException;
+import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.crypto.CryptographicException;
 import io.topiacoin.dht.SDFSDHTAccessor;
 import io.topiacoin.model.DHTWorkspaceEntry;
 import io.topiacoin.model.DataModel;
 import io.topiacoin.model.File;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.Workspace;
+import io.topiacoin.model.exceptions.NoSuchFileException;
+import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
+import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
+import io.topiacoin.util.Notification;
+import io.topiacoin.util.NotificationCenter;
+import io.topiacoin.util.NotificationHandler;
 import io.topiacoin.workspace.blockchain.eos.EOSAdapter;
+import io.topiacoin.workspace.blockchain.eos.EOSChainmail;
+import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
 import io.topiacoin.workspace.blockchain.exceptions.ChainAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.exceptions.NoSuchChainException;
 import org.apache.commons.lang.NotImplementedException;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.UUID;
+import java.util.List;
+import java.util.Random;
 
 public class BlockchainWorkspace implements WorkspacesAPI {
 
@@ -46,6 +59,27 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     private DataModel _dataModel;
     private Chainmail _chainMail;
     private SDFSDHTAccessor _dhtAccessor;
+    private Configuration _config;
+    private NotificationCenter _notificationCenter;
+    private String currentUserID = null;
+
+    public BlockchainWorkspace(Configuration config) {
+        _chainMail = new EOSChainmail(config);
+        _adapterManager = new RPCAdapterManager(_chainMail);
+        _dataModel = DataModel.getInstance();
+        _config = config;
+        _dhtAccessor = SDFSDHTAccessor.getInstance(_config, _dataModel);
+        _notificationCenter = NotificationCenter.defaultCenter();
+        _notificationCenter.addHandler(new NotificationHandler() {
+            @Override public void handleNotification(Notification notification) {
+                try {
+                    currentUserID = _dataModel.getCurrentUser().getUserID();
+                } catch (NoSuchUserException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "login", null);
+    }
 
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
@@ -77,8 +111,7 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void connectWorkspace(String workspaceID, ConnectWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
-
+    public void connectWorkspace(long workspaceID, ConnectWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Instruct ChainMail to connect to the specified workspace's blockchain
         DHTWorkspaceEntry dhtWorkspace = _dhtAccessor.fetchDHTWorkspace(workspaceID);
         if(dhtWorkspace == null) {
@@ -102,8 +135,8 @@ public class BlockchainWorkspace implements WorkspacesAPI {
                 e1.printStackTrace();
             }
         }
-        EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
         // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
+        EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
     }
 
     /**
@@ -129,25 +162,25 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     @Override
     public void createWorkspace(String workspaceName, String workspaceDescription, CreateWorkspaceCallback callback) throws NotLoggedInException {
         // Generate a GUID for the new workspace
-        String workspaceID = UUID.randomUUID().toString();
+        long workspaceID = generateWorkspaceGUID();
         // Instruct Chainmail to create a new workspace blockchain using the new workspace GUID.
-        String currentUserID;
         try {
-            currentUserID = _dataModel.getCurrentUser().getUserID();
-        } catch (NoSuchUserException e) {
-            throw new NotLoggedInException("", e);
-        }
-        try {
+            SecretKey workspaceKey = CryptoUtils.generateAESKey();
+            String ownerKey = CryptoUtils.encryptWithPublicKeyToString(workspaceKey.getEncoded(), _dataModel.getCurrentUser().getPublicKey());
             _chainMail.createBlockchain(currentUserID, workspaceID);
             _chainMail.startBlockchain(currentUserID, workspaceID, null);
-        } catch (ChainAlreadyExistsException | NoSuchChainException | IOException e1) {
+            // Once the chain has been created and started, get the RPC Adapter from the Manager.
+            EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
+            // Instruct the RPC Adapter to initialize the chain with the workspace name, description, and user record for the currently logged in user.
+            adapter.initializeWorkspace(workspaceID, currentUserID, workspaceName, workspaceDescription, ownerKey);
+        } catch (ChainAlreadyExistsException | NoSuchChainException | IOException | CryptographicException | NoSuchUserException | WorkspaceAlreadyExistsException | BlockchainException e1) {
             e1.printStackTrace();
         }
-        // Once the chain has been created and started, get the RPC Adapter from the Manager.
-        EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
-        // Instruct the RPC Adapter to initialize the chain with the workspace name, description, and user record for the currently logged in user.
-        adapter.initializeWorkspace();
-        throw new NotImplementedException("");
+    }
+
+    private long generateWorkspaceGUID() {
+        //TODO is this how we want to do this?
+        return new Random().nextLong();
     }
 
     /**
@@ -166,10 +199,25 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback) {
+    public void updateWorkspaceDescription(Workspace workspaceToUpdate, UpdateWorkspaceDescriptionCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(workspaceToUpdate.getGuid());
         // Instruct the RPC Adapter to set the workspace description
+        try {
+            adapter.setWorkspaceDescription(workspaceToUpdate.getGuid(), currentUserID, workspaceToUpdate.getDescription());
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private EOSAdapter getEOSAdapter(long guid) throws NotLoggedInException, NoSuchWorkspaceException {
+        EOSAdapter adapter = _adapterManager.getRPCAdapter(guid);
+        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        if(adapter == null) {
+            connectWorkspace(guid, null);
+            adapter = _adapterManager.getRPCAdapter(guid);
+        }
+        return adapter;
     }
 
     /**
@@ -192,10 +240,16 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback) {
+    public void inviteUser(Workspace workspace, String userID, String inviteMessage, InviteUserCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
-        // Instruct the RPC Adapter to add an invitation record to the blockchain for the specified user.
+        EOSAdapter adapter = getEOSAdapter(workspace.getGuid());
+        try {
+            String ownerKey = CryptoUtils.encryptWithPublicKeyToString(workspace.getWorkspaceKey().getEncoded(), _dataModel.getUserByID(userID).getPublicKey());
+            // Instruct the RPC Adapter to add an invitation record to the blockchain for the specified user.
+            adapter.addMember(workspace.getGuid(), currentUserID, userID, ownerKey);
+        } catch (CryptographicException | BlockchainException | NoSuchUserException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -214,10 +268,15 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback) {
+    public void acceptInvitation(Workspace workspace, AcceptInvitationCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(workspace.getGuid());
         // Instruct the RPC Adapter to accept the invitation to the specified workspace for the currently logged in user.
+        try {
+            adapter.acceptInvitation(workspace.getGuid(), currentUserID);
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -236,12 +295,20 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void declineInvitation(Workspace workspace, DeclineInvitationCallback callback) {
+    public void declineInvitation(Workspace workspace, DeclineInvitationCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
-        // Instruct the RPC Adapter to decline the invitation to the specified workspace for the currently logged in user.
-        // Instruct Chainmail to stop the blockchain for the declined workspace
-        // Instruct Chainmail to delete the blockchain fro the declined workspace.
+        EOSAdapter adapter = getEOSAdapter(workspace.getGuid());
+        try {
+            // Instruct the RPC Adapter to decline the invitation to the specified workspace for the currently logged in user.
+            adapter.declineInvitation(workspace.getGuid(), currentUserID);
+            // Instruct Chainmail to stop the blockchain for the declined workspace
+            // Instruct Chainmail to delete the blockchain for the declined workspace.
+            _chainMail.destroyBlockchain(workspace.getGuid());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -262,7 +329,8 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      */
     @Override
     public void deliverWorkspaceKey(String workspaceGUID, String userID, String encryptedWorkspaceKey) {
-
+        //TODO implement me
+        throw new NotImplementedException("");
     }
 
     /**
@@ -283,12 +351,20 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback) {
+    public void leaveWorkspace(Workspace workspace, LeaveWorkspaceCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
-        // Instruct the RPC Adapter to remove the currently logged in user from the workspace
-        // Instruct Chainmail to stop the blockchain for the workspace
-        // Instruct Chainmail to delete the blockchain for the workspace
+        EOSAdapter adapter = getEOSAdapter(workspace.getGuid());
+        try {
+            // Instruct the RPC Adapter to remove the currently logged in user from the workspace
+            adapter.removeMember(workspace.getGuid(), currentUserID, currentUserID);
+            // Instruct Chainmail to stop the blockchain for the workspace
+            // Instruct Chainmail to delete the blockchain for the workspace
+            _chainMail.destroyBlockchain(workspace.getGuid());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -310,10 +386,21 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback) {
-        // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
-        // Instruct the RPC Adapter to remove the specified user from the workspace
+    public void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(memberID.equals(currentUserID)) {
+            leaveWorkspace(workspace, new LeaveWorkspaceCallback() {
+                //call callback.whatever();
+            });
+        } else {
+            // Get the RPC Adapter for the specified workspace
+            EOSAdapter adapter = getEOSAdapter(workspace.getGuid());
+            // Instruct the RPC Adapter to remove the specified user from the workspace
+            try {
+                adapter.removeMember(workspace.getGuid(), currentUserID, memberID);
+            } catch (BlockchainException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -346,10 +433,51 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFile(File fileToAdd, AddFileCallback callback) {
+    public void addFile(File fileToAdd, AddFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToAdd.isFolder() || fileToAdd.getVersions() == null || fileToAdd.getVersions().isEmpty()) {
+            throw new IllegalArgumentException("Cannot add File - malformed");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToAdd.getContainerID());
         // Instruct the Adapter to add the specified file metadata to the blockchain
+        try {
+            adapter.addFile(fileToAdd.getContainerID(), currentUserID, fileToAdd);
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Creates a new folder in the specified workspace with the specified parent. It is an error to specify a
+     * non-existent workspace GUID, a non-existent parent GUID, or a null or blank folderName. If the parentID is null
+     * or blank, the folder will be created at the root of the workspace.
+     * <p>
+     * This method will return the folder GUID of the newly created folder.
+     * <p>
+     * On successful creation of the folder, a notification of type 'folderAddComplete' will be posted to the
+     * notification center. The classifier of this notification will be the workspace ID. The notification info will
+     * contain the folder ID under the key 'folderID'.
+     * <p>
+     * On failure to add a folder, a notification of type 'folderAddFailed' will be posted to the notification center.
+     * The classifier of this notification will be the workspace ID.  The notification info will contain the the reason
+     * for the failure under the 'reason' key.
+     *
+     * @param folderToAdd
+     * @param callback
+     */
+    @Override
+    public void addFolder(File folderToAdd, AddFolderCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(!folderToAdd.isFolder() || (folderToAdd.getVersions() != null && !folderToAdd.getVersions().isEmpty())) {
+            throw new IllegalArgumentException("Cannot add File - malformed");
+        }
+        // Get the RPC Adapter for the specified workspace
+        EOSAdapter adapter = getEOSAdapter(folderToAdd.getContainerID());
+        // Instruct the Adapter to add the specified file metadata to the blockchain
+        try {
+            adapter.addFile(folderToAdd.getContainerID(), currentUserID, folderToAdd);
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -369,10 +497,18 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeFile(File fileToRemove, RemoveFileCallback callback) {
+    public void removeFile(File fileToRemove, RemoveFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToRemove.isFolder() || fileToRemove.getVersions() == null || fileToRemove.getVersions().isEmpty()) {
+            throw new IllegalArgumentException("Cannot add File - malformed");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToRemove.getContainerID());
         // Instruct the RPC Adapter to remove the specified file from the blockchain
+        try {
+            adapter.removeFile(fileToRemove.getContainerID(), currentUserID, fileToRemove.getEntryID(), null);
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -406,10 +542,18 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFileVersion(File fileToBeAdded, AddFileVersionCallback callback) {
+    public void addFileVersion(File fileToBeAdded, AddFileVersionCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToBeAdded.isFolder() || fileToBeAdded.getVersions() == null || fileToBeAdded.getVersions().isEmpty() || fileToBeAdded.getVersions().size() > 1 || fileToBeAdded.getVersions().get(0).getAncestorVersionIDs() == null || fileToBeAdded.getVersions().get(0).getAncestorVersionIDs().isEmpty()) {
+            throw new IllegalArgumentException("Cannot add version - malformed");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToBeAdded.getContainerID());
         // Instruct the RPC Adapter to add a new version to the specified file with the given metadata.
+        try {
+            adapter.addFile(fileToBeAdded.getContainerID(), currentUserID, fileToBeAdded);
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
@@ -434,10 +578,15 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) {
+    public void removeFileVersion(long workspaceGUID, String fileGUID, String fileVersionGUID, RemoveFileVersionCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(workspaceGUID);
         // Instract the RPC Adapter to remove the specified file version from the blockchain.
+        try {
+            adapter.removeFile(workspaceGUID, currentUserID, fileGUID, fileVersionGUID);
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
@@ -458,36 +607,63 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void acknowledgeFileVersion(String workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) {
+    public void acknowledgeFileVersion(long workspaceGUID, String fileGUID, String fileVersionGUID, AcknowledgeFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(workspaceGUID);
         // Instruct the RPC Adapter to mark the specified file version as acknowledged.
+        try {
+            adapter.acknowledgeFile(workspaceGUID, currentUserID, fileGUID, fileVersionGUID);
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * @param fileToTag
      * @param tagName
-     * @param isPrivate
+     * @param isPublic
      * @param callback
      */
     @Override
-    public void addFileTag(File fileToTag, String tagName, boolean isPrivate, AddFileTagCallback callback) {
+    public void addFileTag(File fileToTag, String tagName, boolean isPublic, AddFileTagCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToTag.isFolder() || fileToTag.getVersions() == null || fileToTag.getVersions().isEmpty() || fileToTag.getVersions().size() > 1) {
+            throw new IllegalArgumentException("Cannot add tag - malformed");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToTag.getContainerID());
         // Instruct the RPC Adapter to add the given tag to the specified file.
+        try {
+            adapter.addFileTag(fileToTag.getContainerID(), currentUserID, fileToTag.getEntryID(), fileToTag.getVersions().get(0).getVersionID(), tagName, isPublic);
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * @param fileToUntag
      * @param tagName
-     * @param isPrivate
+     * @param isPublic
      * @param callback
      */
     @Override
-    public void removeFileTag(File fileToUntag, String tagName, boolean isPrivate, RemoveFileTagCallback callback) {
+    public void removeFileTag(File fileToUntag, String tagName, boolean isPublic, RemoveFileTagCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToUntag.isFolder() || fileToUntag.getVersions() == null || fileToUntag.getVersions().isEmpty() || fileToUntag.getVersions().size() > 1) {
+            throw new IllegalArgumentException("Cannot add tag - malformed");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToUntag.getContainerID());
         // Instruct the RPC Adapter to remove the given tag from the specified file.
+        try {
+            adapter.removeFileTag(fileToUntag.getContainerID(), currentUserID, fileToUntag.getEntryID(), fileToUntag.getVersions().get(0).getVersionID(), tagName, isPublic);
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -545,10 +721,54 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void lockFile(File fileToLock, LockFileCallback callback) {
+    public void lockFile(File fileToLock, LockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToLock.isFolder()) {
+            throw new IllegalArgumentException("Cannot lock folders");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToLock.getContainerID());
         // Instruct the RPC Adapter to lock the specified file in the blockchain
+        try {
+            adapter.lockFile(fileToLock.getContainerID(), currentUserID, fileToLock.getEntryID());
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Locks the specified file version.  Locking a file version prevents other users from deleting the version or the
+     * file.  It is an error to specify a non-existent workspace GUID, or a non-existent file GUID, or a non-existant version GUID.
+     * <p>
+     * Note: Not sure how we enforce this in a decentralized, blockchain based workspace.
+     * <p>
+     * On successful locking of the file version, a notification of type 'lockFileVersionComplete' will be posted to the notification
+     * center.  The classifier of this notification will be the workspace ID.  The notification info will contain the
+     * file ID under the 'fileID' key and version ID under the 'versionID' key
+     * <p>
+     * On failure to lock the file version, a notification of type 'lockFileVersionFailed' will be posted to the notification center.
+     * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
+     * under the 'fileID' key, the version ID under the 'versionID' key, and the reason for failure under the 'reason' key.
+     *
+     * @param fileToLock
+     * @param callback
+     */
+    @Override
+    public void lockFileVersion(File fileToLock, LockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToLock.isFolder() || fileToLock.getVersions() == null || fileToLock.getVersions().isEmpty() || fileToLock.getVersions().size() > 1) {
+            throw new IllegalArgumentException("Cannot add tag - malformed");
+        }
+        // Get the RPC Adapter for the specified workspace
+        EOSAdapter adapter = getEOSAdapter(fileToLock.getContainerID());
+        // Instruct the RPC Adapter to lock the specified file in the blockchain
+        try {
+            adapter.lockFileVersion(fileToLock.getContainerID(), currentUserID, fileToLock.getEntryID(), fileToLock.getVersions().get(0).getVersionID());
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -561,7 +781,7 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
      * contain the file ID under the 'fileID' key.
      * <p>
-     * On failure to lock the file, a notification of type 'unlockFileFailed' will be posted to the notification center.
+     * On failure to unlock the file, a notification of type 'unlockFileFailed' will be posted to the notification center.
      * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
      * under the 'fileID' key, and the reason for failure under the 'reason' key.
      *
@@ -569,35 +789,51 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void unlockFile(File fileToUnlock, UnlockFileCallback callback) {
+    public void unlockFile(File fileToUnlock, UnlockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(fileToUnlock.getContainerID());
         // Instruct the RPC Adapter to unlock the specified file in the blockchain
+        try {
+            adapter.unlockFile(fileToUnlock.getContainerID(), currentUserID, fileToUnlock.getEntryID());
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
-     * Creates a new folder in the specified workspace with the specified parent. It is an error to specify a
-     * non-existent workspace GUID, a non-existent parent GUID, or a null or blank folderName. If the parentID is null
-     * or blank, the folder will be created at the root of the workspace.
+     * Unlocks the specified file version.  Unlocking a file version allows other users to once again delete the version of
+     * the file or the file itself. It is an error to specify a non-existent workspace GUID, or a non-existent file GUID, or a non-existent version GUID
      * <p>
-     * This method will return the folder GUID of the newly created folder.
+     * Note: Not sure how we enforce this in a decentralized, blockchain based workspace.
      * <p>
-     * On successful creation of the folder, a notification of type 'folderAddComplete' will be posted to the
-     * notification center. The classifier of this notification will be the workspace ID. The notification info will
-     * contain the folder ID under the key 'folderID'.
+     * On successful unlocking of the file version, a notification of type 'unlockFileVersionComplete' will be posted to the
+     * notification center.  The classifier of this notification will be the workspace ID.  The notification info will
+     * contain the file ID under the 'fileID' key and the version ID under the 'versionID' key.
      * <p>
-     * On failure to add a folder, a notification of type 'folderAddFailed' will be posted to the notification center.
-     * The classifier of this notification will be the workspace ID.  The notification info will contain the the reason
-     * for the failure under the 'reason' key.
+     * On failure to unlock the file version, a notification of type 'unlockFileVersionFailed' will be posted to the notification center.
+     * The classifier of this notification will be the workspace ID.  The notification info will contain the file ID
+     * under the 'fileID' key, the version ID under the 'versionID' key, and the reason for failure under the 'reason' key.
      *
-     * @param folderToAdd
+     * @param fileToUnlock
      * @param callback
      */
     @Override
-    public void addFolder(File folderToAdd, AddFolderCallback callback) {
+    public void unlockFileVersion(File fileToUnlock, UnlockFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(fileToUnlock.isFolder() || fileToUnlock.getVersions() == null || fileToUnlock.getVersions().isEmpty() || fileToUnlock.getVersions().size() > 1) {
+            throw new IllegalArgumentException("Cannot add tag - malformed");
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
-        // Instruct the RPC Adapter to add the specified folder in the blockchain.
+        EOSAdapter adapter = getEOSAdapter(fileToUnlock.getContainerID());
+        // Instruct the RPC Adapter to unlock the specified file in the blockchain
+        try {
+            adapter.unlockFileVersion(fileToUnlock.getContainerID(), currentUserID, fileToUnlock.getEntryID(), fileToUnlock.getVersions().get(0).getVersionID());
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        } catch (NoSuchFileException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -616,10 +852,18 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void removeFolder(File folderToRemove, RemoveFolderCallback callback) {
+    public void removeFolder(File folderToRemove, RemoveFolderCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+        if(!folderToRemove.isFolder()) {
+            throw new IllegalArgumentException();
+        }
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(folderToRemove.getContainerID());
         // Instruct the RPC Adapter to remove the specified folder in the blockchain.
+        try {
+            adapter.removeFile(folderToRemove.getContainerID(), currentUserID, folderToRemove.getEntryID(), null);
+        } catch(BlockchainException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
@@ -641,10 +885,15 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addMessage(String workspaceGUID, String message, AddMessageCallback callback) {
+    public void addMessage(long workspaceGUID, String message, String mimeType, AddMessageCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(workspaceGUID);
         // Instruct the RPC Adapter to add the specified message to the blockchain.
+        try {
+            adapter.addMessage(workspaceGUID, currentUserID, message, mimeType);
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -659,9 +908,16 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback) {
+    public void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        // If not found, tell Chainmail to start the blockchain, fetching the RPC Adapter upon completion.
+        EOSAdapter adapter = getEOSAdapter(messageToAcknowledge.getGuid());
         // Instruct the RPC Adapter to acknowledge the specified message in the blockchain.
+        try {
+            adapter.acknowledgeMessage(messageToAcknowledge.getGuid(), currentUserID, messageToAcknowledge.getEntityID());
+        } catch (NoSuchMessageException e) {
+            e.printStackTrace();
+        } catch (BlockchainException e) {
+            e.printStackTrace();
+        }
     }
 }

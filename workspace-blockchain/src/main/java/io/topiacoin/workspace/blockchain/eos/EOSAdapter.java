@@ -641,7 +641,7 @@ public class EOSAdapter {
         }
     }
 
-    public void addFile(long guid, String user, File file, List<String> ancestorVersionIDs) throws NoSuchWorkspaceException, BlockchainException {
+    public void addFile(long guid, String user, File file) throws NoSuchWorkspaceException, BlockchainException {
 
         try {
             Map<String, Object> args = new HashMap<>();
@@ -651,8 +651,10 @@ public class EOSAdapter {
             args.put("fileID", file.getEntryID());
             List<FileVersion> versions = file.getVersions();
             String versionID = NULL_UINT128;
+            List<String> ancestorVersionIDs = null;
             if (versions != null && versions.size() > 0) {
                 versionID = versions.get(0).getVersionID();
+                ancestorVersionIDs = versions.get(0).getAncestorVersionIDs();
             }
             args.put("versionID", versionID);
             args.put("ancestorVersionID", ancestorVersionIDs);
@@ -807,7 +809,7 @@ public class EOSAdapter {
                 boolean isFolder = false;
                 int status = (Integer) row.get("status");
                 String lockOwner = null;
-                file = new File(name, mimeType, entryID, Long.toString(guid), parentID, isFolder, status, lockOwner, null);
+                file = new File(name, mimeType, entryID, guid, parentID, isFolder, status, lockOwner, null);
                 if (TextUtils.isEmpty(versionID) || row.get("versionID").equals(versionID)) {
                     break;
                 }
@@ -933,7 +935,7 @@ public class EOSAdapter {
                 String text = (String) row.get("text");
                 String mimeType = (String) row.get("mimeType");
                 byte[] digSig = null;
-                Message message = new Message(author, Long.toString(guid), msgID, seq, timestamp, text, mimeType, digSig);
+                Message message = new Message(author, msgID, guid, seq, timestamp, text, mimeType, digSig);
                 messages.add(message);
                 newContinuationToken = getNextToken(row.get("id"));
             }
@@ -954,7 +956,7 @@ public class EOSAdapter {
         do {
             messages = getMessages(guid, continuationToken);
             for ( Message curMessage : messages.getMessages()) {
-                if ( curMessage.getGuid().equals(msgID)) {
+                if ( curMessage.getEntityID().equals(msgID)) {
                     message = curMessage;
                     break;
                 }

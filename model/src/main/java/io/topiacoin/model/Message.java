@@ -1,12 +1,13 @@
 package io.topiacoin.model;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class Message {
 
     private String authorID;
     private String entityID;
-    private String guid;
+    private long guid;
     private long seq;
     private long timestamp;
     private String text;
@@ -17,7 +18,7 @@ public class Message {
     public Message() {
     }
 
-    public Message(String authorID, String entityID, String guid, long seq, long timestamp, String text, String mimeType, byte[] digitalSignature) {
+    public Message(String authorID, String entityID, long guid, long seq, long timestamp, String text, String mimeType, byte[] digitalSignature) {
         this.authorID = authorID;
         this.entityID = entityID;
         this.guid = guid;
@@ -55,11 +56,11 @@ public class Message {
         this.entityID = entityID;
     }
 
-    public String getGuid() {
+    public long getGuid() {
         return guid;
     }
 
-    public void setGuid(String guid) {
+    public void setGuid(long guid) {
         this.guid = guid;
     }
 
@@ -107,28 +108,21 @@ public class Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         Message message = (Message) o;
-
-        if (seq != message.seq) return false;
-        if (timestamp != message.timestamp) return false;
-        if (authorID != null ? !authorID.equals(message.authorID) : message.authorID != null) return false;
-        if (entityID != null ? !entityID.equals(message.entityID) : message.entityID != null) return false;
-        if (guid != null ? !guid.equals(message.guid) : message.guid != null) return false;
-        if (text != null ? !text.equals(message.text) : message.text != null) return false;
-        if (mimeType != null ? !mimeType.equals(message.mimeType) : message.mimeType != null) return false;
-        return Arrays.equals(digitalSignature, message.digitalSignature);
+        return guid == message.guid &&
+                seq == message.seq &&
+                timestamp == message.timestamp &&
+                Objects.equals(authorID, message.authorID) &&
+                Objects.equals(entityID, message.entityID) &&
+                Objects.equals(text, message.text) &&
+                Objects.equals(mimeType, message.mimeType) &&
+                Arrays.equals(digitalSignature, message.digitalSignature);
     }
 
     @Override
     public int hashCode() {
-        int result = authorID != null ? authorID.hashCode() : 0;
-        result = 31 * result + (entityID != null ? entityID.hashCode() : 0);
-        result = 31 * result + (guid != null ? guid.hashCode() : 0);
-        result = 31 * result + (int) (seq ^ (seq >>> 32));
-        result = 31 * result + (int) (timestamp ^ (timestamp >>> 32));
-        result = 31 * result + (text != null ? text.hashCode() : 0);
-        result = 31 * result + (mimeType != null ? mimeType.hashCode() : 0);
+
+        int result = Objects.hash(authorID, entityID, guid, seq, timestamp, text, mimeType);
         result = 31 * result + Arrays.hashCode(digitalSignature);
         return result;
     }

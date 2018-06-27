@@ -6,11 +6,11 @@ import java.util.Map;
 public class ChainInfo {
 	public int rpcPort;
 	public int peerPort;
-	public String workspaceId;
+	public long workspaceId;
 	public Process proc;
 	public Map<String, String> extraInfo = new HashMap<>();
 
-	public ChainInfo(String name, int rpc, int peer, Process multichaindProcess) {
+	public ChainInfo(long name, int rpc, int peer, Process multichaindProcess) {
 		rpcPort = rpc;
 		peerPort = peer;
 		workspaceId = name;

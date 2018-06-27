@@ -47,8 +47,9 @@ public class FileVersionTest {
         List<FileTag> systemTags = new ArrayList<FileTag>();
         List<FileChunk> fileChunks = new ArrayList<FileChunk>();
         List<FileVersionReceipt> receipts = new ArrayList<FileVersionReceipt>();
+        List<String> ancestorVersionIDs = new ArrayList<>();
 
-        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts) ;
+        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
 
         assertEquals(entryID, fileVersion.getEntryID());
         assertEquals(versionID, fileVersion.getVersionID());
@@ -62,6 +63,7 @@ public class FileVersionTest {
         assertEquals(systemTags, fileVersion.getSystemTags());
         assertEquals(fileChunks, fileVersion.getFileChunks());
         assertEquals(receipts, fileVersion.getReceipts());
+        assertEquals(ancestorVersionIDs, fileVersion.getAncestorVersionIDs());
 
         assertNotSame(userTags, fileVersion.getUserTags());
         assertNotSame(systemTags, fileVersion.getSystemTags());
@@ -86,8 +88,9 @@ public class FileVersionTest {
         List<FileTag> systemTags = null;
         List<FileChunk> fileChunks = null;
         List<FileVersionReceipt> receipts = null;
+        List<String> ancestorVersionIDs = null;
 
-        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts) ;
+        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
 
         assertEquals(entryID, fileVersion.getEntryID());
         assertEquals(versionID, fileVersion.getVersionID());
@@ -102,6 +105,7 @@ public class FileVersionTest {
         assertNotNull( fileVersion.getSystemTags());
         assertNotNull( fileVersion.getFileChunks());
         assertNotNull( fileVersion.getReceipts());
+        assertNotNull( fileVersion.getAncestorVersionIDs());
     }
 
 
@@ -255,6 +259,7 @@ public class FileVersionTest {
         List<FileTag> systemTags = new ArrayList<FileTag>();
         List<FileChunk> fileChunks = new ArrayList<FileChunk>();
         List<FileVersionReceipt> receipts = new ArrayList<FileVersionReceipt>();
+        List<String> ancestorVersionIDs = new ArrayList<>();
 
         userTags.add(new FileTag ( "scope", "value")) ;
 
@@ -265,8 +270,8 @@ public class FileVersionTest {
 
         receipts.add(new FileVersionReceipt(entryID, versionID, ownerID, date)) ;
 
-        FileVersion fileVersion1 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts) ;
-        FileVersion fileVersion2 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts) ;
+        FileVersion fileVersion1 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
+        FileVersion fileVersion2 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
 
         assertEquals(fileVersion1, fileVersion1);
         assertEquals(fileVersion2, fileVersion2);

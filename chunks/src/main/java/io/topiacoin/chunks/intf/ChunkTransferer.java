@@ -16,7 +16,7 @@ public interface ChunkTransferer {
 	 * @param handler The Handler for notifying when each chunk succeeds/fails to transfer, and for when the whole list is done being processed
 	 * @param state An opaque object that will be passed to the handler on fetch operation completion.  This can be used to carry state between the initiator of the fetch and the handler.
 	 */
-	public void fetchChunksRemotely(final List<String> chunkIDs, final String containerID, final ChunksTransferHandler handler, final Object state);
+	public void fetchChunksRemotely(final List<String> chunkIDs, final long containerID, final ChunksTransferHandler handler, final Object state);
 
 	public int getListenPort();
 

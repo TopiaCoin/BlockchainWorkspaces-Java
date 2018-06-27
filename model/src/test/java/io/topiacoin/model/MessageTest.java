@@ -12,8 +12,6 @@ public class MessageTest {
 
         assertNull(message.getAuthorID());
         assertNull(message.getDigitalSignature());
-        assertNull(message.getEntityID());
-        assertNull(message.getGuid());
         assertNull(message.getMimeType());
         assertNull(message.getText());
 
@@ -25,8 +23,8 @@ public class MessageTest {
     public void testConstructor() throws Exception {
 
         String authorID = "JannerWingfeather";
-        String entityID = "Entity Identifier";
-        String guid = "Globally Unique Identifier";
+        String entityID = "45678";
+        long guid = 12345L;
         long seq = 12345;
         long timestamp = 1564783953;
         String text = "A great place to live";
@@ -50,8 +48,8 @@ public class MessageTest {
     public void testBasicAccessors() throws Exception {
 
         String authorID = "JannerWingfeather";
-        String entityID = "Entity Identifier";
-        String guid = "Globally Unique Identifier";
+        String entityID = "45678";
+        long guid = 12345L;
         long seq = 12345;
         long timestamp = 1564783953;
         String text = "A great place to live";
@@ -66,17 +64,11 @@ public class MessageTest {
         message.setAuthorID(null);
         assertNull(message.getAuthorID());
 
-        assertNull(message.getEntityID());
         message.setEntityID(entityID);
         assertEquals(entityID, message.getEntityID());
-        message.setEntityID(null);
-        assertNull(message.getEntityID());
 
-        assertNull(message.getGuid());
         message.setGuid(guid);
         assertEquals(guid, message.getGuid());
-        message.setGuid(null);
-        assertNull(message.getGuid());
 
         assertEquals(0, message.getSeq());
         message.setSeq(seq);
@@ -114,8 +106,8 @@ public class MessageTest {
     public void testEqualsAndHashCode() throws Exception {
 
         String authorID = "JannerWingfeather";
-        String entityID = "Entity Identifier";
-        String guid = "Globally Unique Identifier";
+        String entityID = "45678";
+        long guid = 12345L;
         long seq = 12345;
         long timestamp = 1564783953;
         String text = "A great place to live";

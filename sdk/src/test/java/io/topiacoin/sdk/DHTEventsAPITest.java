@@ -49,10 +49,10 @@ public class DHTEventsAPITest {
 		CurrentUser user = new CurrentUser("user1-63HzRNRH7h1", "user1-63HzRNRH71h@hotmail.com", kp1.getPublic(), kp1.getPrivate());
 		model.setCurrentUser(user);
 
-		Map<String, SecretKey> testWorkspaces = new HashMap<>();
-		testWorkspaces.put("wks1", CryptoUtils.generateAESKey());
-		testWorkspaces.put("wks2", CryptoUtils.generateAESKey());
-		testWorkspaces.put("wks3", CryptoUtils.generateAESKey());
+		Map<Long, SecretKey> testWorkspaces = new HashMap<>();
+		testWorkspaces.put(123L, CryptoUtils.generateAESKey());
+		testWorkspaces.put(456L, CryptoUtils.generateAESKey());
+		testWorkspaces.put(789L, CryptoUtils.generateAESKey());
 		Set<String> notificationsIveReceived = new HashSet<String>();
 		final CountDownLatch latch = new CountDownLatch(testWorkspaces.keySet().size());
 		final Object lock = new Object();
@@ -73,7 +73,7 @@ public class DHTEventsAPITest {
 		//Add workspaces for the user - make sure the Notifications fire. This is weirdly more of an emulation of the createWorkspace call,
 		//but it'll have to do.
 		synchronized (lock) {
-			for (String workspaceID : testWorkspaces.keySet()) {
+			for (long workspaceID : testWorkspaces.keySet()) {
 				SecretKey workspaceNodeKey = testWorkspaces.get(workspaceID);
 				//Store the nodeKey for the new user
 				String pkString = Base64.getEncoder().encodeToString(user.getPublicKey().getEncoded());
@@ -82,8 +82,8 @@ public class DHTEventsAPITest {
 				fauxBootstrapNode.storeContent(dhtKey, dhtValue);
 				//Store the workspaceID for the user
 				dhtKey = HashUtils.sha256String(user.getUserID());
-				dhtValue = CryptoUtils.encryptWithPublicKeyToString(workspaceID, user.getPublicKey());
-				String hash = HashUtils.sha256String(HashUtils.sha256String(workspaceID));
+				dhtValue = CryptoUtils.encryptWithPublicKeyToString("" + workspaceID, user.getPublicKey());
+				String hash = HashUtils.sha256String(HashUtils.sha256String("" + workspaceID));
 				fauxBootstrapNode.storeContent(dhtKey, hash + "\n" + dhtValue);
 			}
 		}
@@ -102,11 +102,11 @@ public class DHTEventsAPITest {
 		}, "removedFromWorkspace", null);
 		//remove workspaces for the user - make sure the Notifications fire.
 		synchronized (lock) {
-			for (String workspaceID : testWorkspaces.keySet()) {
+			for (long workspaceID : testWorkspaces.keySet()) {
 				SecretKey workspaceNodeKey = testWorkspaces.get(workspaceID);
 				//Fetch the User's workspaceIDs and remove this workspace from the list
 				String dhtKey = HashUtils.sha256String(user.getUserID());
-				String hash = HashUtils.sha256String(HashUtils.sha256String(workspaceID));
+				String hash = HashUtils.sha256String(HashUtils.sha256String("" + workspaceID));
 				Set<String> values = fauxBootstrapNode.fetchContent(dhtKey);
 				for (String value : values) {
 					String[] split = value.split("\n");
@@ -126,7 +126,7 @@ public class DHTEventsAPITest {
 					fauxBootstrapNode.removeContent(dhtKey, keyStr);
 				}
 				//Fetch the workspace's nodes, and remove this user's nodes from the list
-				dhtKey = HashUtils.sha256String(workspaceID);
+				dhtKey = HashUtils.sha256String("" + workspaceID);
 				hash = HashUtils.sha256String(HashUtils.sha256String(user.getUserID()));
 				values = fauxBootstrapNode.fetchContent(dhtKey);
 				for (String value : values) {
