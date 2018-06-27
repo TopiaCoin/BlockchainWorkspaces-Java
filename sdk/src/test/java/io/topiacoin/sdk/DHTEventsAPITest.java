@@ -53,15 +53,15 @@ public class DHTEventsAPITest {
 		testWorkspaces.put(123L, CryptoUtils.generateAESKey());
 		testWorkspaces.put(456L, CryptoUtils.generateAESKey());
 		testWorkspaces.put(789L, CryptoUtils.generateAESKey());
-		Set<String> notificationsIveReceived = new HashSet<String>();
+		Set<Long> notificationsIveReceived = new HashSet<>();
 		final CountDownLatch latch = new CountDownLatch(testWorkspaces.keySet().size());
 		final Object lock = new Object();
 		NotificationCenter center = NotificationCenter.defaultCenter();
 		center.addHandler(new NotificationHandler() {
 			@Override public void handleNotification(Notification notification) {
 				synchronized (lock) {
-					Assert.assertTrue(testWorkspaces.keySet().contains(notification.getClassifier()));
-					Assert.assertTrue(notificationsIveReceived.add(notification.getClassifier()));
+					Assert.assertTrue(testWorkspaces.keySet().contains(Long.parseLong(notification.getClassifier())));
+					Assert.assertTrue(notificationsIveReceived.add(Long.parseLong(notification.getClassifier())));
 					latch.countDown();
 				}
 			}
@@ -94,8 +94,8 @@ public class DHTEventsAPITest {
 		center.addHandler(new NotificationHandler() {
 			@Override public void handleNotification(Notification notification) {
 				synchronized (lock) {
-					Assert.assertTrue(testWorkspaces.keySet().contains(notification.getClassifier()));
-					Assert.assertTrue(notificationsIveReceived.remove(notification.getClassifier()));
+					Assert.assertTrue(testWorkspaces.keySet().contains(Long.parseLong(notification.getClassifier())));
+					Assert.assertTrue(notificationsIveReceived.remove(Long.parseLong(notification.getClassifier())));
 					latch2.countDown();
 				}
 			}
