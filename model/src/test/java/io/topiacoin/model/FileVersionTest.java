@@ -49,7 +49,7 @@ public class FileVersionTest {
         List<FileVersionReceipt> receipts = new ArrayList<FileVersionReceipt>();
         List<String> ancestorVersionIDs = new ArrayList<>();
 
-        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
+        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
 
         assertEquals(entryID, fileVersion.getEntryID());
         assertEquals(versionID, fileVersion.getVersionID());
@@ -90,7 +90,7 @@ public class FileVersionTest {
         List<FileVersionReceipt> receipts = null;
         List<String> ancestorVersionIDs = null;
 
-        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
+        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
 
         assertEquals(entryID, fileVersion.getEntryID());
         assertEquals(versionID, fileVersion.getVersionID());
@@ -270,8 +270,8 @@ public class FileVersionTest {
 
         receipts.add(new FileVersionReceipt(entryID, versionID, ownerID, date)) ;
 
-        FileVersion fileVersion1 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
-        FileVersion fileVersion2 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs) ;
+        FileVersion fileVersion1 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
+        FileVersion fileVersion2 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
 
         assertEquals(fileVersion1, fileVersion1);
         assertEquals(fileVersion2, fileVersion2);

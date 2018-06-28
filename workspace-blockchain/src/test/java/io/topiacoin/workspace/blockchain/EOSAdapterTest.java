@@ -410,7 +410,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
         System.out.println("GUID: " + guid);
@@ -423,7 +423,7 @@ public class EOSAdapterTest {
         try {
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertNotNull(files.getFiles());
             assertEquals(0, files.getFiles().size());
@@ -434,7 +434,7 @@ public class EOSAdapterTest {
 
             // Verify that there is one file in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(1, files.getFiles().size());
 
@@ -444,7 +444,7 @@ public class EOSAdapterTest {
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(0, files.getFiles().size());
 
@@ -488,7 +488,7 @@ public class EOSAdapterTest {
         try {
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertNotNull(files.getFiles());
             assertEquals(0, files.getFiles().size());
@@ -508,7 +508,7 @@ public class EOSAdapterTest {
                         null,
                         null,
                         null,
-                        ancestorIDs);
+                        ancestorIDs, null);
                 File file = new File(name, mimeType, fID, guid, parentID, false, 1, null, Arrays.asList(version));
 
                 Thread.sleep(5);
@@ -519,24 +519,24 @@ public class EOSAdapterTest {
 
             // Fetch the first set of files
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(100, files.getFiles().size());
 
             // Fetch the second set of files
-            files = adapter.getFiles(guid, files.getContinuationToken());
+            files = adapter.getFiles(guid, owner, files.getContinuationToken());
             assertNotNull(files);
             assertEquals(100, files.getFiles().size());
 
             // Fetch the third set of files
-            files = adapter.getFiles(guid, files.getContinuationToken());
+            files = adapter.getFiles(guid, owner, files.getContinuationToken());
             assertNotNull(files);
             assertEquals(50, files.getFiles().size());
 
             // Fetch each file individually by its fileID
             long start = System.currentTimeMillis();
             for ( String fID : fileIDs ) {
-                File file = adapter.getFile(guid, fID, versionID);
+                File file = adapter.getFile(guid, fID, versionID, owner);
                 assertNotNull(file) ;
                 assertEquals(fID, file.getEntryID());
             }
@@ -588,7 +588,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file1 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version1));
 
         FileVersion version2 = new FileVersion(fileID,
@@ -603,7 +603,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file2 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version2));
 
         FileVersion version3 = new FileVersion(fileID,
@@ -618,7 +618,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file3 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version3));
 
         System.out.println("GUID: " + guid);
@@ -631,7 +631,7 @@ public class EOSAdapterTest {
         try {
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(0, files.getFiles().size());
 
@@ -641,7 +641,7 @@ public class EOSAdapterTest {
 
             // Verify that there is one file in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(1, files.getFiles().size());
 
@@ -651,7 +651,7 @@ public class EOSAdapterTest {
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(2, files.getFiles().size());
 
@@ -661,7 +661,7 @@ public class EOSAdapterTest {
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(1, files.getFiles().size());
 
@@ -671,13 +671,13 @@ public class EOSAdapterTest {
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(2, files.getFiles().size());
 
             // Get a specific file version
             Thread.sleep(100);
-            File file = adapter.getFile(guid, fileID, versionID3);
+            File file = adapter.getFile(guid, fileID, versionID3, owner);
             assertNotNull ( file ) ;
 
             // Remove the file
@@ -686,7 +686,7 @@ public class EOSAdapterTest {
 
             // Verify that there are no files in the workspace
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
             assertNotNull(files);
             assertEquals(0, files.getFiles().size());
 
@@ -734,7 +734,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file1 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version1));
 
         FileVersion version2 = new FileVersion(fileID,
@@ -749,7 +749,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file2 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version2));
 
         FileVersion version3 = new FileVersion(fileID,
@@ -764,7 +764,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file3 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version3));
 
         FileVersion version4 = new FileVersion(fileID,
@@ -779,7 +779,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file4 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version4));
 
         System.out.println("GUID: " + guid);
@@ -795,42 +795,42 @@ public class EOSAdapterTest {
             adapter.addFile(guid, owner, file1);
 
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
 
             // Add a new File Version
             Thread.sleep(100);
             adapter.addFile(guid, owner, file2);
 
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
 
             // Add a new File Version
             Thread.sleep(100);
             adapter.addFile(guid, owner, file3);
 
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
 
             // Add a new File Version
             Thread.sleep(100);
             adapter.addFile(guid, owner, file4);
 
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
 
             // Remove the file
             Thread.sleep(100);
             adapter.removeFile(guid, owner, fileID, versionID1);
 
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
 
             // Remove the file
             Thread.sleep(100);
             adapter.removeFile(guid, owner, fileID, versionID3);
 
             Thread.sleep(100);
-            files = adapter.getFiles(guid);
+            files = adapter.getFiles(guid, owner);
 
 
             // TODO - Add some assertions to this test case.
@@ -1036,7 +1036,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
         System.out.println("GUID: " + guid);
@@ -1054,6 +1054,11 @@ public class EOSAdapterTest {
             // Lock the File
             Thread.sleep(100);
             adapter.lockFile(guid,owner, fileID);
+
+            // Fetch the File and check the lock
+            Thread.sleep(100);
+            File fetchedFile = adapter.getFile(guid, fileID, versionID, owner);
+            assertEquals(owner, fetchedFile.getLockOwner());
 
             // Attempt to Remove the file
             try {
@@ -1076,6 +1081,11 @@ public class EOSAdapterTest {
             // Unlock the File
             Thread.sleep(100);
             adapter.unlockFile(guid,owner, fileID);
+
+            // Fetch the File and check the lock
+            Thread.sleep(100);
+            fetchedFile = adapter.getFile(guid, fileID, versionID, owner);
+            assertNull(fetchedFile.getLockOwner());
 
             // Attempt to Remove the file
             Thread.sleep(100);
@@ -1121,7 +1131,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
         System.out.println("GUID: " + guid);
@@ -1206,7 +1216,7 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                ancestorIDs);
+                ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
         String tagValue = "OogaBooga";

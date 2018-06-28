@@ -156,7 +156,7 @@ public class WorkspaceTest {
         List<File> files = new ArrayList<File>();
         List<Message> messages = new ArrayList<Message>();
 
-        members.add(new Member(userID, status, date, inviterID, authToken)) ;
+        members.add(new Member(userID, status, date, inviterID, authToken, null)) ;
 
         files.add(new File(name, mimeType, entryID,guid, parentID, isFolder, status, lockOwner, versions)) ;
 

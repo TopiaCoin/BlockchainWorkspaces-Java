@@ -15,6 +15,7 @@ public class FileVersion {
     private List<FileTag> userTags;
     private List<FileTag> systemTags;
     private String status;
+    private String lockOwner;
 
     private List<FileChunk> fileChunks;
 
@@ -29,7 +30,7 @@ public class FileVersion {
         this.ancestorVersionIDs = new ArrayList<String>();
     }
 
-    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileTag> systemTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts, List<String> ancestorVersionIDs) {
+    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileTag> systemTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts, List<String> ancestorVersionIDs, String lockOwner) {
         this.entryID = entryID;
         this.versionID = versionID;
         this.ownerID = ownerID;
@@ -59,6 +60,7 @@ public class FileVersion {
         this.fileChunks = (other.fileChunks != null ? new ArrayList<FileChunk>(other.fileChunks) : new ArrayList<FileChunk>());
         this.receipts = (other.receipts != null ? new ArrayList<FileVersionReceipt>(other.receipts) : new ArrayList<FileVersionReceipt>());
         this.ancestorVersionIDs = other.ancestorVersionIDs;
+        this.lockOwner = other.lockOwner;
     }
 
     public String getEntryID() {
@@ -174,6 +176,14 @@ public class FileVersion {
     public List<String> getAncestorVersionIDs() { return this.ancestorVersionIDs; }
 
     public void setAncestorVersionIDs(List<String> ancestorVersionIDs) { this.ancestorVersionIDs = ancestorVersionIDs; }
+
+    public String getLockOwner() {
+        return lockOwner;
+    }
+
+    public void setLockOwner(String lockOwner) {
+        this.lockOwner = lockOwner;
+    }
 
     @Override
     public boolean equals(Object o) {
