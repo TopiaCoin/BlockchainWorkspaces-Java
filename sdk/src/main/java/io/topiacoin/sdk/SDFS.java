@@ -17,6 +17,7 @@ import io.topiacoin.core.callbacks.AddFileTagCallback;
 import io.topiacoin.core.callbacks.AddFileVersionCallback;
 import io.topiacoin.core.callbacks.AddFolderCallback;
 import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.AddSDFSFileCallback;
 import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
 import io.topiacoin.core.callbacks.DeclineInvitationCallback;
 import io.topiacoin.core.callbacks.DownloadFileVersionCallback;
@@ -512,16 +513,16 @@ public class SDFS {
                     newFile.setVersions(Collections.singletonList(fileVersion));
 
                     _log.info ( "Adding " + fileToBeAdded.getName() + " to Workspace") ;
-                    _workspaceAPI.addFile(newFile, new AddFileCallback() {
+                    _workspaceAPI.addFile(newFile, new AddSDFSFileCallback() {
                         @Override
-                        public void didAddFile(java.io.File addFile) {
+                        public void didAddFile(File addFile) {
                             _log.info ( "Added " + fileToBeAdded.getName() + " to Workspace") ;
                             if ( callback != null )
                                 callback.didAddFile(fileToBeAdded);
                         }
 
                         @Override
-                        public void failedToAddFile(java.io.File file) {
+                        public void failedToAddFile(File file) {
                             _log.warn ( "Failed to Add " + fileToBeAdded.getName() + " to Workspace") ;
                             if ( callback != null )
                                 callback.failedToAddFile(fileToBeAdded);

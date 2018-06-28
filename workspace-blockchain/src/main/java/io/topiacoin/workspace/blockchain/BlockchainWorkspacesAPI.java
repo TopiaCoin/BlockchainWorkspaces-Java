@@ -10,6 +10,7 @@ import io.topiacoin.core.callbacks.AddFileTagCallback;
 import io.topiacoin.core.callbacks.AddFileVersionCallback;
 import io.topiacoin.core.callbacks.AddFolderCallback;
 import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.AddSDFSFileCallback;
 import io.topiacoin.core.callbacks.ConnectWorkspaceCallback;
 import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
 import io.topiacoin.core.callbacks.DeclineInvitationCallback;
@@ -275,7 +276,7 @@ public class BlockchainWorkspacesAPI implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFile(io.topiacoin.model.File fileToAdd, AddFileCallback callback) {
+    public void addFile(io.topiacoin.model.File fileToAdd, AddSDFSFileCallback callback) {
 
     }
 
