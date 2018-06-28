@@ -33,6 +33,7 @@ import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -781,15 +782,8 @@ public class EOSAdapter {
                     fileVersion.setLockOwner(versionLockOwner) ;
 
                     // Get the User File Tags of this file version
-                    List<FileTag> privateUserTags = getFileTags(guid, file.getEntryID(), versionID, user);
-                    List<FileTag> publicUserTags = getFileTags(guid, file.getEntryID(), versionID, "public");
-                    List<FileTag> userTags = new ArrayList<>(privateUserTags) ;
-                    userTags.addAll(publicUserTags);
-                    fileVersion.setUserTags(userTags);
-
-                    // Get the System File Tags of this file version
-                    List<FileTag> systemTags = getFileTags(guid, file.getEntryID(), versionID, "system");
-                    fileVersion.setSystemTags(systemTags);
+                    List<FileTag> tags = getFileTags(guid, file.getEntryID(), versionID, "public", user);
+                    fileVersion.setUserTags(tags);
 
                     // Get the File Receipts of this file version
                     List<FileVersionReceipt> fileReceipts = getFileReceipts(guid, file.getEntryID(), versionID);
@@ -1330,10 +1324,12 @@ public class EOSAdapter {
         return lockHolder;
     }
 
-    public List<FileTag> getFileTags(long guid, String fileID, String versionID, String scope) throws BlockchainException {
+    public List<FileTag> getFileTags(long guid, String fileID, String versionID, String... scopes) throws BlockchainException {
         List<FileTag> fileTags = new ArrayList<>();
 
         // TODO - Replace this implementation once the EOS bug that prevents use of secondary indexes is fixed.
+
+        List<String> desiredScopes = Arrays.asList(scopes);
 
         boolean hasMore = false;
         Object continuationToken = null;
@@ -1359,7 +1355,7 @@ public class EOSAdapter {
                     if ( fileID.equals(fID) && versionID.equals(vID) ) {
                         String tagScope = (String) row.get("scope");
                         String tagValue = (String) row.get("value");
-                        if (tagScope.equals(scope)) {
+                        if (desiredScopes.contains(tagScope)) {
                             FileTag fileTag = new FileTag(tagScope, tagValue);
                             fileTags.add(fileTag);
                         }

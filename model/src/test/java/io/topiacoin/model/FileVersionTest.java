@@ -28,7 +28,6 @@ public class FileVersionTest {
         assertNotNull ( fileVersion.getFileChunks());
         assertNotNull ( fileVersion.getReceipts());
         assertNotNull ( fileVersion.getUserTags());
-        assertNotNull ( fileVersion.getSystemTags());
 
     }
 
@@ -44,12 +43,11 @@ public class FileVersionTest {
         String fileHash = "HasheyHashHash";
         String status = "Irritated";
         List<FileTag> userTags = new ArrayList<FileTag>();
-        List<FileTag> systemTags = new ArrayList<FileTag>();
         List<FileChunk> fileChunks = new ArrayList<FileChunk>();
         List<FileVersionReceipt> receipts = new ArrayList<FileVersionReceipt>();
         List<String> ancestorVersionIDs = new ArrayList<>();
 
-        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
+        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, fileChunks, receipts, ancestorVersionIDs, null) ;
 
         assertEquals(entryID, fileVersion.getEntryID());
         assertEquals(versionID, fileVersion.getVersionID());
@@ -60,13 +58,11 @@ public class FileVersionTest {
         assertEquals(fileHash, fileVersion.getFileHash());
         assertEquals(status, fileVersion.getStatus());
         assertEquals(userTags, fileVersion.getUserTags());
-        assertEquals(systemTags, fileVersion.getSystemTags());
         assertEquals(fileChunks, fileVersion.getFileChunks());
         assertEquals(receipts, fileVersion.getReceipts());
         assertEquals(ancestorVersionIDs, fileVersion.getAncestorVersionIDs());
 
         assertNotSame(userTags, fileVersion.getUserTags());
-        assertNotSame(systemTags, fileVersion.getSystemTags());
         assertNotSame(fileChunks, fileVersion.getFileChunks());
         assertNotSame(receipts, fileVersion.getReceipts());
 
@@ -85,12 +81,11 @@ public class FileVersionTest {
         String fileHash = "HasheyHashHash";
         String status = "Irritated";
         List<FileTag> userTags = null;
-        List<FileTag> systemTags = null;
         List<FileChunk> fileChunks = null;
         List<FileVersionReceipt> receipts = null;
         List<String> ancestorVersionIDs = null;
 
-        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
+        FileVersion fileVersion = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, fileChunks, receipts, ancestorVersionIDs, null) ;
 
         assertEquals(entryID, fileVersion.getEntryID());
         assertEquals(versionID, fileVersion.getVersionID());
@@ -102,7 +97,6 @@ public class FileVersionTest {
         assertEquals(status, fileVersion.getStatus());
 
         assertNotNull(fileVersion.getUserTags());
-        assertNotNull( fileVersion.getSystemTags());
         assertNotNull( fileVersion.getFileChunks());
         assertNotNull( fileVersion.getReceipts());
         assertNotNull( fileVersion.getAncestorVersionIDs());
@@ -187,13 +181,10 @@ public class FileVersionTest {
         String ownerID = "Janner";
         long date = 1234567890321L;
         List<FileTag> userTags = new ArrayList<FileTag>();
-        List<FileTag> systemTags = new ArrayList<FileTag>();
         List<FileChunk> fileChunks = new ArrayList<FileChunk>();
         List<FileVersionReceipt> receipts = new ArrayList<FileVersionReceipt>();
 
         userTags.add(new FileTag ( "scope", "value")) ;
-
-        systemTags.add (new FileTag("system", "value2")) ;
 
         SecretKey key = new SecretKeySpec(new byte[16], "AES");
         fileChunks.add(new FileChunk("1", 0, 12, 10, key, new byte[16], "SHA-256:AAAAAAAAAAAAAAAA", "SHA-256:AAAAAAAAAAAAAAAA", "ZIP"));
@@ -211,16 +202,6 @@ public class FileVersionTest {
         fileVersion.setUserTags(null);
         assertNotNull ( fileVersion.getUserTags());
         assertEquals ( 0, fileVersion.getUserTags().size()) ;
-
-        // Check the System Tags Accessors
-        assertNotNull ( fileVersion.getSystemTags());
-        assertEquals(0, fileVersion.getSystemTags().size());
-        fileVersion.setSystemTags(systemTags);
-        assertEquals(systemTags, fileVersion.getSystemTags());
-        assertNotSame(systemTags, fileVersion.getSystemTags());
-        fileVersion.setSystemTags(null);
-        assertNotNull ( fileVersion.getSystemTags());
-        assertEquals(0, fileVersion.getSystemTags().size());
 
         // Check the File Chunks Accessors
         assertNotNull ( fileVersion.getFileChunks());
@@ -270,8 +251,8 @@ public class FileVersionTest {
 
         receipts.add(new FileVersionReceipt(entryID, versionID, ownerID, date)) ;
 
-        FileVersion fileVersion1 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
-        FileVersion fileVersion2 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, systemTags, fileChunks, receipts, ancestorVersionIDs, null) ;
+        FileVersion fileVersion1 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, fileChunks, receipts, ancestorVersionIDs, null) ;
+        FileVersion fileVersion2 = new FileVersion(entryID, versionID, ownerID, size, date, uploadDate, fileHash, status, userTags, fileChunks, receipts, ancestorVersionIDs, null) ;
 
         assertEquals(fileVersion1, fileVersion1);
         assertEquals(fileVersion2, fileVersion2);

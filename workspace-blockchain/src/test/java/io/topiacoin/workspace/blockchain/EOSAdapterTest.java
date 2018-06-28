@@ -409,7 +409,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
@@ -507,7 +506,6 @@ public class EOSAdapterTest {
                         null,
                         null,
                         null,
-                        null,
                         ancestorIDs, null);
                 File file = new File(name, mimeType, fID, guid, parentID, false, 1, null, Arrays.asList(version));
 
@@ -587,7 +585,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file1 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version1));
 
@@ -602,7 +599,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file2 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version2));
 
@@ -614,7 +610,6 @@ public class EOSAdapterTest {
                 System.currentTimeMillis(),
                 "foo",
                 "ACTIVE",
-                null,
                 null,
                 null,
                 null,
@@ -733,7 +728,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file1 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version1));
 
@@ -745,7 +739,6 @@ public class EOSAdapterTest {
                 System.currentTimeMillis(),
                 "foo",
                 "ACTIVE",
-                null,
                 null,
                 null,
                 null,
@@ -763,7 +756,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file3 = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version3));
 
@@ -775,7 +767,6 @@ public class EOSAdapterTest {
                 System.currentTimeMillis(),
                 "foo",
                 "ACTIVE",
-                null,
                 null,
                 null,
                 null,
@@ -1035,7 +1026,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
@@ -1130,7 +1120,6 @@ public class EOSAdapterTest {
                 null,
                 null,
                 null,
-                null,
                 ancestorIDs, null);
         File file = new File(name, mimeType, fileID, guid, parentID, false, 1, null, Arrays.asList(version));
 
@@ -1212,7 +1201,6 @@ public class EOSAdapterTest {
                 System.currentTimeMillis(),
                 "foo",
                 "ACTIVE",
-                null,
                 null,
                 null,
                 null,

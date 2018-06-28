@@ -13,7 +13,6 @@ public class FileVersion {
     private long uploadDate;
     private String fileHash;
     private List<FileTag> userTags;
-    private List<FileTag> systemTags;
     private String status;
     private String lockOwner;
 
@@ -24,13 +23,12 @@ public class FileVersion {
 
     public FileVersion() {
         this.userTags = new ArrayList<FileTag>();
-        this.systemTags = new ArrayList<FileTag>();
         this.fileChunks = new ArrayList<FileChunk>();
         this.receipts = new ArrayList<FileVersionReceipt>();
         this.ancestorVersionIDs = new ArrayList<String>();
     }
 
-    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileTag> systemTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts, List<String> ancestorVersionIDs, String lockOwner) {
+    public FileVersion(String entryID, String versionID, String ownerID, long size, long date, long uploadDate, String fileHash, String status, List<FileTag> userTags, List<FileChunk> fileChunks, List<FileVersionReceipt> receipts, List<String> ancestorVersionIDs, String lockOwner) {
         this.entryID = entryID;
         this.versionID = versionID;
         this.ownerID = ownerID;
@@ -40,7 +38,6 @@ public class FileVersion {
         this.fileHash = fileHash;
         this.status = status;
         this.userTags = ( userTags != null ? new ArrayList<FileTag>(userTags) : new ArrayList<FileTag>());
-        this.systemTags = (systemTags != null ? new ArrayList<FileTag>(systemTags) : new ArrayList<FileTag>());
         this.fileChunks = (fileChunks != null ? new ArrayList<FileChunk>(fileChunks) : new ArrayList<FileChunk>());
         this.receipts = (receipts != null ? new ArrayList<FileVersionReceipt>(receipts) : new ArrayList<FileVersionReceipt>());
         this.ancestorVersionIDs = (ancestorVersionIDs != null ? new ArrayList<String>(ancestorVersionIDs) : new ArrayList<String>());
@@ -56,7 +53,6 @@ public class FileVersion {
         this.fileHash = other.fileHash;
         this.status = other.status;
         this.userTags = ( other.userTags != null ? new ArrayList<FileTag>(other.userTags) : new ArrayList<FileTag>());
-        this.systemTags = (other.systemTags != null ? new ArrayList<FileTag>(other.systemTags) : new ArrayList<FileTag>());
         this.fileChunks = (other.fileChunks != null ? new ArrayList<FileChunk>(other.fileChunks) : new ArrayList<FileChunk>());
         this.receipts = (other.receipts != null ? new ArrayList<FileVersionReceipt>(other.receipts) : new ArrayList<FileVersionReceipt>());
         this.ancestorVersionIDs = other.ancestorVersionIDs;
@@ -131,18 +127,6 @@ public class FileVersion {
 
     }
 
-    public List<FileTag> getSystemTags() {
-        return new ArrayList<FileTag>(systemTags);
-    }
-
-    public void setSystemTags(List<FileTag> systemTags) {
-        this.systemTags.clear() ;
-        if ( systemTags != null ) {
-            this.systemTags.addAll(systemTags);
-        }
-
-    }
-
     public String getStatus() {
         return status;
     }
@@ -200,7 +184,6 @@ public class FileVersion {
         if (ownerID != null ? !ownerID.equals(that.ownerID) : that.ownerID != null) return false;
         if (fileHash != null ? !fileHash.equals(that.fileHash) : that.fileHash != null) return false;
         if (!userTags.equals(that.userTags)) return false;
-        if (!systemTags.equals(that.systemTags)) return false;
         if (status != null ? !status.equals(that.status) : that.status != null) return false;
         if (!fileChunks.equals(that.fileChunks)) return false;
         if(!ancestorVersionIDs.equals(that.ancestorVersionIDs)) return false;
@@ -217,7 +200,6 @@ public class FileVersion {
         result = 31 * result + (int) (uploadDate ^ (uploadDate >>> 32));
         result = 31 * result + (fileHash != null ? fileHash.hashCode() : 0);
         result = 31 * result + userTags.hashCode();
-        result = 31 * result + systemTags.hashCode();
         result = 31 * result + (status != null ? status.hashCode() : 0);
         result = 31 * result + fileChunks.hashCode();
         result = 31 * result + receipts.hashCode();
@@ -236,7 +218,6 @@ public class FileVersion {
                 ", uploadDate=" + uploadDate +
                 ", fileHash='" + fileHash + '\'' +
                 ", userTags=" + userTags +
-                ", systemTags=" + systemTags +
                 ", status='" + status + '\'' +
                 ", fileChunks=" + fileChunks +
                 ", receipts=" + receipts +
