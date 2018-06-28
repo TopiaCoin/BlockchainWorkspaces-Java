@@ -12,7 +12,9 @@ import io.topiacoin.eosrpcadapter.messages.SignedTransaction;
 import io.topiacoin.eosrpcadapter.messages.TableRows;
 import io.topiacoin.eosrpcadapter.messages.Transaction;
 import io.topiacoin.model.File;
+import io.topiacoin.model.FileTag;
 import io.topiacoin.model.FileVersion;
+import io.topiacoin.model.FileVersionReceipt;
 import io.topiacoin.model.Member;
 import io.topiacoin.model.Message;
 import io.topiacoin.model.exceptions.NoSuchFileException;
@@ -450,7 +452,9 @@ public class EOSAdapter {
                 String inviterID = (String) row.get("inviter");
                 String authToken = null;
                 Member member = new Member(userID, status, inviteDate, inviterID, authToken, null);
-                // TODO - Get the lock status of this member
+                // Get the lock owner, if any, of this member
+                member.setLockOwner(getLockHolder(guid, userID));
+
                 members.add(member);
                 newContinuationToken = getNextToken(row.get("id"));
             }
@@ -736,11 +740,11 @@ public class EOSAdapter {
         }
     }
 
-    public Files getFiles(long guid) throws NoSuchWorkspaceException, BlockchainException {
-        return getFiles(guid, null);
+    public Files getFiles(long guid, String user) throws NoSuchWorkspaceException, BlockchainException {
+        return getFiles(guid, user, null);
     }
 
-    public Files getFiles(long guid, Object continuationToken) throws NoSuchWorkspaceException, BlockchainException {
+    public Files getFiles(long guid, String user, Object continuationToken) throws NoSuchWorkspaceException, BlockchainException {
 
         List<File> files = new ArrayList<>();
         boolean hasMore = false;
@@ -756,16 +760,41 @@ public class EOSAdapter {
                     upper_bound,
                     100,
                     true);
-            System.out.println("rows: " + rows);
+//            System.out.println("rows: " + rows);
 
             hasMore = rows.more;
 
             for (Map<String, Object> row : rows.rows) {
                 String metadata = (String) row.get("metadata");
                 File file = convertRowToFile(guid, metadata);
-                // TODO - Get the Lock Status of this file
-                // TODO - Get the File Tags of this file version
-                // TODO - Get the File Receipts of this file version
+
+                // Get the Lock Status of this file
+                String fileLockOwner = getLockHolder(guid, file.getEntryID());
+                file.setLockOwner(fileLockOwner);
+
+                if ( file.getVersions() != null && file.getVersions().size() > 0 ) {
+                    FileVersion fileVersion = file.getVersions().get(0);
+                    String versionID = fileVersion.getVersionID();
+
+                    // Get the Lock Status of this file version
+                    String versionLockOwner = getLockHolder(guid, versionID);
+                    fileVersion.setLockOwner(versionLockOwner) ;
+
+                    // Get the User File Tags of this file version
+                    List<FileTag> privateUserTags = getFileTags(guid, file.getEntryID(), versionID, user);
+                    List<FileTag> publicUserTags = getFileTags(guid, file.getEntryID(), versionID, "public");
+                    List<FileTag> userTags = new ArrayList<>(privateUserTags) ;
+                    userTags.addAll(publicUserTags);
+                    fileVersion.setUserTags(userTags);
+
+                    // Get the System File Tags of this file version
+                    List<FileTag> systemTags = getFileTags(guid, file.getEntryID(), versionID, "system");
+                    fileVersion.setSystemTags(systemTags);
+
+                    // Get the File Receipts of this file version
+                    List<FileVersionReceipt> fileReceipts = getFileReceipts(guid, file.getEntryID(), versionID);
+                    fileVersion.setReceipts(fileReceipts);
+                }
                 files.add(file);
                 newContinuationToken = getNextToken(row.get("id"));
             }
@@ -776,7 +805,7 @@ public class EOSAdapter {
         return new Files(files, hasMore, (hasMore ? newContinuationToken : null));
     }
 
-    public File getFile(long guid, String fileID, String versionID) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
+    public File getFile(long guid, String fileID, String versionID, String user) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
 
         File file = null;
 
@@ -784,7 +813,7 @@ public class EOSAdapter {
         Object continuationToken = null;
 
         do {
-            files = getFiles(guid, continuationToken);
+            files = getFiles(guid, user, continuationToken);
             for ( File curFile : files.getFiles()) {
                 if ( curFile.getEntryID().equals(fileID) && (versionID == null || curFile.getVersions().get(0).getVersionID().equals(versionID))) {
                     file = curFile;
@@ -1260,6 +1289,132 @@ public class EOSAdapter {
         } catch (WalletException e) {
             throw new BlockchainException("An exception occurred communicating with the wallet", e.getCause());
         }
+    }
+
+    public String getLockHolder(long guid, String objectID) throws BlockchainException {
+        String lockHolder = null;
+
+        // TODO - Replace this implementation once the EOS bug that prevents use of secondary indexes is fixed.
+
+        boolean hasMore = false;
+        Object continuationToken = null;
+
+        try {
+            do {
+                String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
+                String upper_bound = "-1";
+                TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                        Long.toString(guid),
+                        "locks",
+                        lower_bound,
+                        upper_bound,
+                        100,
+                        true);
+//                System.out.println("rows: " + rows);
+
+                hasMore = rows.more;
+
+                for (Map<String, Object> row : rows.rows) {
+                    String entityGuid = (String) row.get("guid");
+                    String lockOwner = (String) row.get("lockOwner");
+                    if (objectID.equals(entityGuid)) {
+                        lockHolder = lockOwner;
+                    }
+                    continuationToken = getNextToken(row.get("id"));
+                }
+            } while (lockHolder == null && hasMore);
+        } catch (ChainException e) {
+            throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
+        }
+
+        return lockHolder;
+    }
+
+    public List<FileTag> getFileTags(long guid, String fileID, String versionID, String scope) throws BlockchainException {
+        List<FileTag> fileTags = new ArrayList<>();
+
+        // TODO - Replace this implementation once the EOS bug that prevents use of secondary indexes is fixed.
+
+        boolean hasMore = false;
+        Object continuationToken = null;
+
+        try {
+            do {
+                String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
+                String upper_bound = "-1";
+                TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                        Long.toString(guid),
+                        "filetags",
+                        lower_bound,
+                        upper_bound,
+                        100,
+                        true);
+//                System.out.println("rows: " + rows);
+
+                hasMore = rows.more;
+
+                for (Map<String, Object> row : rows.rows) {
+                    String fID = (String) row.get("fileID");
+                    String vID = (String) row.get("versionID");
+                    if ( fileID.equals(fID) && versionID.equals(vID) ) {
+                        String tagScope = (String) row.get("scope");
+                        String tagValue = (String) row.get("value");
+                        if (tagScope.equals(scope)) {
+                            FileTag fileTag = new FileTag(tagScope, tagValue);
+                            fileTags.add(fileTag);
+                        }
+                    }
+                    continuationToken = getNextToken(row.get("id"));
+                }
+            } while (hasMore);
+        } catch (ChainException e) {
+            throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
+        }
+
+        return fileTags;
+    }
+
+    public List<FileVersionReceipt> getFileReceipts(long guid, String fileID, String versionID) throws BlockchainException {
+        List<FileVersionReceipt> fileReceipts = new ArrayList<>();
+
+        // TODO - Replace this implementation once the EOS bug that prevents use of secondary indexes is fixed.
+
+        boolean hasMore = false;
+        Object continuationToken = null;
+
+        try {
+            do {
+                String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
+                String upper_bound = "-1";
+                TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                        Long.toString(guid),
+                        "filereceipts",
+                        lower_bound,
+                        upper_bound,
+                        100,
+                        true);
+//                System.out.println("rows: " + rows);
+
+                hasMore = rows.more;
+
+                for (Map<String, Object> row : rows.rows) {
+                    String fID = (String) row.get("fileID");
+                    String vID = (String) row.get("versionID");
+                    long uID = (Long) row.get("user") ;
+                    long timestamp = (Long) row.get("timestamp");
+
+                    if (fID.equals(fileID) && vID.equals(versionID)) {
+                        FileVersionReceipt fvr = new FileVersionReceipt(fID, vID, Long.toString(uID), timestamp);
+                        fileReceipts.add(fvr);
+                    }
+                    continuationToken = getNextToken(row.get("id"));
+                }
+            } while (hasMore);
+        } catch (ChainException e) {
+            throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
+        }
+
+        return fileReceipts;
     }
 
     // ======== Private Methods ========
