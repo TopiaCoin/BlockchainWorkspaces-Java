@@ -22,6 +22,7 @@ import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
+import io.topiacoin.workspace.blockchain.util.TimeExpiringCache;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,14 @@ public class EOSAdapter {
     private long _lastModified = 0;
     private final String contractAccount;
 
+    private ObjectMapper objectMapper;
+
+    private TimeExpiringCache<String, Files> filesCache = new TimeExpiringCache<>(250);
+    private TimeExpiringCache<String, TableRows> entityLocksCache = new TimeExpiringCache<>(250);
+    private TimeExpiringCache<String, TableRows> fileTagsCache = new TimeExpiringCache<>(250);
+    private TimeExpiringCache<String, TableRows> fileReceiptsCache = new TimeExpiringCache<>(250);
+    private TimeExpiringCache<String, Messages> messagesCache = new TimeExpiringCache<>(250);
+
     public EOSAdapter(String eosNodeURL, String eosWalletURL) {
         this.eosNodeURL = eosNodeURL;
         this.eosWalletURL = eosWalletURL;
@@ -68,6 +77,7 @@ public class EOSAdapter {
         }
 
         _eosRpcAdapter = new EOSRPCAdapter(nodeURL, walletURL);
+        objectMapper = new ObjectMapper();
     }
 
     @PreDestroy
@@ -321,6 +331,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            filesCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -439,7 +451,7 @@ public class EOSAdapter {
                     upperBound,
                     100,
                     true);
-            System.out.println("rows: " + rows);
+//            System.out.println("rows: " + rows);
             if (rows.rows.size() == 0) {
                 throw new NoSuchWorkspaceException("The requested workspace does not exist");
             }
@@ -590,6 +602,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            entityLocksCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -630,6 +644,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            entityLocksCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -684,6 +700,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            filesCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -725,6 +743,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            filesCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -750,6 +770,13 @@ public class EOSAdapter {
         List<File> files = new ArrayList<>();
         boolean hasMore = false;
         Object newContinuationToken = null;
+
+        // Returned the cached result if found.
+        String cacheKey = guid + ":" + user + ":" + continuationToken ;
+        Files cachedFiles = filesCache.get(cacheKey) ;
+        if ( cachedFiles != null ) {
+            return cachedFiles;
+        }
 
         try {
             String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
@@ -796,7 +823,10 @@ public class EOSAdapter {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return new Files(files, hasMore, (hasMore ? newContinuationToken : null));
+        Files fetchedFiles = new Files(files, hasMore, (hasMore ? newContinuationToken : null));
+        filesCache.put(cacheKey, fetchedFiles);
+
+        return fetchedFiles;
     }
 
     public File getFile(long guid, String fileID, String versionID, String user) throws NoSuchWorkspaceException, NoSuchFileException, BlockchainException {
@@ -872,6 +902,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            fileReceiptsCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -939,6 +971,12 @@ public class EOSAdapter {
         boolean hasMore = false;
         Object newContinuationToken = null;
 
+        String cacheKey = guid +":"+continuationToken;
+        Messages cachedMessages = messagesCache.get(cacheKey) ;
+        if ( cachedMessages != null ) {
+            return cachedMessages;
+        }
+
         try {
             String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
             String upper_bound = "-1";
@@ -949,7 +987,7 @@ public class EOSAdapter {
                     upper_bound,
                     100,
                     true);
-            System.out.println("rows: " + rows);
+//            System.out.println("rows: " + rows);
 
             hasMore = rows.more;
 
@@ -969,7 +1007,9 @@ public class EOSAdapter {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
 
-        return new Messages(messages, hasMore, (hasMore ? newContinuationToken : null));
+        Messages fetchedMessages = new Messages(messages, hasMore, (hasMore ? newContinuationToken : null));
+        messagesCache.put(cacheKey, fetchedMessages);
+        return fetchedMessages;
     }
 
     public Message getMessage(long guid, String msgID) throws NoSuchWorkspaceException, NoSuchMessageException, BlockchainException {
@@ -1064,6 +1104,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            fileTagsCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -1107,6 +1149,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            fileTagsCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -1147,6 +1191,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            entityLocksCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -1187,6 +1233,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            entityLocksCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -1228,6 +1276,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            entityLocksCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -1269,6 +1319,8 @@ public class EOSAdapter {
             RequiredKeys requiredKeys = _eosRpcAdapter.chain().getRequiredKeys(initTX, availableKeys);
             SignedTransaction signedInitTx = _eosRpcAdapter.wallet().signTransaction(initTX, requiredKeys.required_keys, info.chain_id);
             _eosRpcAdapter.chain().pushTransaction(signedInitTx);
+
+            entityLocksCache.expireAll();
         } catch (ChainException e) {
             if (e.getCause() instanceof ChainException) {
                 Exception extractedException = extractExceptionForRootCause((ChainException) e.getCause());
@@ -1297,16 +1349,25 @@ public class EOSAdapter {
             do {
                 String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
                 String upper_bound = "-1";
-                TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
-                        Long.toString(guid),
-                        "locks",
-                        lower_bound,
-                        upper_bound,
-                        100,
-                        true);
+
+                String cacheKey = Long.toString(guid) + ":" + lower_bound + ":" + upper_bound;
+
+                TableRows rows = null ;
+
+                rows = entityLocksCache.get(cacheKey);
+                if ( rows == null ) {
+                    rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                            Long.toString(guid),
+                            "locks",
+                            lower_bound,
+                            upper_bound,
+                            100,
+                            true);
 //                System.out.println("rows: " + rows);
 
-                hasMore = rows.more;
+                    hasMore = rows.more;
+                    entityLocksCache.put(cacheKey, rows);
+                }
 
                 for (Map<String, Object> row : rows.rows) {
                     String entityGuid = (String) row.get("guid");
@@ -1338,16 +1399,24 @@ public class EOSAdapter {
             do {
                 String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
                 String upper_bound = "-1";
-                TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
-                        Long.toString(guid),
-                        "filetags",
-                        lower_bound,
-                        upper_bound,
-                        100,
-                        true);
-//                System.out.println("rows: " + rows);
 
-                hasMore = rows.more;
+                String cacheKey = Long.toString(guid) + ":" + lower_bound + ":" + upper_bound;
+
+                TableRows rows = null ;
+
+                rows = fileTagsCache.get(cacheKey);
+                if ( rows == null ) {
+                    rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                            Long.toString(guid),
+                            "filetags",
+                            lower_bound,
+                            upper_bound,
+                            100,
+                            true);
+//                System.out.println("rows: " + rows);
+                    hasMore = rows.more;
+                    fileTagsCache.put(cacheKey, rows);
+                }
 
                 for (Map<String, Object> row : rows.rows) {
                     String fID = (String) row.get("fileID");
@@ -1382,16 +1451,25 @@ public class EOSAdapter {
             do {
                 String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
                 String upper_bound = "-1";
-                TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
-                        Long.toString(guid),
-                        "filereceipts",
-                        lower_bound,
-                        upper_bound,
-                        100,
-                        true);
+
+                String cacheKey = Long.toString(guid) + ":" + lower_bound + ":" + upper_bound;
+
+                TableRows rows = null ;
+
+                rows = fileReceiptsCache.get(cacheKey);
+                if ( rows == null ) {
+                    rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
+                            Long.toString(guid),
+                            "filereceipts",
+                            lower_bound,
+                            upper_bound,
+                            100,
+                            true);
 //                System.out.println("rows: " + rows);
 
-                hasMore = rows.more;
+                    hasMore = rows.more;
+                    fileReceiptsCache.put(cacheKey, rows);
+                }
 
                 for (Map<String, Object> row : rows.rows) {
                     String fID = (String) row.get("fileID");
@@ -1444,9 +1522,7 @@ public class EOSAdapter {
     private File convertRowToFile(long guid, String metadata) {
         try {
             // Unmarshall the metadata JSON String to a Map and start pulling info out.
-            ObjectMapper mapper = new ObjectMapper();
-
-            return mapper.readValue(metadata, File.class);
+            return objectMapper.readValue(metadata, File.class);
         } catch (IOException e) {
             _log.warn("Error Unmarshalling File data: ", e);
             return null;
@@ -1456,8 +1532,7 @@ public class EOSAdapter {
     private String convertFileToRow(File file) {
         try {
             // Marshall the object into a JSON String
-            ObjectMapper mapper = new ObjectMapper();
-            String metadata = mapper.writeValueAsString(file);
+            String metadata = objectMapper.writeValueAsString(file);
 
             return metadata;
         } catch (JsonProcessingException e) {

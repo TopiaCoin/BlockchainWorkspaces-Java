@@ -5,6 +5,7 @@ import io.topiacoin.chunks.intf.ChunksFetchHandler;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.core.WorkspacesAPI;
 import io.topiacoin.core.callbacks.AddFileCallback;
+import io.topiacoin.core.callbacks.AddSDFSFileCallback;
 import io.topiacoin.core.callbacks.DownloadFileVersionCallback;
 import io.topiacoin.core.callbacks.SaveFileVersionCallback;
 import io.topiacoin.core.impl.DefaultConfiguration;
@@ -1001,12 +1002,12 @@ public class SDFSTest {
         EasyMock.expectLastCall();
 
         Capture<File> fileCapture = EasyMock.newCapture();
-        Capture<AddFileCallback> addFileCallbackCapture = EasyMock.newCapture();
+        Capture<AddSDFSFileCallback> addFileCallbackCapture = EasyMock.newCapture();
         workspaceAPI.addFile(capture(fileCapture), capture(addFileCallbackCapture));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override
             public Object answer() throws Throwable {
-                addFileCallbackCapture.getValue().didAddFile(fileToAdd);
+                addFileCallbackCapture.getValue().didAddFile(new File());
                 return null;
             }
         });
@@ -1086,12 +1087,12 @@ public class SDFSTest {
         EasyMock.expectLastCall();
 
         Capture<File> fileCapture = EasyMock.newCapture();
-        Capture<AddFileCallback> addFileCallbackCapture = EasyMock.newCapture();
+        Capture<AddSDFSFileCallback> addFileCallbackCapture = EasyMock.newCapture();
         workspaceAPI.addFile(capture(fileCapture), capture(addFileCallbackCapture));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override
             public Object answer() throws Throwable {
-                addFileCallbackCapture.getValue().failedToAddFile(fileToAdd);
+                addFileCallbackCapture.getValue().failedToAddFile(new File());
                 return null;
             }
         });

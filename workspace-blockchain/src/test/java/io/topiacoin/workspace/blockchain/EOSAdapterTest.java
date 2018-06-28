@@ -515,6 +515,7 @@ public class EOSAdapterTest {
                 fileIDs.add(fID);
             }
 
+            System.err.println ( "\nFetch All Files" ) ;
             // Fetch the first set of files
             Thread.sleep(100);
             files = adapter.getFiles(guid, owner);
@@ -531,6 +532,7 @@ public class EOSAdapterTest {
             assertNotNull(files);
             assertEquals(50, files.getFiles().size());
 
+            System.err.println ( "\nFetch Individual Files" ) ;
             // Fetch each file individually by its fileID
             long start = System.currentTimeMillis();
             for ( String fID : fileIDs ) {
@@ -1082,7 +1084,7 @@ public class EOSAdapterTest {
             adapter.removeFile(guid, owner, fileID, noVersionID);
         } finally {
             Thread.sleep(100);
-            adapter.destroy(guid, owner);
+//            adapter.destroy(guid, owner);
         }
     }
 

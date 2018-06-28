@@ -515,11 +515,10 @@ public class SDFS {
                     _log.info ( "Adding " + fileToBeAdded.getName() + " to Workspace") ;
                     _workspaceAPI.addFile(newFile, new AddSDFSFileCallback() {
                         @Override public void didAddFile(File fileToAdd) {
-                            _log.info ( "Added " + fileToBeAdded.getName() + " to Workspace") ;
-                            if ( callback != null )
+                            _log.info("Added " + fileToBeAdded.getName() + " to Workspace");
+                            if (callback != null)
                                 callback.didAddFile(fileToBeAdded);
                         }
-
                         @Override public void failedToAddFile(File fileToAdd) {
                             _log.warn ( "Failed to Add " + fileToBeAdded.getName() + " to Workspace") ;
                             if ( callback != null )
