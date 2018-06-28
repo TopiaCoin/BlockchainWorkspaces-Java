@@ -7,17 +7,19 @@ public class Member {
     private long inviteDate;
     private String inviterID;
     private String authToken;
+    private String lockOwner;
 
 
     public Member() {
     }
 
-    public Member(String userID, int status, long inviteDate, String inviterID, String authToken) {
+    public Member(String userID, int status, long inviteDate, String inviterID, String authToken, String lockOwner) {
         this.userID = userID;
         this.status = status;
         this.inviteDate = inviteDate;
         this.inviterID = inviterID;
         this.authToken = authToken;
+        this.lockOwner = lockOwner;
     }
 
     public Member(Member member) {
@@ -26,6 +28,7 @@ public class Member {
         this.inviteDate = member.inviteDate;
         this.inviterID = member.inviterID;
         this.authToken = member.authToken;
+        this.lockOwner = member.lockOwner;
     }
 
     public String getUserID() {
@@ -58,6 +61,14 @@ public class Member {
 
     public void setInviterID(String inviterID) {
         this.inviterID = inviterID;
+    }
+
+    public String getLockOwner() {
+        return lockOwner;
+    }
+
+    public void setLockOwner(String lockOwner) {
+        this.lockOwner = lockOwner;
     }
 
     @Override

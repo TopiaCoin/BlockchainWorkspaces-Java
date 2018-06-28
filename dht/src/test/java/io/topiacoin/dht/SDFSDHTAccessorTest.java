@@ -48,7 +48,7 @@ public class SDFSDHTAccessorTest {
 
 		DataModel model1 = new TestDataModel();
 		model1.setCurrentUser(new CurrentUser("user1-63HzRNRH7h", "user1-63HzRNRH7h@hotmail.com", kp1.getPublic(), kp1.getPrivate()));
-		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
+		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken", null);
 		List<Member> members = new ArrayList<>();
 		members.add(member1);
 		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
@@ -145,8 +145,8 @@ public class SDFSDHTAccessorTest {
 		DataModel model2 = new TestDataModel();
 		model1.setCurrentUser(new CurrentUser("user1-63HzRNRH7h", "user1-63HzRNRH7h@hotmail.com", kp1.getPublic(), kp1.getPrivate()));
 		model2.setCurrentUser(new CurrentUser("user2-f7zql0bn25", "user2-f7zql0bn25@hotmail.com", kp2.getPublic(), kp2.getPrivate()));
-		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
-		Member memberToInvite = new Member("user2-f7zql0bn25", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken2");
+		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken", null);
+		Member memberToInvite = new Member("user2-f7zql0bn25", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken2", null);
 		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
@@ -257,7 +257,7 @@ public class SDFSDHTAccessorTest {
 
 		DataModel model1 = new TestDataModel();
 		model1.setCurrentUser(new CurrentUser("user1-63HzRNRH7h", "user1-63HzRNRH7h@hotmail.com", kp1.getPublic(), kp1.getPrivate()));
-		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
+		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken", null);
 		List<Member> members = new ArrayList<>();
 		members.add(member1);
 		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
@@ -353,8 +353,8 @@ public class SDFSDHTAccessorTest {
 		DataModel model2 = new TestDataModel();
 		model1.setCurrentUser(new CurrentUser("user1-63HzRNRH7h", "user1-63HzRNRH7h@hotmail.com", kp1.getPublic(), kp1.getPrivate()));
 		model2.setCurrentUser(new CurrentUser("user2-f7zql0bn25", "user2-f7zql0bn25@hotmail.com", kp2.getPublic(), kp2.getPrivate()));
-		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
-		Member memberToInvite = new Member("user2-f7zql0bn25", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken2");
+		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken", null);
+		Member memberToInvite = new Member("user2-f7zql0bn25", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken2", null);
 		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
 		model1.addWorkspace(workspace);
 		model1.addMemberToWorkspace(workspace.getGuid(), member1);
@@ -514,7 +514,7 @@ public class SDFSDHTAccessorTest {
 
 		DataModel model1 = new TestDataModel();
 		model1.setCurrentUser(new CurrentUser("user1-63HzRNRH7h", "user1-63HzRNRH7h@hotmail.com", kp1.getPublic(), kp1.getPrivate()));
-		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken");
+		Member member1 = new Member("user1-63HzRNRH7h", 1, System.currentTimeMillis(), "user1-63HzRNRH7h", "authToken", null);
 		List<Member> members = new ArrayList<>();
 		members.add(member1);
 		Workspace workspace = new Workspace("My Workspace", "a test Workspace", 1, CryptoUtils.generateAESKey(), 12345L, System.currentTimeMillis(), null, null, null);
@@ -552,7 +552,7 @@ public class SDFSDHTAccessorTest {
 					}
 					//Remove somebody that isn't in the workspace
 					try {
-						accessor1.removeMemberFromWorkspace(workspace.getGuid(), new Member(user2Node1.getUserID(), 1, System.currentTimeMillis(), "whocares", "not important"));
+						accessor1.removeMemberFromWorkspace(workspace.getGuid(), new Member(user2Node1.getUserID(), 1, System.currentTimeMillis(), "whocares", "not important", null));
 						Assert.fail();
 					} catch(NoSuchUserException ex) {
 						//good

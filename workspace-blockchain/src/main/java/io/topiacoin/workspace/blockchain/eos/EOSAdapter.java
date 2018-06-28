@@ -20,7 +20,6 @@ import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.exceptions.BlockchainException;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -450,7 +449,8 @@ public class EOSAdapter {
                 long inviteDate = 0;//Long.parseLong(row.get("inviteDate"));
                 String inviterID = (String) row.get("inviter");
                 String authToken = null;
-                Member member = new Member(userID, status, inviteDate, inviterID, authToken);
+                Member member = new Member(userID, status, inviteDate, inviterID, authToken, null);
+                // TODO - Get the lock status of this member
                 members.add(member);
                 newContinuationToken = getNextToken(row.get("id"));
             }
@@ -763,6 +763,9 @@ public class EOSAdapter {
             for (Map<String, Object> row : rows.rows) {
                 String metadata = (String) row.get("metadata");
                 File file = convertRowToFile(guid, metadata);
+                // TODO - Get the Lock Status of this file
+                // TODO - Get the File Tags of this file version
+                // TODO - Get the File Receipts of this file version
                 files.add(file);
                 newContinuationToken = getNextToken(row.get("id"));
             }
