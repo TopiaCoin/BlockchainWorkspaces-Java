@@ -451,7 +451,7 @@ public class EOSAdapter {
                     upperBound,
                     100,
                     true);
-            System.out.println("rows: " + rows);
+//            System.out.println("rows: " + rows);
             if (rows.rows.size() == 0) {
                 throw new NoSuchWorkspaceException("The requested workspace does not exist");
             }
@@ -773,19 +773,12 @@ public class EOSAdapter {
 
         // Returned the cached result if found.
         String cacheKey = guid + ":" + user + ":" + continuationToken ;
-        System.err.print ( cacheKey + " -- " ) ;
         Files cachedFiles = filesCache.get(cacheKey) ;
         if ( cachedFiles != null ) {
-            System.err.println("+");
             return cachedFiles;
         }
-        System.err.println(".");
 
         try {
-            long start ;
-            long stop ;
-
-            start = System.currentTimeMillis();
             String lower_bound = (continuationToken != null ? continuationToken.toString() : "0");
             String upper_bound = "-1";
             TableRows rows = _eosRpcAdapter.chain().getTableRows(contractAccount,
@@ -796,12 +789,9 @@ public class EOSAdapter {
                     100,
                     true);
 //            System.out.println("rows: " + rows);
-            stop = System.currentTimeMillis();
-            System.out.println ( "Elapsed Time (Fetch): " + (stop - start)) ;
 
             hasMore = rows.more;
 
-                start = System.currentTimeMillis();
             for (Map<String, Object> row : rows.rows) {
                 String metadata = (String) row.get("metadata");
                 File file = convertRowToFile(guid, metadata);
@@ -829,8 +819,6 @@ public class EOSAdapter {
                 files.add(file);
                 newContinuationToken = getNextToken(row.get("id"));
             }
-            stop = System.currentTimeMillis();
-            System.out.println ( "Elapsed Time (Convert): " + (stop - start)) ;
         } catch (ChainException e) {
             throw new BlockchainException("An exception occurred communicating with the blockchain", e.getCause());
         }
@@ -999,7 +987,7 @@ public class EOSAdapter {
                     upper_bound,
                     100,
                     true);
-            System.out.println("rows: " + rows);
+//            System.out.println("rows: " + rows);
 
             hasMore = rows.more;
 
