@@ -79,6 +79,11 @@ public class BlockchainWorkspace implements WorkspacesAPI {
                 }
             }
         }, "login", null);
+        try {
+            _chainMail.start(_adapterManager);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

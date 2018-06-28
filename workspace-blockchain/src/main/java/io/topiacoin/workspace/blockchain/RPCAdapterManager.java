@@ -54,6 +54,7 @@ public class RPCAdapterManager {
 
 	public void didStartBlockchain(long workspaceID, String nodeURL, String walletURL) {
 		EOSAdapter adapter = new EOSAdapter(nodeURL, walletURL);
+		adapter.initialize();
 		_eosrpcAdapterMap.put(workspaceID, adapter);
 	}
 

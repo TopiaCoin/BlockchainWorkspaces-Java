@@ -323,7 +323,7 @@ public class EOSChainmail implements Chainmail {
 				}
 				if (success) {
 					for (ChainmailCallback callback : blockchainListeners) {
-						callback.onBlockchainStarted(workspaceID, "127.0.0.1:" + nodePort, "127.0.0.1:" + PORT_RANGE_START);
+						callback.onBlockchainStarted(workspaceID, "http://127.0.0.1:" + nodePort, "http://127.0.0.1:" + PORT_RANGE_START);
 					}
 				}
 			}
