@@ -10,6 +10,7 @@ import io.topiacoin.core.callbacks.AddFileTagCallback;
 import io.topiacoin.core.callbacks.AddFileVersionCallback;
 import io.topiacoin.core.callbacks.AddFolderCallback;
 import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.AddSDFSFileCallback;
 import io.topiacoin.core.callbacks.ConnectWorkspaceCallback;
 import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
 import io.topiacoin.core.callbacks.DeclineInvitationCallback;
@@ -50,7 +51,6 @@ import org.apache.commons.lang.NotImplementedException;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.List;
 import java.util.Random;
 
 public class BlockchainWorkspace implements WorkspacesAPI {
@@ -91,7 +91,7 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      */
     @Override
     public void checkForUpdates() {
-
+		throw new NotImplementedException();
     }
 
     /**
@@ -137,6 +137,11 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         }
         // On connection, ask the RPC Adapter Manager if it has an adapter for the specified workspace chain.
         EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
+        if(adapter != null) {
+        	callback.connectedWorkspace(workspaceID);
+		} else {
+			callback.failedToConnectWorkspace(workspaceID);
+		}
     }
 
     /**
@@ -173,8 +178,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
             EOSAdapter adapter = _adapterManager.getRPCAdapter(workspaceID);
             // Instruct the RPC Adapter to initialize the chain with the workspace name, description, and user record for the currently logged in user.
             adapter.initializeWorkspace(workspaceID, currentUserID, workspaceName, workspaceDescription, ownerKey);
+            callback.createdWorkspace(workspaceID);
         } catch (ChainAlreadyExistsException | NoSuchChainException | IOException | CryptographicException | NoSuchUserException | WorkspaceAlreadyExistsException | BlockchainException e1) {
             e1.printStackTrace();
+            callback.failedToCreateWorkspace();
         }
     }
 
@@ -205,8 +212,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to set the workspace description
         try {
             adapter.setWorkspaceDescription(workspaceToUpdate.getGuid(), currentUserID, workspaceToUpdate.getDescription());
+            callback.updatedWorkspaceDescription(workspaceToUpdate);
         } catch (BlockchainException e) {
             e.printStackTrace();
+            callback.failedToUpdateWorkspaceDescription(workspaceToUpdate);
         }
     }
 
@@ -247,8 +256,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
             String ownerKey = CryptoUtils.encryptWithPublicKeyToString(workspace.getWorkspaceKey().getEncoded(), _dataModel.getUserByID(userID).getPublicKey());
             // Instruct the RPC Adapter to add an invitation record to the blockchain for the specified user.
             adapter.addMember(workspace.getGuid(), currentUserID, userID, ownerKey);
+            callback.invitedUser(workspace, userID);
         } catch (CryptographicException | BlockchainException | NoSuchUserException e) {
             e.printStackTrace();
+            callback.failedToInviteUser(workspace, userID);
         }
     }
 
@@ -274,8 +285,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to accept the invitation to the specified workspace for the currently logged in user.
         try {
             adapter.acceptInvitation(workspace.getGuid(), currentUserID);
+            callback.acceptedInvitation(workspace);
         } catch (BlockchainException e) {
             e.printStackTrace();
+            callback.failedToAcceptInvitation(workspace);
         }
     }
 
@@ -304,12 +317,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
             // Instruct Chainmail to stop the blockchain for the declined workspace
             // Instruct Chainmail to delete the blockchain for the declined workspace.
             _chainMail.destroyBlockchain(workspace.getGuid());
-        } catch (IOException e) {
+            callback.decliendInvitation(workspace);
+        } catch (IOException | BlockchainException e) {
             e.printStackTrace();
-        } catch (BlockchainException e) {
-            e.printStackTrace();
+            callback.failedToDeclineInvitation(workspace);
         }
-    }
+	}
 
     /**
      * Sends an encrypted workspace key to a new workspace member. Normally, the inviter will send the encrypted
@@ -360,12 +373,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
             // Instruct Chainmail to stop the blockchain for the workspace
             // Instruct Chainmail to delete the blockchain for the workspace
             _chainMail.destroyBlockchain(workspace.getGuid());
-        } catch (IOException e) {
+            callback.leftWorkspace(workspace);
+        } catch (IOException | BlockchainException e) {
             e.printStackTrace();
-        } catch (BlockchainException e) {
-            e.printStackTrace();
+            callback.failedToLeaveWorkspace(workspace);
         }
-    }
+	}
 
     /**
      * Removes the specified member from the workspace. It is an error to specify a non-existent workspace GUID, or a
@@ -389,16 +402,24 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     public void removeUserFromWorkspace(Workspace workspace, String memberID, RemoveUserCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         if(memberID.equals(currentUserID)) {
             leaveWorkspace(workspace, new LeaveWorkspaceCallback() {
-                //call callback.whatever();
-            });
+				@Override public void leftWorkspace(Workspace workspace) {
+					callback.removedUser(workspace, currentUserID);
+				}
+
+				@Override public void failedToLeaveWorkspace(Workspace workspace) {
+					callback.failedToRemoveUser(workspace, currentUserID);
+				}
+			});
         } else {
             // Get the RPC Adapter for the specified workspace
             EOSAdapter adapter = getEOSAdapter(workspace.getGuid());
             // Instruct the RPC Adapter to remove the specified user from the workspace
             try {
                 adapter.removeMember(workspace.getGuid(), currentUserID, memberID);
+                callback.removedUser(workspace, memberID);
             } catch (BlockchainException e) {
                 e.printStackTrace();
+                callback.failedToRemoveUser(workspace, memberID);
             }
         }
     }
@@ -433,7 +454,7 @@ public class BlockchainWorkspace implements WorkspacesAPI {
      * @param callback
      */
     @Override
-    public void addFile(File fileToAdd, AddFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
+    public void addFile(File fileToAdd, AddSDFSFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         if(fileToAdd.isFolder() || fileToAdd.getVersions() == null || fileToAdd.getVersions().isEmpty()) {
             throw new IllegalArgumentException("Cannot add File - malformed");
         }
@@ -442,8 +463,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the Adapter to add the specified file metadata to the blockchain
         try {
             adapter.addFile(fileToAdd.getContainerID(), currentUserID, fileToAdd);
+            callback.didAddFile(fileToAdd);
         } catch (BlockchainException e) {
             e.printStackTrace();
+            callback.failedToAddFile(fileToAdd);
         }
     }
 
@@ -475,8 +498,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the Adapter to add the specified file metadata to the blockchain
         try {
             adapter.addFile(folderToAdd.getContainerID(), currentUserID, folderToAdd);
+            callback.addedFolder(folderToAdd);
         } catch (BlockchainException e) {
             e.printStackTrace();
+            callback.failedToAddFolder(folderToAdd);
         }
     }
 
@@ -506,8 +531,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to remove the specified file from the blockchain
         try {
             adapter.removeFile(fileToRemove.getContainerID(), currentUserID, fileToRemove.getEntryID(), null);
+            callback.removedFile(fileToRemove);
         } catch (BlockchainException e) {
             e.printStackTrace();
+            callback.failedToRemoveFile(fileToRemove);
         }
     }
 
@@ -551,8 +578,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to add a new version to the specified file with the given metadata.
         try {
             adapter.addFile(fileToBeAdded.getContainerID(), currentUserID, fileToBeAdded);
+            callback.addedFileVersion(fileToBeAdded);
         } catch(BlockchainException ex) {
             ex.printStackTrace();
+            callback.failedToAddFileVersion(fileToBeAdded);
         }
     }
 
@@ -584,8 +613,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instract the RPC Adapter to remove the specified file version from the blockchain.
         try {
             adapter.removeFile(workspaceGUID, currentUserID, fileGUID, fileVersionGUID);
+            callback.removedFileVersion(fileVersionGUID);
         } catch(BlockchainException ex) {
             ex.printStackTrace();
+			callback.failedToRemoveFileVersion(fileVersionGUID);
         }
     }
 
@@ -613,12 +644,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to mark the specified file version as acknowledged.
         try {
             adapter.acknowledgeFile(workspaceGUID, currentUserID, fileGUID, fileVersionGUID);
-        } catch (NoSuchFileException e) {
+            callback.acknowledgedFile(fileVersionGUID);
+        } catch (NoSuchFileException | BlockchainException e) {
             e.printStackTrace();
-        } catch (BlockchainException e) {
-            e.printStackTrace();
+            callback.failedToAcknowledgeFile(fileVersionGUID);
         }
-    }
+	}
 
     /**
      * @param fileToTag
@@ -636,12 +667,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to add the given tag to the specified file.
         try {
             adapter.addFileTag(fileToTag.getContainerID(), currentUserID, fileToTag.getEntryID(), fileToTag.getVersions().get(0).getVersionID(), tagName, isPublic);
-        } catch (NoSuchFileException e) {
+            callback.addedFileTag(fileToTag, tagName);
+        } catch (NoSuchFileException | BlockchainException e) {
             e.printStackTrace();
-        } catch (BlockchainException e) {
-            e.printStackTrace();
+            callback.failedToAddFileTag(fileToTag, tagName);
         }
-    }
+	}
 
     /**
      * @param fileToUntag
@@ -659,12 +690,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to remove the given tag from the specified file.
         try {
             adapter.removeFileTag(fileToUntag.getContainerID(), currentUserID, fileToUntag.getEntryID(), fileToUntag.getVersions().get(0).getVersionID(), tagName, isPublic);
-        } catch (NoSuchFileException e) {
+            callback.removedFileTag(fileToUntag, tagName);
+        } catch (NoSuchFileException | BlockchainException e) {
             e.printStackTrace();
-        } catch (BlockchainException e) {
-            e.printStackTrace();
+            callback.failedToRemoveFile(fileToUntag, tagName);
         }
-    }
+	}
 
     /**
      * Initiates a download of the specified file version. It is an error to specify a non-existent workspaceGUID, a
@@ -730,12 +761,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to lock the specified file in the blockchain
         try {
             adapter.lockFile(fileToLock.getContainerID(), currentUserID, fileToLock.getEntryID());
-        } catch(BlockchainException ex) {
+            callback.lockedFile(fileToLock);
+        } catch(BlockchainException | NoSuchFileException ex) {
             ex.printStackTrace();
-        } catch (NoSuchFileException e) {
-            e.printStackTrace();
+            callback.failedToLockFile(fileToLock);
         }
-    }
+	}
 
     /**
      * Locks the specified file version.  Locking a file version prevents other users from deleting the version or the
@@ -764,12 +795,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to lock the specified file in the blockchain
         try {
             adapter.lockFileVersion(fileToLock.getContainerID(), currentUserID, fileToLock.getEntryID(), fileToLock.getVersions().get(0).getVersionID());
-        } catch(BlockchainException ex) {
+            callback.lockedFile(fileToLock);
+        } catch(BlockchainException | NoSuchFileException ex) {
             ex.printStackTrace();
-        } catch (NoSuchFileException e) {
-            e.printStackTrace();
+            callback.failedToLockFile(fileToLock);
         }
-    }
+	}
 
     /**
      * Unlocks the specified file.  Unlocking a file allows other users to once again delete or upload new version of
@@ -795,12 +826,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to unlock the specified file in the blockchain
         try {
             adapter.unlockFile(fileToUnlock.getContainerID(), currentUserID, fileToUnlock.getEntryID());
-        } catch(BlockchainException ex) {
+            callback.unlockedFile(fileToUnlock);
+        } catch(BlockchainException | NoSuchFileException ex) {
             ex.printStackTrace();
-        } catch (NoSuchFileException e) {
-            e.printStackTrace();
+            callback.failedToUnlockFile(fileToUnlock);
         }
-    }
+	}
 
     /**
      * Unlocks the specified file version.  Unlocking a file version allows other users to once again delete the version of
@@ -829,12 +860,12 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to unlock the specified file in the blockchain
         try {
             adapter.unlockFileVersion(fileToUnlock.getContainerID(), currentUserID, fileToUnlock.getEntryID(), fileToUnlock.getVersions().get(0).getVersionID());
-        } catch(BlockchainException ex) {
+            callback.unlockedFile(fileToUnlock);
+        } catch(BlockchainException | NoSuchFileException ex) {
             ex.printStackTrace();
-        } catch (NoSuchFileException e) {
-            e.printStackTrace();
+            callback.failedToUnlockFile(fileToUnlock);
         }
-    }
+	}
 
     /**
      * Removes the specified folder from workspace. All content contained within the folder is also removed. It is an
@@ -861,8 +892,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to remove the specified folder in the blockchain.
         try {
             adapter.removeFile(folderToRemove.getContainerID(), currentUserID, folderToRemove.getEntryID(), null);
+            callback.removedFolder(folderToRemove);
         } catch(BlockchainException ex) {
             ex.printStackTrace();
+            callback.failedToRemoveFolder(folderToRemove);
         }
     }
 
@@ -891,8 +924,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to add the specified message to the blockchain.
         try {
             adapter.addMessage(workspaceGUID, currentUserID, message, mimeType);
+            callback.addedMessage(workspaceGUID, message);
         } catch (BlockchainException e) {
             e.printStackTrace();
+            callback.failedToAddMessage(workspaceGUID, message);
         }
     }
 
@@ -914,10 +949,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         // Instruct the RPC Adapter to acknowledge the specified message in the blockchain.
         try {
             adapter.acknowledgeMessage(messageToAcknowledge.getGuid(), currentUserID, messageToAcknowledge.getEntityID());
-        } catch (NoSuchMessageException e) {
+            callback.acknowlegedMessage(messageToAcknowledge);
+        } catch (NoSuchMessageException | BlockchainException e) {
             e.printStackTrace();
-        } catch (BlockchainException e) {
-            e.printStackTrace();
+            callback.failedToAcknowledgeMessage(messageToAcknowledge);
         }
-    }
+	}
 }

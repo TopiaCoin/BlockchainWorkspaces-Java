@@ -8,6 +8,7 @@ import io.topiacoin.core.callbacks.AddFileTagCallback;
 import io.topiacoin.core.callbacks.AddFileVersionCallback;
 import io.topiacoin.core.callbacks.AddFolderCallback;
 import io.topiacoin.core.callbacks.AddMessageCallback;
+import io.topiacoin.core.callbacks.AddSDFSFileCallback;
 import io.topiacoin.core.callbacks.ConnectWorkspaceCallback;
 import io.topiacoin.core.callbacks.CreateWorkspaceCallback;
 import io.topiacoin.core.callbacks.DeclineInvitationCallback;
@@ -270,7 +271,7 @@ public interface WorkspacesAPI {
      * will be posted upon start of the file upload to allow listeners to learn the file ID and version ID assigned to
      * this file.
      */
-    void addFile(File fileToAdd, AddFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
+    void addFile(File fileToAdd, AddSDFSFileCallback callback) throws NotLoggedInException, NoSuchWorkspaceException;
 
     /**
      * Removes a file from the specified workspace. It is an error to specify a non-existent workspace GUID, or a
