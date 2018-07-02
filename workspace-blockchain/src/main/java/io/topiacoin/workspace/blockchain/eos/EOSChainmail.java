@@ -33,12 +33,15 @@ public class EOSChainmail implements Chainmail {
 
 	private String nodeOSExecutable;
 	private String KeosExecutable;
+	private String cleosExecutable;
+	private String smartContractDir;
 	private File EOSConfigBaseDir;
 	private String EOSConfigBaseDirButInLinuxStyle;
 	private int PORT_RANGE_START;
 	private int PORT_RANGE_END;
 	private Process keosTerm;
 	private Process cmdTerm;
+	private Process cleosTerm;
 	private ProcessBuilder termBuilder;
 
 	private final Stack<Integer> availablePorts = new Stack<>();
@@ -49,13 +52,15 @@ public class EOSChainmail implements Chainmail {
 	private static final DateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
 	public EOSChainmail(Configuration config) {
-		String nodeOSexe = config.getConfigurationOption("nodeos_install_dir");
-		String keosEXE = config.getConfigurationOption("keos_install_dir");
+		String nodeOSexe = config.getConfigurationOption("nodeos_install");
+		String keosEXE = config.getConfigurationOption("keos_install");
+		String cleosEXE = config.getConfigurationOption("cleos_install");
 		String blockchain_storage_dir = config.getConfigurationOption("blockchain_storage_dir");
 		String blockchain_storage_dir_linux = config.getConfigurationOption("blockchain_storage_dir_linux");
+		String smartContractDir = config.getConfigurationOption("smart_contract_dir_linux");
 		int portRangeStart = config.getConfigurationOption("chainmail_port_range_start", Integer.class);
 		int portRangeEnd = config.getConfigurationOption("chainmail_port_range_end", Integer.class);
-		init(nodeOSexe, keosEXE, blockchain_storage_dir, blockchain_storage_dir_linux, portRangeStart, portRangeEnd);
+		init(nodeOSexe, keosEXE, cleosEXE, blockchain_storage_dir, blockchain_storage_dir_linux, smartContractDir, portRangeStart, portRangeEnd);
 	}
 
 	EOSChainmail() {
@@ -63,18 +68,20 @@ public class EOSChainmail implements Chainmail {
 	}
 
 	EOSChainmail(int portRangeStart, int portRangeEnd) {
-		init("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "/mnt/c/EOS/eos/build/programs/keosd/keosd", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", portRangeStart, portRangeEnd);
+		init("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "/mnt/c/EOS/eos/build/programs/keosd/keosd", "/mnt/c/EOS/eos/build/programs/cleos/cleos", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains/secrataContainer", portRangeStart, portRangeEnd);
 	}
 
-	private void init(String nodeOSexe, String keosEXE, String baseDir, String baseDirLinux, int portRangeStart, int portRangeEnd) {
+	private void init(String nodeOSexe, String keosEXE, String cleosExe, String baseDir, String baseDirLinux, String smartContractDirect, int portRangeStart, int portRangeEnd) {
 		nodeOSExecutable = nodeOSexe;
 		KeosExecutable = keosEXE;
+		cleosExecutable = cleosExe;
 		EOSConfigBaseDir = new File(baseDir);
 		EOSConfigBaseDirButInLinuxStyle = baseDirLinux;
 		termBuilder = new ProcessBuilder("wsl");
 		termBuilder.redirectErrorStream(true);
 		PORT_RANGE_START = portRangeStart;
 		PORT_RANGE_END = portRangeEnd;
+		smartContractDir = smartContractDirect;
 	}
 
 	@Override public void start(RPCAdapterManager manager) throws IOException {
@@ -96,11 +103,13 @@ public class EOSChainmail implements Chainmail {
 		}
 		cmdTerm = termBuilder.start();
 		keosTerm = termBuilder.start();
+		cleosTerm = termBuilder.start();
 		try {
 			Thread.sleep(200);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("Starting Keos");
 		OutputStreamWriter writer = new OutputStreamWriter(keosTerm.getOutputStream());
 		String walletStartCmd =
 				KeosExecutable + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir "
@@ -128,6 +137,7 @@ public class EOSChainmail implements Chainmail {
 		}
 		cmdTerm.destroy();
 		keosTerm.destroy();
+		cleosTerm.destroy();
 	}
 
 	@Override public boolean createBlockchain(String currentUserID, long workspaceID) throws ChainAlreadyExistsException {
@@ -322,8 +332,133 @@ public class EOSChainmail implements Chainmail {
 					}
 				}
 				if (success) {
+					if(firstTimeStartup) {
+						OutputStreamWriter tempWalletWriter = new OutputStreamWriter(cleosTerm.getOutputStream());
+						String sdfsTmpWalletCreateCmd = cleosExecutable + " --wallet-url http://127.0.0.1:" + PORT_RANGE_START + " wallet create -n sdfstmp\n";
+						tempWalletWriter.write(sdfsTmpWalletCreateCmd);
+						tempWalletWriter.flush();
+						BufferedReader tempWalletReader = new BufferedReader(new InputStreamReader(cleosTerm.getInputStream()));
+						String tempWalletPassword = null;
+						boolean nextLineFinal = false;
+						while ((line = tempWalletReader.readLine()) != null) {
+							System.out.println(line);
+							if(nextLineFinal) {
+								tempWalletPassword = line.substring(1, line.length() - 1);
+								break;
+							}
+							if (line.contains("Without password imported keys will not be retrievable.")) {
+								nextLineFinal = true;
+							}
+						}
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						String genKeysCmd = cleosExecutable + " --wallet-url http://127.0.0.1:" + PORT_RANGE_START + " create key\n";
+						tempWalletWriter.write(genKeysCmd);
+						tempWalletWriter.flush();
+						String pubKey1 = null;
+						String privKey1 = null;
+						while ((line = tempWalletReader.readLine()) != null) {
+							System.out.println(line);
+							if(privKey1 == null) {
+								privKey1 = line.replace("Private key: ", "");
+							} else if(pubKey1 == null) {
+								pubKey1 = line.replace("Public key: ", "");
+								break;
+							} else {
+								break;
+							}
+						}
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						tempWalletWriter.write(genKeysCmd);
+						tempWalletWriter.flush();
+						String pubKey2 = null;
+						String privKey2 = null;
+						while ((line = tempWalletReader.readLine()) != null) {
+							System.out.println(line);
+							if(privKey2 == null) {
+								privKey2 = line.replace("Private key: ", "");
+							} else if(pubKey2 == null) {
+								pubKey2 = line.replace("Public key: ", "");
+								break;
+							} else {
+								break;
+							}
+						}
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						String walletImportCmd = cleosExecutable + " --wallet-url http://127.0.0.1:" + PORT_RANGE_START + " wallet import -n sdfstmp "+privKey1+"\n";
+						tempWalletWriter.write(walletImportCmd);
+						tempWalletWriter.flush();
+						while ((line = tempWalletReader.readLine()) != null) {
+							System.out.println(line);
+							if(line.startsWith("imported private key for")) {
+								break;
+							}
+						}
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						walletImportCmd = cleosExecutable + " --wallet-url http://127.0.0.1:" + PORT_RANGE_START + " wallet import -n sdfstmp "+privKey2+"\n";
+						tempWalletWriter.write(walletImportCmd);
+						tempWalletWriter.flush();
+						while ((line = tempWalletReader.readLine()) != null) {
+							System.out.println(line);
+							if(line.startsWith("imported private key for")) {
+								break;
+							}
+						}
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						String accountCreateCmd = cleosExecutable + " --wallet-url http://127.0.0.1:" + PORT_RANGE_START + " --url http://127.0.0.1:" + rpcPort + " create account eosio sdfs "+pubKey1+" "+pubKey2+"\n";
+						tempWalletWriter.write(accountCreateCmd);
+						tempWalletWriter.flush();
+						while ((line = tempWalletReader.readLine()) != null) {
+							System.out.println(line);
+							if(line.contains("eosio::newaccount")) {
+								break;
+							}
+						}
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+						OutputStreamWriter scWriter = new OutputStreamWriter(cleosTerm.getOutputStream());
+						String smartContractDeployCmd =
+								cleosExecutable + " --wallet-url http://127.0.0.1:" + PORT_RANGE_START + " --url http://127.0.0.1:" + info.rpcPort + " set contract sdfs " + smartContractDir + "\n";
+						scWriter.write(smartContractDeployCmd);
+						scWriter.flush();
+						BufferedReader scReader = new BufferedReader(new InputStreamReader(cleosTerm.getInputStream()));
+						while ((line = scReader.readLine()) != null) {
+							System.out.println(line);
+							if (line.contains("eosio::setabi")) {
+								break;
+							}
+						}
+					}
 					for (ChainmailCallback callback : blockchainListeners) {
-						callback.onBlockchainStarted(workspaceID, "http://127.0.0.1:" + nodePort, "http://127.0.0.1:" + PORT_RANGE_START);
+						callback.onBlockchainStarted(workspaceID, "http://127.0.0.1:" + rpcPort, "http://127.0.0.1:" + PORT_RANGE_START);
 					}
 				}
 			}

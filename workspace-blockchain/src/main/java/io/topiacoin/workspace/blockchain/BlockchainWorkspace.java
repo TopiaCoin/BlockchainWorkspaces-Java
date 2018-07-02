@@ -86,6 +86,11 @@ public class BlockchainWorkspace implements WorkspacesAPI {
         }
     }
 
+    public void stop() {
+        _chainMail.stop();
+        _dhtAccessor.stop();
+    }
+
     /**
      * Requestes that the Blockchain Workspace API check all tracked workspaces for updates. This will cause the system
      * to check all of the tracked blockchains for changes. This functionality is periodically invoked by the API to

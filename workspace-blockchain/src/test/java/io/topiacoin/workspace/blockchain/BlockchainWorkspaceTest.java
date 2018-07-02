@@ -12,6 +12,7 @@ import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -22,11 +23,14 @@ public class BlockchainWorkspaceTest {
 
 	@Test
 	public void theGreatestIntegrationTestTheWorldHasEverSeen() throws NotLoggedInException, CryptographicException, NoSuchAlgorithmException, IOException {
+		File blockchainStorageDir = new File("C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains");
 		Configuration config = new DefaultConfiguration();
-		config.setConfigurationOption("nodeos_install_dir", "/mnt/c/EOS/eos/build/programs/nodeos/nodeos");
-		config.setConfigurationOption("keos_install_dir", "/mnt/c/EOS/eos/build/programs/keosd/keosd");
+		config.setConfigurationOption("nodeos_install", "/mnt/c/EOS/eos/build/programs/nodeos/nodeos");
+		config.setConfigurationOption("keos_install", "/mnt/c/EOS/eos/build/programs/keosd/keosd");
+		config.setConfigurationOption("cleos_install", "/mnt/c/EOS/eos/build/programs/cleos/cleos");
 		config.setConfigurationOption("blockchain_storage_dir", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains");
 		config.setConfigurationOption("blockchain_storage_dir_linux", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains");
+		config.setConfigurationOption("smart_contract_dir_linux", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains/secrataContainer");
 		config.setConfigurationOption("chainmail_port_range_start", "9240");
 		config.setConfigurationOption("chainmail_port_range_end", "9250");
 
@@ -52,17 +56,23 @@ public class BlockchainWorkspaceTest {
 		DataModel dataModel = DataModel.getInstance();
 		KeyPair myKeys = CryptoUtils.generateECKeyPair();
 		CurrentUser me = new CurrentUser("usera", "foo@bar.com", myKeys.getPublic(), myKeys.getPrivate());
-		dataModel.setCurrentUser(me);
+		try {
+			dataModel.setCurrentUser(me);
 
-		workspace.createWorkspace("A Workspace", "A description", new CreateWorkspaceCallback() {
-			@Override public void createdWorkspace(long workspaceID) {
-				System.out.println("Nifty!");
-			}
+			workspace.createWorkspace("A Workspace", "A description", new CreateWorkspaceCallback() {
+				@Override public void createdWorkspace(long workspaceID) {
+					System.out.println("Nifty!");
+				}
 
-			@Override public void failedToCreateWorkspace() {
-				System.out.println("Failed");
-			}
-		});
+				@Override public void failedToCreateWorkspace() {
+					System.out.println("Failed");
+				}
+			});
+		} finally {
+			workspace.stop();
+			fauxBootstrapNode.shutdown(false);
+			new File(new File(blockchainStorageDir, "wallet"), "sdfstmp.wallet").delete();
+		}
 	}
 
 }
