@@ -10,6 +10,7 @@ import io.topiacoin.dht.DHT;
 import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -18,12 +19,16 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BlockchainWorkspaceTest {
+
 
 	@Test
 	public void theGreatestIntegrationTestTheWorldHasEverSeen() throws NotLoggedInException, CryptographicException, NoSuchAlgorithmException, IOException {
 		File blockchainStorageDir = new File("C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains");
+		new File(new File(blockchainStorageDir, "wallet"), "sdfstmp.wallet").deleteOnExit();
 		Configuration config = new DefaultConfiguration();
 		config.setConfigurationOption("nodeos_install", "/mnt/c/EOS/eos/build/programs/nodeos/nodeos");
 		config.setConfigurationOption("keos_install", "/mnt/c/EOS/eos/build/programs/keosd/keosd");
@@ -58,20 +63,27 @@ public class BlockchainWorkspaceTest {
 		CurrentUser me = new CurrentUser("usera", "foo@bar.com", myKeys.getPublic(), myKeys.getPrivate());
 		try {
 			dataModel.setCurrentUser(me);
+			final Map<String, Boolean> success = new HashMap<String, Boolean>();
+			while(success.get("success") == null) {
+				workspace.createWorkspace("A Workspace", "A description", new CreateWorkspaceCallback() {
+					@Override public void createdWorkspace(long workspaceID) {
+						System.out.println("Nifty!");
+						success.put("success", true);
+					}
 
-			workspace.createWorkspace("A Workspace", "A description", new CreateWorkspaceCallback() {
-				@Override public void createdWorkspace(long workspaceID) {
-					System.out.println("Nifty!");
-				}
-
-				@Override public void failedToCreateWorkspace() {
-					System.out.println("Failed");
-				}
-			});
+					@Override public void failedToCreateWorkspace() {
+						System.out.println("Failed");
+						success.put("success", false);
+					}
+				});
+				Thread.sleep(100);
+			}
+			Assert.assertTrue(success.get("success"));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		} finally {
 			workspace.stop();
 			fauxBootstrapNode.shutdown(false);
-			new File(new File(blockchainStorageDir, "wallet"), "sdfstmp.wallet").delete();
 		}
 	}
 

@@ -1,5 +1,8 @@
 package io.topiacoin.workspace.blockchain.eos;
 
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.exceptions.DockerCertificateException;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.workspace.blockchain.ChainInfo;
@@ -29,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-public class EOSChainmail implements Chainmail {
+public class EOSDockerChainmail implements Chainmail {
 
 	private String nodeOSExecutable;
 	private String KeosExecutable;
@@ -43,6 +46,7 @@ public class EOSChainmail implements Chainmail {
 	private Process cmdTerm;
 	private Process cleosTerm;
 	private ProcessBuilder termBuilder;
+	private DockerClient docker;
 
 	private final Stack<Integer> availablePorts = new Stack<>();
 	private final Map<Long, Integer> portsInUse = new HashMap<>();
@@ -51,7 +55,7 @@ public class EOSChainmail implements Chainmail {
 	private RPCAdapterManager _rpcManager;
 	private static final DateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-	public EOSChainmail(Configuration config) {
+	public EOSDockerChainmail(Configuration config) {
 		String nodeOSexe = config.getConfigurationOption("nodeos_install");
 		String keosEXE = config.getConfigurationOption("keos_install");
 		String cleosEXE = config.getConfigurationOption("cleos_install");
@@ -63,11 +67,11 @@ public class EOSChainmail implements Chainmail {
 		init(nodeOSexe, keosEXE, cleosEXE, blockchain_storage_dir, blockchain_storage_dir_linux, smartContractDir, portRangeStart, portRangeEnd);
 	}
 
-	EOSChainmail() {
+	EOSDockerChainmail() {
 		this(9240, 9250);
 	}
 
-	EOSChainmail(int portRangeStart, int portRangeEnd) {
+	EOSDockerChainmail(int portRangeStart, int portRangeEnd) {
 		init("/mnt/c/EOS/eos/build/programs/nodeos/nodeos", "/mnt/c/EOS/eos/build/programs/keosd/keosd", "/mnt/c/EOS/eos/build/programs/cleos/cleos", "C:\\Users\\csandwith\\AppData\\Roaming\\EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains", "/mnt/c/Users/csandwith/AppData/Roaming/EOSTestChains/secrataContainer", portRangeStart, portRangeEnd);
 	}
 
@@ -82,6 +86,11 @@ public class EOSChainmail implements Chainmail {
 		PORT_RANGE_START = portRangeStart;
 		PORT_RANGE_END = portRangeEnd;
 		smartContractDir = smartContractDirect;
+		try {
+			docker = DefaultDockerClient.fromEnv().build();
+		} catch (DockerCertificateException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override public void start(RPCAdapterManager manager) throws IOException {
