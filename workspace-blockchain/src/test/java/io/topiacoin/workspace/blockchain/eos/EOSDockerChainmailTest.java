@@ -5,14 +5,14 @@ import io.topiacoin.workspace.blockchain.ChainmailTest;
 import org.junit.Ignore;
 
 @Ignore
-public class EOSChainmailTest extends ChainmailTest {
+public class EOSDockerChainmailTest extends ChainmailTest {
 
 	@Override public Chainmail getChainmailInstance(int portstart, int portend) {
-		return new EOSChainmail(portstart, portend);
+		return new EOSDockerChainmail(portstart, portend);
 	}
 
 	@Override public Chainmail getChainmailInstance() {
-		return new EOSChainmail();
+		return new EOSDockerChainmail();
 	}
 
 	public void updateRPCLastModified(EOSAdapter eosa) {

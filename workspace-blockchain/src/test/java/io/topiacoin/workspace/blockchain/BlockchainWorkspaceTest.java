@@ -11,6 +11,7 @@ import io.topiacoin.dht.config.DHTConfiguration;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -22,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Ignore
 public class BlockchainWorkspaceTest {
 
 

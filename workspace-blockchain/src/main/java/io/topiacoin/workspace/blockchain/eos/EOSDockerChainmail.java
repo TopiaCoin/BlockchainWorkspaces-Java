@@ -2,7 +2,15 @@ package io.topiacoin.workspace.blockchain.eos;
 
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
+import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.ContainerCreation;
+import com.spotify.docker.client.messages.ContainerInfo;
+import com.spotify.docker.client.messages.ExecCreation;
+import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.PortBinding;
 import io.topiacoin.core.Configuration;
 import io.topiacoin.model.MemberNode;
 import io.topiacoin.workspace.blockchain.ChainInfo;
@@ -12,25 +20,37 @@ import io.topiacoin.workspace.blockchain.RPCAdapterManager;
 import io.topiacoin.workspace.blockchain.exceptions.ChainAlreadyExistsException;
 import io.topiacoin.workspace.blockchain.exceptions.NoSuchChainException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.TeeOutputStream;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class EOSDockerChainmail implements Chainmail {
 
@@ -43,6 +63,7 @@ public class EOSDockerChainmail implements Chainmail {
 	private int PORT_RANGE_START;
 	private int PORT_RANGE_END;
 	private Process keosTerm;
+	private String keosID;
 	private Process cmdTerm;
 	private Process cleosTerm;
 	private ProcessBuilder termBuilder;
@@ -110,32 +131,102 @@ public class EOSDockerChainmail implements Chainmail {
 		for (int i = PORT_RANGE_START + 1; i <= PORT_RANGE_END - 1; i += 2) {
 			availablePorts.push(i);
 		}
-		cmdTerm = termBuilder.start();
-		keosTerm = termBuilder.start();
-		cleosTerm = termBuilder.start();
+		Map<String, List<PortBinding>> portBindings = new HashMap<>();
+		List<String> ports = new ArrayList<>();
+		for(int i = PORT_RANGE_START; i <= PORT_RANGE_END; i++) {
+			List<PortBinding> hostPorts = new ArrayList<>();
+			hostPorts.add(PortBinding.of("0.0.0.0", i));
+			portBindings.put("" + i, hostPorts);
+			ports.add("" + i);
+		}
+		HostConfig hostConfig = HostConfig.builder().portBindings(portBindings).build();
+		ContainerConfig containerConfig = ContainerConfig.builder()
+				.hostConfig(hostConfig)
+				.image("eosio/eos-dev").exposedPorts(ports.toArray(new String[ports.size()]))
+				.cmd("sh", "-c", "while :; do sleep 1; done")
+				.build();
 		try {
-			Thread.sleep(200);
+			System.out.println("Create");
+			final ContainerCreation creation = docker.createContainer(containerConfig, "keosd");
+			keosID = creation.id();
+
+			// Inspect container
+			System.out.println("Inspect");
+			final ContainerInfo info = docker.inspectContainer(keosID);
+
+			// Start container
+			System.out.println("Start");
+			docker.startContainer(keosID);
+
+			System.out.println("exe");
+			// Exec command inside running container with attached STDOUT and STDERR
+			//final String[] command = { "keosd", "--http-server-address", "127.0.0.1:" + PORT_RANGE_START, "--data-dir", EOSConfigBaseDirButInLinuxStyle, "--wallet-dir", EOSConfigBaseDirButInLinuxStyle + "/wallet" };
+			final String[] command = {"sh", "-c", "keosd --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir "
+					+ EOSConfigBaseDirButInLinuxStyle + "/wallet"};
+			final ExecCreation execCreation = docker.execCreate(
+					keosID, command, DockerClient.ExecCreateParam.attachStdout(),
+					DockerClient.ExecCreateParam.attachStderr());
+
+			final PipedInputStream out = new PipedInputStream();
+			final PipedOutputStream out_pipe = new PipedOutputStream(out);
+			ExecutorService executor = Executors.newSingleThreadExecutor();
+			executor.submit(new Callable<Void>() {
+     			@Override
+				public Void call() throws Exception {
+					docker.execStart(execCreation.id()).attach(out_pipe, out_pipe);
+					return null;
+				}
+			});
+			Thread.sleep(100);
+			try (Scanner sc_out = new Scanner(out)) {
+				System.out.println("err_hasNext: " + sc_out.hasNext() + " line: " + sc_out.hasNextLine());
+				String line;
+				while ((line = sc_out.nextLine()) != null) {
+					System.out.println(line);
+					if (line.contains("add api url: /v1/wallet/unlock")) {
+						break;
+					}
+				}
+			}
+
+			final String[] command2 = {"sh", "-c", "ls"};
+			ExecCreation execCreation2 = docker.execCreate(
+					keosID, command2, DockerClient.ExecCreateParam.attachStdout(),
+					DockerClient.ExecCreateParam.attachStderr());
+
+			final PipedInputStream out2 = new PipedInputStream();
+			final PipedOutputStream out_pipe2 = new PipedOutputStream(out2);
+			ExecutorService executor2 = Executors.newSingleThreadExecutor();
+			executor2.submit(new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					docker.execStart(execCreation2.id()).attach(out_pipe2, out_pipe2);
+					return null;
+				}
+			});
+			Thread.sleep(100);
+			try (Scanner sc_out2 = new Scanner(out2)) {
+				System.out.println("err_hasNext: " + sc_out2.hasNext() + " line: " + sc_out2.hasNextLine());
+				String line;
+				while (sc_out2.hasNext() && (line = sc_out2.nextLine()) != null) {
+					System.out.println(line);
+				}
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		}
-		System.out.println("Starting Keos");
-		OutputStreamWriter writer = new OutputStreamWriter(keosTerm.getOutputStream());
-		String walletStartCmd =
-				KeosExecutable + " --http-server-address 127.0.0.1:" + PORT_RANGE_START + " --data-dir " + EOSConfigBaseDirButInLinuxStyle + "/ --wallet-dir "
-						+ EOSConfigBaseDirButInLinuxStyle + "/wallet" + "\n";
-		writer.write(walletStartCmd);
-		writer.flush();
-		BufferedReader in = new BufferedReader(new InputStreamReader(keosTerm.getInputStream()));
-		String line;
-		while ((line = in.readLine()) != null) {
-			System.out.println(line);
-			if (line.contains("add api url: /v1/wallet/unlock")) {
-				break;
-			}
+		} catch (DockerException e) {
+			e.printStackTrace();
 		}
 	}
 
 	@Override public void stop() {
+		try {
+			docker.killContainer(keosID);
+			docker.removeContainer(keosID);
+			docker.close();
+		} catch (InterruptedException | DockerException e) {
+			e.printStackTrace();
+		}
 		Set<Long> blockchains = portsInUse.keySet();
 		for (Long blockchain : blockchains) {
 			try {
@@ -145,7 +236,6 @@ public class EOSDockerChainmail implements Chainmail {
 			}
 		}
 		cmdTerm.destroy();
-		keosTerm.destroy();
 		cleosTerm.destroy();
 	}
 
@@ -561,5 +651,14 @@ public class EOSDockerChainmail implements Chainmail {
 
 	private boolean chainIsRunning(long workspaceID) {
 		return chainInfo.containsKey(workspaceID);
+	}
+
+	private boolean dockerContainerExists(String name) {
+		try {
+			docker.inspectContainer(name);
+			return true;
+		} catch (DockerException | InterruptedException e) {
+			return false;
+		}
 	}
 }
