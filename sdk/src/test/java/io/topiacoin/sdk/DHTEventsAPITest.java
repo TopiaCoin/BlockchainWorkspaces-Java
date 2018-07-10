@@ -44,6 +44,7 @@ public class DHTEventsAPITest {
 		dhtconfig.setBootstrapNodeID(fauxBootstrapNode.getNode().getNodeID().getNodeID());
 		dhtconfig.setBootstrapNodePort(fauxBootstrapNode.getNode().getPort());
 
+		DataModel.initialize(config);
 		DataModel model = DataModel.getInstance();
 		KeyPair kp1 = CryptoUtils.generateECKeyPair();
 		CurrentUser user = new CurrentUser("user1-63HzRNRH7h1", "user1-63HzRNRH71h@hotmail.com", kp1.getPublic(), kp1.getPrivate());

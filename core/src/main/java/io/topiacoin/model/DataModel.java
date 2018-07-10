@@ -32,11 +32,9 @@ public class DataModel {
 
     private DataModelProvider _provider;
 
-    private static Configuration _config;
-
-    protected DataModel() {
+    protected DataModel(Configuration _config) {
         if(_config != null) {
-            if (_config.getConfigurationOption("model.storage.type").equalsIgnoreCase("memory")) {
+            if (_config.getConfigurationOption("model.storage.type", "memory").equalsIgnoreCase("memory")) {
                 _provider = new MemoryDataModelProvider();
             } else {
                 _provider = new SQLiteDataModelProvider(_config);
@@ -54,8 +52,7 @@ public class DataModel {
     }
 
     public static synchronized void initialize(Configuration config) {
-        _config = config;
-        __instance = new DataModel();
+        __instance = new DataModel(config);
     }
 
 

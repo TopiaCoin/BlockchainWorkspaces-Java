@@ -60,7 +60,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -139,7 +139,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -221,7 +221,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -283,7 +283,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -341,7 +341,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -398,7 +398,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -490,7 +490,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -601,7 +601,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -717,7 +717,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -791,7 +791,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -855,7 +855,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -922,7 +922,7 @@ public class SDFSTest {
         SDFS sdfs = new SDFS();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -969,7 +969,7 @@ public class SDFSTest {
         Configuration configuration = new DefaultConfiguration();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 
@@ -1054,7 +1054,7 @@ public class SDFSTest {
         Configuration configuration = new DefaultConfiguration();
 
         // Create the Concrete Test objects
-        DataModel dataModel = new DataModel() {
+        DataModel dataModel = new DataModel(new DefaultConfiguration()) {
             // This anonymous subclass exists so that we can bypass the singleton instance for testing.
         };
 

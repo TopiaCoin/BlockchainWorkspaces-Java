@@ -52,7 +52,7 @@ public class ChunkManagerTest {
 		try {
 			config.setConfigurationOption("chunkStorageLoc", chunkStorageLocA.getAbsolutePath());
 			config.setConfigurationOption("chunkStorageQuota", "1000");
-			DataModel model = new TestDataModel();
+			DataModel model = new TestDataModel(config);
 			KeyPair userAKeyPair = CryptoUtils.generateECKeyPair();
 			CurrentUser currentUserA = new CurrentUser("userA", "userA@email.com", userAKeyPair.getPublic(), userAKeyPair.getPrivate());
 			model.setCurrentUser(currentUserA);
@@ -182,7 +182,7 @@ public class ChunkManagerTest {
 			io.topiacoin.model.File f = new io.topiacoin.model.File();
 			f.setEntryID("FileFoo");
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(configA);
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.setCurrentUser(currentUserA);
@@ -195,7 +195,7 @@ public class ChunkManagerTest {
 			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(configB);
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.setCurrentUser(currentUserB);
@@ -329,7 +329,7 @@ public class ChunkManagerTest {
 			io.topiacoin.model.File f = new io.topiacoin.model.File();
 			f.setEntryID("FileFoo");
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(configA);
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.setCurrentUser(currentUserA);
@@ -342,7 +342,7 @@ public class ChunkManagerTest {
 			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(configB);
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.setCurrentUser(currentUserB);
@@ -463,7 +463,7 @@ public class ChunkManagerTest {
 			io.topiacoin.model.File f = new io.topiacoin.model.File();
 			f.setEntryID("FileFoo");
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(configA);
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.setCurrentUser(currentUserA);
@@ -477,7 +477,7 @@ public class ChunkManagerTest {
 			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", bingoChunk);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(configA);
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.setCurrentUser(currentUserB);
@@ -602,7 +602,7 @@ public class ChunkManagerTest {
 			io.topiacoin.model.File f = new io.topiacoin.model.File();
 			f.setEntryID("FileFoo");
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(configA);
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.setCurrentUser(currentUserA);
@@ -615,7 +615,7 @@ public class ChunkManagerTest {
 			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(configB);
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.setCurrentUser(currentUserB);

@@ -8,6 +8,7 @@ import io.topiacoin.chunks.exceptions.InsufficientSpaceException;
 import io.topiacoin.chunks.exceptions.InvalidReservationException;
 import io.topiacoin.chunks.exceptions.NoSuchChunkException;
 import io.topiacoin.chunks.impl.SimpleChunkRetrievalStrategyFactory;
+import io.topiacoin.core.impl.DefaultConfiguration;
 import io.topiacoin.crypto.CryptoUtils;
 import io.topiacoin.model.CurrentUser;
 import io.topiacoin.model.DataModel;
@@ -100,7 +101,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -113,7 +114,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -241,7 +242,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -256,7 +257,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addChunkForFile("FileFoo", "VersionFoo", barChunk);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", bazChunk);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -417,7 +418,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererC.setChunkStorage(transfererCChunkStorage);
 			transfererD.setChunkStorage(transfererDChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUser(new User(currentUserC));
@@ -438,7 +439,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", chunkBaz);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUser(new User(currentUserC));
@@ -459,7 +460,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", chunkBaz);
 
-			DataModel modelC = new TestDataModel();
+			DataModel modelC = new TestDataModel(new DefaultConfiguration());
 			modelC.addUser(new User(currentUserA));
 			modelC.addUser(new User(currentUserB));
 			modelC.addUser(new User(currentUserC));
@@ -480,7 +481,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelC.addChunkForFile("FileFoo", "VersionFoo", chunkBar);
 			modelC.addChunkForFile("FileFoo", "VersionFoo", chunkBaz);
 
-			DataModel modelD = new TestDataModel();
+			DataModel modelD = new TestDataModel(new DefaultConfiguration());
 			modelD.addUser(new User(currentUserA));
 			modelD.addUser(new User(currentUserB));
 			modelD.addUser(new User(currentUserC));
@@ -652,7 +653,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererC.setChunkStorage(transfererCChunkStorage);
 			transfererD.setChunkStorage(transfererDChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUser(new User(currentUserC));
@@ -671,7 +672,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUser(new User(currentUserC));
@@ -690,7 +691,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelB.addFileVersion("FileFoo", v);
 			modelB.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelC = new TestDataModel();
+			DataModel modelC = new TestDataModel(new DefaultConfiguration());
 			modelC.addUser(new User(currentUserA));
 			modelC.addUser(new User(currentUserB));
 			modelC.addUser(new User(currentUserC));
@@ -709,7 +710,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelC.addFileVersion("FileFoo", v);
 			modelC.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelD = new TestDataModel();
+			DataModel modelD = new TestDataModel(new DefaultConfiguration());
 			modelD.addUser(new User(currentUserA));
 			modelD.addUser(new User(currentUserB));
 			modelD.addUser(new User(currentUserC));
@@ -838,7 +839,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -851,7 +852,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -1002,7 +1003,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -1015,7 +1016,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -1169,7 +1170,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -1182,7 +1183,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -1335,7 +1336,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -1348,7 +1349,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -1462,7 +1463,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(jackedUpUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -1475,7 +1476,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
@@ -1587,7 +1588,7 @@ public abstract class AbstractChunkTransfererTest {
 			transfererA.setChunkStorage(transfererAChunkStorage);
 			transfererB.setChunkStorage(transfererBChunkStorage);
 
-			DataModel modelA = new TestDataModel();
+			DataModel modelA = new TestDataModel(new DefaultConfiguration());
 			modelA.addUser(new User(currentUserA));
 			modelA.addUser(new User(currentUserB));
 			modelA.addUserNode(userAMemberNode);
@@ -1600,7 +1601,7 @@ public abstract class AbstractChunkTransfererTest {
 			modelA.addFileVersion("FileFoo", v);
 			modelA.addChunkForFile("FileFoo", "VersionFoo", c);
 
-			DataModel modelB = new TestDataModel();
+			DataModel modelB = new TestDataModel(new DefaultConfiguration());
 			modelB.addUser(new User(currentUserA));
 			modelB.addUser(new User(currentUserB));
 			modelB.addUserNode(userAMemberNode);
