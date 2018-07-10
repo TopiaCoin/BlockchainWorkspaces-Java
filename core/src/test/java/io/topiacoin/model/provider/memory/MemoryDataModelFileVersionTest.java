@@ -12,4 +12,7 @@ public class MemoryDataModelFileVersionTest extends DataModelFileVersionTest {
 		DataModel.initialize(config);
 		return DataModel.getInstance();
 	}
+	@Override public void tearDownDataModel() {
+		DataModel.getInstance().close();
+	}
 }

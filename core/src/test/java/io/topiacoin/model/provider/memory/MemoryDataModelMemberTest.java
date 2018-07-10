@@ -13,4 +13,7 @@ public class MemoryDataModelMemberTest extends DataModelMemberTest {
 		DataModel.initialize(config);
 		return DataModel.getInstance();
 	}
+	@Override public void tearDownDataModel() {
+		DataModel.getInstance().close();
+	}
 }

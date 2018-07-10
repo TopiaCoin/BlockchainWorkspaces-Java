@@ -12,4 +12,9 @@ public class MemoryDataModelFileChunkTest extends DataModelFileChunkTest {
 		DataModel.initialize(config);
 		return DataModel.getInstance();
 	}
+
+	@Override public void tearDownDataModel() {
+		DataModel.getInstance().close();
+	}
+
 }

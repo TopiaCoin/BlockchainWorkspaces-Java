@@ -226,4 +226,6 @@ public interface DataModelProvider {
     boolean hasChunkInWorkspace(String chunkID, long workspaceGuid);
 
     List<String> hasChunksInWorkspace(List<String> chunkIDs, long workspaceGuid);
+
+    void close();
 }

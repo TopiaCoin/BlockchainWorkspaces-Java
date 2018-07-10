@@ -358,4 +358,9 @@ public class DataModel {
     public List<String> hasChunksInWorkspace(List<String> chunkIDs, long workspaceGuid) {
         return _provider.hasChunksInWorkspace(chunkIDs, workspaceGuid);
     }
+
+    public void close() {
+        _provider.close();
+        __instance = null;
+    }
 }

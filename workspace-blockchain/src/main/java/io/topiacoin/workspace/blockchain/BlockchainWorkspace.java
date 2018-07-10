@@ -5,7 +5,6 @@ import io.topiacoin.core.WorkspacesAPI;
 import io.topiacoin.core.callbacks.AcceptInvitationCallback;
 import io.topiacoin.core.callbacks.AcknowledgeFileCallback;
 import io.topiacoin.core.callbacks.AcknowledgeMessageCallback;
-import io.topiacoin.core.callbacks.AddFileCallback;
 import io.topiacoin.core.callbacks.AddFileTagCallback;
 import io.topiacoin.core.callbacks.AddFileVersionCallback;
 import io.topiacoin.core.callbacks.AddFolderCallback;
@@ -955,10 +954,10 @@ public class BlockchainWorkspace implements WorkspacesAPI {
     @Override
     public void acknowledgeMessage(Message messageToAcknowledge, AcknowledgeMessageCallback callback) throws NotLoggedInException, NoSuchWorkspaceException {
         // Get the RPC Adapter for the specified workspace
-        EOSAdapter adapter = getEOSAdapter(messageToAcknowledge.getGuid());
+        EOSAdapter adapter = getEOSAdapter(messageToAcknowledge.getWorkspaceGuid());
         // Instruct the RPC Adapter to acknowledge the specified message in the blockchain.
         try {
-            adapter.acknowledgeMessage(messageToAcknowledge.getGuid(), currentUserID, messageToAcknowledge.getEntityID());
+            adapter.acknowledgeMessage(messageToAcknowledge.getWorkspaceGuid(), currentUserID, messageToAcknowledge.getMessageID());
             callback.acknowlegedMessage(messageToAcknowledge);
         } catch (NoSuchMessageException | BlockchainException e) {
             e.printStackTrace();

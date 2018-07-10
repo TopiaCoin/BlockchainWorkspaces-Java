@@ -12,6 +12,7 @@ import io.topiacoin.model.exceptions.NoSuchFileException;
 import io.topiacoin.model.exceptions.NoSuchFileTagException;
 import io.topiacoin.model.exceptions.NoSuchFileVersionException;
 import io.topiacoin.model.exceptions.NoSuchFileVersionReceiptException;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -23,6 +24,13 @@ import static org.junit.Assert.*;
 public abstract class DataModelFileVersionTest {
 
     public abstract DataModel initDataModel();
+
+    public abstract void tearDownDataModel();
+
+    @After
+    public void destroy() {
+        tearDownDataModel();
+    }
 
     // -------- File Version Tests --------
 

@@ -881,12 +881,12 @@ public class EOSAdapterTest {
             assertNotNull(messages);
             assertEquals ( 1, messages.getMessages().size());
 
-            String msgID = messages.getMessages().get(0).getEntityID();
+            String msgID = messages.getMessages().get(0).getMessageID();
 
             // Get the Message directly
             Message fetchedMessage = adapter.getMessage(guid, msgID) ;
             assertNotNull ( fetchedMessage) ;
-            assertEquals (msgID, fetchedMessage.getEntityID());
+            assertEquals (msgID, fetchedMessage.getMessageID());
             assertEquals(message, fetchedMessage.getText());
             assertEquals(mimeType, fetchedMessage.getMimeType());
 
@@ -955,7 +955,7 @@ public class EOSAdapterTest {
 
             // Collect the MsgIDs of each of the messages
             for (Message m : messages.getMessages() ) {
-                msgIDs.add(m.getEntityID());
+                msgIDs.add(m.getMessageID());
             }
 
             // Get the next batch of messages and verify we get 100 back.
@@ -967,7 +967,7 @@ public class EOSAdapterTest {
 
             // Collect the MsgIDs of each of the messages
             for (Message m : messages.getMessages() ) {
-                msgIDs.add(m.getEntityID());
+                msgIDs.add(m.getMessageID());
             }
 
             // Get the final batch of 50 messages
@@ -979,13 +979,13 @@ public class EOSAdapterTest {
 
             // Collect the MsgIDs of each of the messages
             for (Message m : messages.getMessages() ) {
-                msgIDs.add(m.getEntityID());
+                msgIDs.add(m.getMessageID());
             }
 
             // Individually fetch each of the messages by ID
             for ( String msgID : msgIDs) {
                 Message message = adapter.getMessage(guid, msgID) ;
-                assertEquals(msgID, message.getGuid());
+                assertEquals(msgID, message.getWorkspaceGuid());
             }
 
         } finally {

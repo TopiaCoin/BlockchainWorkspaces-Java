@@ -32,17 +32,104 @@ import io.topiacoin.model.exceptions.UserAlreadyExistsException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
+import javax.crypto.SecretKey;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SQLiteDataModelProvider implements DataModelProvider {
-	SqlJetDb _db;
+	private SqlJetDb _db;
+	private static final String CREATE_WORKSPACES_TABLE = "CREATE TABLE Workspaces ("
+			+ "guid INTEGER NON NULL PRIMARY KEY, "
+			+ "name TEXT, "
+			+ "description TEXT, "
+			+ "status INTEGER, "
+			+ "lastModified INTEGER, "
+			+ "workspaceKey BLOB)";
+
+	private Workspace rowToWorkspace(ISqlJetCursor cursor) {
+		Workspace tr = null;
+		try {
+			SecretKey workspaceKey = null;//cursor.getBlobAsArray("workspaceKey");
+			long guid = cursor.getInteger("guid");
+			tr = new Workspace(cursor.getString("name"), cursor.getString("description"), (int) cursor.getInteger("status"), workspaceKey, guid, cursor.getInteger("lastModified"), null, null, null);
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+		}
+		return tr;
+	}
+
+	private Member rowToMember(ISqlJetCursor cursor) {
+		return null;
+	}
+
+	private static final String CREATE_FILES_TABLE = "CREATE TABLE Files ("
+			+ "entryID TEXT NON NULL PRIMARY KEY, "
+			+ "containerID INTEGER NON NULL, "
+			+ "name TEXT, "
+			+ "mimeType TEXT, "
+			+ "parentID TEXT, "
+			+ "status INTEGER, "
+			+ "isFolder INTEGER, "
+			+ "lockOwner TEXT)";
+	private static final String CREATE_FILE_VERSIONS_TABLE = "CREATE TABLE FileVersions ("
+			+ "entryID TEXT NON NULL PRIMARY KEY, "
+			+ "versionID TEXT NON NULL, "
+			+ "ownerID TEXT, "
+			+ "size INTEGER, "
+			+ "date INTEGER, "
+			+ "uploadDate INTEGER, "
+			+ "fileHash TEXT, "
+			+ "status TEXT, "
+			+ "lockOwner TEXT)";
+	private static final String CREATE_FILE_VERSION_RECEIPTS_TABLE = "CREATE TABLE FileVersionReceipts ("
+			+ "entryID TEXT NON NULL PRIMARY KEY, "
+			+ "versionID TEXT, "
+			+ "recipientID TEXT, "
+			+ "date INTEGER)";
+	private static final String CREATE_FILE_CHUNKS_TABLE = "CREATE TABLE FileChunks ("
+			+ "chunkID TEXT NON NULL PRIMARY KEY, "
+			+ "index INTEGER, "
+			+ "cipherTextSize INTEGER, "
+			+ "clearTextSize INTEGER, "
+			+ "chunkKey BLOB, "
+			+ "initializationVector BLOB, "
+			+ "cipherTextHash TEXT, "
+			+ "clearTextHash TEXT, "
+			+ "compressionAlgorithm TEXT)";
+	private static final String CREATE_FILE_TAGS_TABLE = "CREATE TABLE FileTags ("
+			+ "scope TEXT, "
+			+ "value TEXT)";
+	private static final String CREATE_USER_NODES_TABLE = "CREATE TABLE UserNodes ("
+			+ "userId TEXT NON NULL, "
+			+ "hostname TEXT, "
+			+ "port INTEGER, "
+			+ "publicKey BLOB)";
+	private static final String CREATE_MEMBERS_TABLE = "CREATE TABLE Members ("
+			+ "userId TEXT NON NULL, "
+			+ "status INTEGER, "
+			+ "inviteDate INTEGER, "
+			+ "inviterID TEXT, "
+			+ "authToken TEXT, "
+			+ "lockOwner TEXT, "
+			+ "parentWorkspace INTEGER)";
+	private static final String CREATE_MESSAGES_TABLE = "CREATE TABLE Messages ("
+			+ "authorID TEXT NON NULL, "
+			+ "messageID TEXT NON NULL, "
+			+ "workspaceGuid INTEGER, "
+			+ "seq INTEGER, "
+			+ "timestamp INTEGER, "
+			+ "text TEXT NON NULL, "
+			+ "mimeType TEXT NON NULL, "
+			+ "digitalSignature BLOB)";
 
 	public SQLiteDataModelProvider(Configuration config) {
 		String dbLoc = config.getConfigurationOption("model.sqllite.location");
 		java.io.File dbFile = new java.io.File(dbLoc);
+		System.out.println("Testing SQLite db at " + dbFile.getAbsolutePath());
 		boolean dbExists = dbFile.exists();
 		try {
 			_db = SqlJetDb.open(dbFile, true);
@@ -55,25 +142,166 @@ public class SQLiteDataModelProvider implements DataModelProvider {
 			} finally {
 				_db.commit();
 			}
-			ISqlJetTable workspaces = _db.getTable("Workspaces");
-			/*private Map<Long, Workspace> _workspaceMap;
-			private Map<Long, List<Member>> _workspaceMemberMap;
-			private Map<Long, List<Message>> _workspaceMessageMap;
-			private Map<Long, List<File>> _workspaceFileMap;
-			private Map<Long, Message> _masterMessageMap;
-			private Map<String, File> _masterFileMap;
-			private Map<String, List<FileVersion>> _fileVersionsMap;
-			private Map<String, List<FileVersionReceipt>> _fileVersionsReceiptMap;
-			private Map<String, List<FileChunk>> _fileChunkMap;
-			private Map<String, List<FileTag>> _fileVersionsTagMap;
-			private Map<String, List<UserNode>> _userIDtoUserNodeMap;*/
 		} catch (SqlJetException e) {
 			e.printStackTrace();
 		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("Workspaces");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_WORKSPACES_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("Files");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_FILES_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("FileVersions");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_FILE_VERSIONS_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("FileVersionReceipts");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_FILE_VERSION_RECEIPTS_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("FileChunks");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_FILE_CHUNKS_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("FileTags");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_FILE_TAGS_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("UserNodes");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_USER_NODES_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("Members");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_MEMBERS_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.WRITE);
+			_db.getTable("Messages");
+		} catch (SqlJetException e) {
+			try {
+				_db.createTable(CREATE_MESSAGES_TABLE);
+				_db.commit();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException("Failed to initialize", e1);
+			}
+		}
+		/*private Map<Long, Workspace> _workspaceMap;
+		private Map<Long, List<Member>> _workspaceMemberMap;
+		private Map<Long, List<Message>> _workspaceMessageMap;
+		private Map<Long, List<File>> _workspaceFileMap;
+		private Map<Long, Message> _masterMessageMap;
+		private Map<String, File> _masterFileMap;
+		private Map<String, List<FileVersion>> _fileVersionsMap;
+		private Map<String, List<FileVersionReceipt>> _fileVersionsReceiptMap;
+		private Map<String, List<FileChunk>> _fileChunkMap;
+		private Map<String, List<FileTag>> _fileVersionsTagMap;
+		private Map<String, List<UserNode>> _userIDtoUserNodeMap;*/
+	}
 
+	@Override public void close() {
+		try {
+			_db.commit();
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+		}
+		try {
+			_db.close();
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override public List<Workspace> getWorkspaces() {
+		try {
+			_db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+			ISqlJetTable table = _db.getTable("Workspaces");
+			List<Workspace> tr = new ArrayList<>();
+			try {
+				ISqlJetCursor cursor = table.order(table.getPrimaryKeyIndexName());
+				try {
+					if (!cursor.eof()) {
+						do {
+							tr.add(rowToWorkspace(cursor));
+						} while(cursor.next());
+					}
+					return tr;
+				} finally {
+					cursor.close();
+				}
+			} finally {
+				_db.commit();
+			}
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
@@ -98,6 +326,36 @@ public class SQLiteDataModelProvider implements DataModelProvider {
 	}
 
 	@Override public List<Member> getMembersInWorkspace(long workspaceID) throws NoSuchWorkspaceException {
+		return getMembersInWorkspace(workspaceID, true);
+	}
+
+	private List<Member> getMembersInWorkspace(long workspaceID, boolean useTransaction) {
+		try {
+			if(useTransaction) {
+				_db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+			}
+			ISqlJetTable table = _db.getTable("Members");
+			List<Member> tr = new ArrayList<>();
+			try {
+				ISqlJetCursor cursor = table.lookup("parentWorkspace", workspaceID);
+				try {
+					if (!cursor.eof()) {
+						do {
+							tr.add(rowToMember(cursor));
+						} while(cursor.next());
+					}
+					return tr;
+				} finally {
+					cursor.close();
+				}
+			} finally {
+				if(useTransaction) {
+					_db.commit();
+				}
+			}
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 

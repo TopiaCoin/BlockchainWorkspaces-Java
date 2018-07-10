@@ -6,6 +6,7 @@ import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.MessageAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -17,6 +18,13 @@ import static org.junit.Assert.*;
 public abstract class DataModelMessageTest {
 
     public abstract DataModel initDataModel();
+
+    public abstract void tearDownDataModel();
+
+    @After
+    public void destroy() {
+        tearDownDataModel();
+    }
 
     // -------- Message Tests --------
 
@@ -31,7 +39,7 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -85,7 +93,7 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -112,7 +120,7 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -159,7 +167,7 @@ public abstract class DataModelMessageTest {
         String authorID = UUID.randomUUID().toString();
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -180,7 +188,7 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -200,7 +208,7 @@ public abstract class DataModelMessageTest {
         String authorID = UUID.randomUUID().toString();
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -221,7 +229,7 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -240,7 +248,7 @@ public abstract class DataModelMessageTest {
         String authorID = UUID.randomUUID().toString();
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 
@@ -261,7 +269,7 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setGuid(messageID);
+        message.setWorkspaceGuid(messageID);
         message.setText("foo");
         message.setAuthorID(authorID);
 

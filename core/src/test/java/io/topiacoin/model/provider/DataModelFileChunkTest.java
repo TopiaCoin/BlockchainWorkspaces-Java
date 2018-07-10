@@ -9,6 +9,7 @@ import io.topiacoin.model.exceptions.FileChunkAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchFileChunkException;
 import io.topiacoin.model.exceptions.NoSuchFileException;
 import io.topiacoin.model.exceptions.NoSuchFileVersionException;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -20,6 +21,13 @@ import static org.junit.Assert.*;
 public abstract class DataModelFileChunkTest {
 
     public abstract DataModel initDataModel();
+
+    public abstract void tearDownDataModel();
+
+    @After
+    public void destroy() {
+        tearDownDataModel();
+    }
 
 
     // -------- File Chunk Tests --------

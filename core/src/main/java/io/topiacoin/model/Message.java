@@ -6,8 +6,8 @@ import java.util.Objects;
 public class Message {
 
     private String authorID;
-    private String entityID;
-    private long guid;
+    private String messageID;
+    private long workspaceGuid;
     private long seq;
     private long timestamp;
     private String text;
@@ -18,10 +18,10 @@ public class Message {
     public Message() {
     }
 
-    public Message(String authorID, String entityID, long guid, long seq, long timestamp, String text, String mimeType, byte[] digitalSignature) {
+    public Message(String authorID, String messageID, long workspaceGuid, long seq, long timestamp, String text, String mimeType, byte[] digitalSignature) {
         this.authorID = authorID;
-        this.entityID = entityID;
-        this.guid = guid;
+        this.messageID = messageID;
+        this.workspaceGuid = workspaceGuid;
         this.seq = seq;
         this.timestamp = timestamp;
         this.text = text;
@@ -31,8 +31,8 @@ public class Message {
 
     public Message(Message next) {
         this.authorID = next.authorID;
-        this.entityID = next.entityID;
-        this.guid = next.guid;
+        this.messageID = next.messageID;
+        this.workspaceGuid = next.workspaceGuid;
         this.seq = next.seq;
         this.timestamp = next.timestamp;
         this.text = next.text;
@@ -48,20 +48,20 @@ public class Message {
         this.authorID = authorID;
     }
 
-    public String getEntityID() {
-        return entityID;
+    public String getMessageID() {
+        return messageID;
     }
 
-    public void setEntityID(String entityID) {
-        this.entityID = entityID;
+    public void setMessageID(String messageID) {
+        this.messageID = messageID;
     }
 
-    public long getGuid() {
-        return guid;
+    public long getWorkspaceGuid() {
+        return workspaceGuid;
     }
 
-    public void setGuid(long guid) {
-        this.guid = guid;
+    public void setWorkspaceGuid(long workspaceGuid) {
+        this.workspaceGuid = workspaceGuid;
     }
 
     public long getSeq() {
@@ -109,11 +109,11 @@ public class Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Message message = (Message) o;
-        return guid == message.guid &&
+        return workspaceGuid == message.workspaceGuid &&
                 seq == message.seq &&
                 timestamp == message.timestamp &&
                 Objects.equals(authorID, message.authorID) &&
-                Objects.equals(entityID, message.entityID) &&
+                Objects.equals(messageID, message.messageID) &&
                 Objects.equals(text, message.text) &&
                 Objects.equals(mimeType, message.mimeType) &&
                 Arrays.equals(digitalSignature, message.digitalSignature);
@@ -122,7 +122,7 @@ public class Message {
     @Override
     public int hashCode() {
 
-        int result = Objects.hash(authorID, entityID, guid, seq, timestamp, text, mimeType);
+        int result = Objects.hash(authorID, messageID, workspaceGuid, seq, timestamp, text, mimeType);
         result = 31 * result + Arrays.hashCode(digitalSignature);
         return result;
     }
@@ -131,8 +131,8 @@ public class Message {
     public String toString() {
         return "Message{" +
                 "authorID='" + authorID + '\'' +
-                ", entityID='" + entityID + '\'' +
-                ", guid='" + guid + '\'' +
+                ", messageID='" + messageID + '\'' +
+                ", workspaceGuid='" + workspaceGuid + '\'' +
                 ", seq=" + seq +
                 ", timestamp=" + timestamp +
                 ", text='" + text + '\'' +

@@ -6,6 +6,7 @@ import io.topiacoin.model.DataModel;
 import io.topiacoin.model.User;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.UserAlreadyExistsException;
+import org.junit.After;
 import org.junit.Test;
 
 import java.security.KeyPair;
@@ -17,6 +18,13 @@ import static org.junit.Assert.*;
 public abstract class DataModelUserTest {
 
     public abstract DataModel initDataModel();
+
+    public abstract void tearDownDataModel();
+
+    @After
+    public void destroy() {
+        tearDownDataModel();
+    }
 
     // -------- User Tests --------
 

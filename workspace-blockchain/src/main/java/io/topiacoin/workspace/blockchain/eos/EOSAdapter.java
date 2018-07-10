@@ -1022,7 +1022,7 @@ public class EOSAdapter {
         do {
             messages = getMessages(guid, continuationToken);
             for ( Message curMessage : messages.getMessages()) {
-                if ( curMessage.getEntityID().equals(msgID)) {
+                if ( curMessage.getMessageID().equals(msgID)) {
                     message = curMessage;
                     break;
                 }

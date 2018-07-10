@@ -282,12 +282,12 @@ public class MemoryDataModelProvider implements DataModelProvider {
 			throw new NoSuchWorkspaceException("No workspace exists with the requested ID");
 		}
 
-		if (_masterMessageMap.containsKey(message.getGuid())) {
+		if (_masterMessageMap.containsKey(message.getWorkspaceGuid())) {
 			throw new MessageAlreadyExistsException("This message already exists");
 		}
 
 		Message messageToAdd = new Message(message);
-		_masterMessageMap.put(message.getGuid(), messageToAdd);
+		_masterMessageMap.put(message.getWorkspaceGuid(), messageToAdd);
 		messages.add(messageToAdd);
 	}
 
@@ -303,10 +303,10 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		Iterator<Message> iterator = messages.iterator();
 		while (iterator.hasNext()) {
 			Message curMessage = iterator.next();
-			if (curMessage.getGuid() == message.getGuid()) {
+			if (curMessage.getWorkspaceGuid() == message.getWorkspaceGuid()) {
 				iterator.remove();
 				Message messageToAdd = new Message(message);
-				_masterMessageMap.put(message.getGuid(), messageToAdd);
+				_masterMessageMap.put(message.getWorkspaceGuid(), messageToAdd);
 				messages.add(messageToAdd);
 				messageFound = true;
 				break;
@@ -325,11 +325,11 @@ public class MemoryDataModelProvider implements DataModelProvider {
 			throw new NoSuchWorkspaceException("No workspace exists with the requested ID");
 		}
 
-		if (!_masterMessageMap.containsKey(message.getGuid())) {
+		if (!_masterMessageMap.containsKey(message.getWorkspaceGuid())) {
 			throw new NoSuchMessageException("No message exists with the requested ID");
 		}
 
-		_masterMessageMap.remove(message.getGuid());
+		_masterMessageMap.remove(message.getWorkspaceGuid());
 		messages.remove(message);
 	}
 
@@ -1173,6 +1173,10 @@ public class MemoryDataModelProvider implements DataModelProvider {
 			e.printStackTrace();
 		}
 		return new ArrayList<String>();
+	}
+
+	@Override public void close() {
+
 	}
 
 	// -------- Private Methods --------

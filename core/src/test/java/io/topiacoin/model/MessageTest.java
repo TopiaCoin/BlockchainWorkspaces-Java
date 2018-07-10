@@ -34,8 +34,8 @@ public class MessageTest {
         Message message = new Message(authorID, entityID, guid, seq, timestamp, text, mimeType, digSig);
 
         assertEquals(authorID, message.getAuthorID());
-        assertEquals(entityID, message.getEntityID());
-        assertEquals(guid, message.getGuid());
+        assertEquals(entityID, message.getMessageID());
+        assertEquals(guid, message.getWorkspaceGuid());
         assertEquals(seq, message.getSeq());
         assertEquals(timestamp, message.getTimestamp());
         assertEquals(text, message.getText());
@@ -64,11 +64,11 @@ public class MessageTest {
         message.setAuthorID(null);
         assertNull(message.getAuthorID());
 
-        message.setEntityID(entityID);
-        assertEquals(entityID, message.getEntityID());
+        message.setMessageID(entityID);
+        assertEquals(entityID, message.getMessageID());
 
-        message.setGuid(guid);
-        assertEquals(guid, message.getGuid());
+        message.setWorkspaceGuid(guid);
+        assertEquals(guid, message.getWorkspaceGuid());
 
         assertEquals(0, message.getSeq());
         message.setSeq(seq);

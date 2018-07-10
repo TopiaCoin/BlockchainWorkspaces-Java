@@ -6,6 +6,7 @@ import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.FileAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchFileException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -17,6 +18,13 @@ import static org.junit.Assert.*;
 public abstract class DataModelFileTest {
 
     public abstract DataModel initDataModel();
+
+    public abstract void tearDownDataModel();
+
+    @After
+    public void destroy() {
+        tearDownDataModel();
+    }
 
 
     // -------- File Tests --------

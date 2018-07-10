@@ -4,6 +4,7 @@ import io.topiacoin.model.DataModel;
 import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -15,6 +16,13 @@ import static org.junit.Assert.*;
 public abstract class DataModelWorkspaceTest {
 
     public abstract DataModel initDataModel();
+
+    public abstract void tearDownDataModel();
+
+    @After
+    public void destroy() {
+        tearDownDataModel();
+    }
 
     // -------- Workspace Tests --------
 
