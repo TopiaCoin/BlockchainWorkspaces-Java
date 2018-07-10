@@ -1,5 +1,8 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.Message;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.MessageAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
@@ -11,7 +14,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelMessageTest {
+public abstract class DataModelMessageTest {
+
+    public abstract DataModel initDataModel();
 
     // -------- Message Tests --------
 
@@ -30,7 +35,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -84,7 +89,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -111,7 +116,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -129,7 +134,7 @@ public class DataModelMessageTest {
     public void testGetMessagesFromNonExistentWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Message> messages;
 
             // Expect a NoSuchWorkspaceException
@@ -140,7 +145,7 @@ public class DataModelMessageTest {
     public void testGetNonExistentMessage() throws Exception {
         long messageID = new Random().nextLong();
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         Message message;
 
         // Expect a NoSuchMessageException
@@ -158,7 +163,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         // Expect a NoSuchWorkspaceException
         dataModel.addMessageToWorkspace(workspaceID, message);
@@ -179,7 +184,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addMessageToWorkspace(workspaceID, message);
@@ -199,7 +204,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         // Expect a NoSuchWorkspaceException
         dataModel.updateMessageInWorkspace(workspaceID, message);
@@ -220,7 +225,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -239,7 +244,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         // Expect a NoSuchWorkspaceException
         dataModel.removeMessageFromWorkspace(workspaceID, message);
@@ -260,7 +265,7 @@ public class DataModelMessageTest {
         message.setText("foo");
         message.setAuthorID(authorID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 

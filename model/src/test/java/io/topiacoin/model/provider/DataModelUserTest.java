@@ -1,6 +1,9 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
 import io.topiacoin.crypto.CryptoUtils;
+import io.topiacoin.model.CurrentUser;
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.User;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.UserAlreadyExistsException;
 import org.junit.Test;
@@ -11,7 +14,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelUserTest {
+public abstract class DataModelUserTest {
+
+    public abstract DataModel initDataModel();
 
     // -------- User Tests --------
 
@@ -27,7 +32,7 @@ public class DataModelUserTest {
         user.setEmail(email);
         user.setPublicKey(keyPair.getPublic());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<User> users;
 
@@ -94,7 +99,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail("foo@example.com");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<User> users;
 
@@ -129,7 +134,7 @@ public class DataModelUserTest {
 
         List<User> users;
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addUser(user);
 
@@ -151,7 +156,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail(email);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addUser(user);
 
@@ -183,7 +188,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail(email);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<User> users;
 
@@ -200,7 +205,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail(email);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<User> users;
 
@@ -217,7 +222,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail(email);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<User> users;
 
@@ -236,7 +241,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail(email);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.updateUser(user);
     }
@@ -251,7 +256,7 @@ public class DataModelUserTest {
         user.setUserID(userID);
         user.setEmail(email);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.removeUser(user);
     }

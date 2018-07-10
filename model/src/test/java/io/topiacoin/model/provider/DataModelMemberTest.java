@@ -1,5 +1,8 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.Member;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.MemberAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchMemberException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
@@ -11,7 +14,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelMemberTest {
+public abstract class DataModelMemberTest {
+
+    public abstract DataModel initDataModel();
 
     // -------- Member Tests --------
 
@@ -31,7 +36,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         dataModel.addWorkspace(workspace);
@@ -82,7 +87,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         dataModel.addWorkspace(workspace);
@@ -114,7 +119,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         dataModel.addWorkspace(workspace);
@@ -136,7 +141,7 @@ public class DataModelMemberTest {
     public void testFetchMembersFromNonExistentWorkspace() throws Exception {
         long fakeID = 12345L;
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         // Expecting a NoSuchWorkspaceException
@@ -148,7 +153,7 @@ public class DataModelMemberTest {
         long fakeID = 12345L;
         String userID = UUID.randomUUID().toString();
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         Member member;
 
         // Expecting a NoSuchWorkspaceException
@@ -164,7 +169,7 @@ public class DataModelMemberTest {
         workspace.setGuid(workspaceID);
         workspace.setName("Sample Workspace");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -186,7 +191,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         // Expecting a NoSuchWorkspaceException
@@ -209,7 +214,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         dataModel.addWorkspace(workspace);
@@ -232,7 +237,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         // Expecting a NoSuchWorkspaceException
@@ -255,7 +260,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         dataModel.addWorkspace(workspace);
@@ -276,7 +281,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         // Expecting a NoSuchWorkspaceException
@@ -299,7 +304,7 @@ public class DataModelMemberTest {
         member.setStatus(1);
         member.setInviteDate(System.currentTimeMillis());
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
         List<Member> members;
 
         dataModel.addWorkspace(workspace);

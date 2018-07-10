@@ -1,5 +1,6 @@
 package io.topiacoin.model;
 
+import io.topiacoin.core.Configuration;
 import io.topiacoin.model.exceptions.BadAuthTokenException;
 import io.topiacoin.model.exceptions.FileAlreadyExistsException;
 import io.topiacoin.model.exceptions.FileChunkAlreadyExistsException;
@@ -16,10 +17,12 @@ import io.topiacoin.model.exceptions.NoSuchMemberException;
 import io.topiacoin.model.exceptions.NoSuchMessageException;
 import io.topiacoin.model.exceptions.NoSuchUserException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
+import io.topiacoin.model.exceptions.NotInitializedException;
 import io.topiacoin.model.exceptions.UserAlreadyExistsException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import io.topiacoin.model.provider.DataModelProvider;
 import io.topiacoin.model.provider.MemoryDataModelProvider;
+import io.topiacoin.model.provider.SQLiteDataModelProvider;
 
 import java.util.List;
 
@@ -29,16 +32,30 @@ public class DataModel {
 
     private DataModelProvider _provider;
 
+    private static Configuration _config;
+
     protected DataModel() {
-        // TODO - Replace this with code that loads the provider based on some configuration
-        _provider = new MemoryDataModelProvider();
+        if(_config != null) {
+            if (_config.getConfigurationOption("model.storage.type").equalsIgnoreCase("memory")) {
+                _provider = new MemoryDataModelProvider();
+            } else {
+                _provider = new SQLiteDataModelProvider(_config);
+            }
+        } else {
+            throw new NotInitializedException();
+        }
     }
 
     public static synchronized DataModel getInstance() {
         if (__instance == null) {
-            __instance = new DataModel();
+            throw new NotInitializedException();
         }
         return __instance;
+    }
+
+    public static synchronized void initialize(Configuration config) {
+        _config = config;
+        __instance = new DataModel();
     }
 
 

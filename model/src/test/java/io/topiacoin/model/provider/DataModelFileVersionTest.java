@@ -1,5 +1,11 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.File;
+import io.topiacoin.model.FileTag;
+import io.topiacoin.model.FileVersion;
+import io.topiacoin.model.FileVersionReceipt;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.FileTagAlreadyExistsException;
 import io.topiacoin.model.exceptions.FileVersionAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchFileException;
@@ -14,7 +20,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelFileVersionTest {
+public abstract class DataModelFileVersionTest {
+
+    public abstract DataModel initDataModel();
 
     // -------- File Version Tests --------
 
@@ -36,7 +44,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -112,7 +120,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -145,7 +153,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -173,7 +181,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -201,7 +209,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -229,7 +237,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -258,7 +266,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -286,7 +294,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -317,7 +325,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -345,7 +353,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -374,7 +382,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -402,7 +410,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -430,7 +438,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -459,7 +467,7 @@ public class DataModelFileVersionTest {
         fileVersion.setVersionID(versionID);
         fileVersion.setEntryID(fileID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -496,7 +504,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -555,7 +563,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -587,7 +595,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -620,7 +628,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -650,7 +658,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -681,7 +689,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -711,7 +719,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -742,7 +750,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -774,7 +782,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -804,7 +812,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -835,7 +843,7 @@ public class DataModelFileVersionTest {
         fileReceipt.setVersionID(versionID);
         fileReceipt.setRecipientID("George Bush");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -868,7 +876,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -917,7 +925,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -948,7 +956,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -980,7 +988,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -1009,7 +1017,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -1039,7 +1047,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -1072,7 +1080,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -1101,7 +1109,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -1131,7 +1139,7 @@ public class DataModelFileVersionTest {
         fileTag.setScope("public");
         fileTag.setValue("booyah");
 
-        DataModel dataModel = new DataModel() ;
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);

@@ -1,5 +1,8 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.File;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.FileAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchFileException;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
@@ -11,7 +14,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelFileTest {
+public abstract class DataModelFileTest {
+
+    public abstract DataModel initDataModel();
 
 
     // -------- File Tests --------
@@ -30,7 +35,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -90,7 +95,7 @@ public class DataModelFileTest {
         file2.setName("Foo");
         file2.setParentID(parentID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file1);
@@ -133,7 +138,7 @@ public class DataModelFileTest {
         file2.setName("Foo");
         file2.setParentID(parentID);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file1);
@@ -162,7 +167,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<File> files;
 
@@ -179,7 +184,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<File> files;
 
@@ -200,7 +205,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -217,7 +222,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addFileToWorkspace(workspaceID, file);
     }
@@ -235,7 +240,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -254,7 +259,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.updateFileInWorkspace(workspaceID, file);
     }
@@ -272,7 +277,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -289,7 +294,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.removeFileFromWorkspace(workspaceID, file);
     }
@@ -300,7 +305,7 @@ public class DataModelFileTest {
         String fileID = UUID.randomUUID().toString();
         String ownerID = UUID.randomUUID().toString();
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.removeFileFromWorkspace(workspaceID, fileID);
     }
@@ -318,7 +323,7 @@ public class DataModelFileTest {
         file.setEntryID(fileID);
         file.setName("Foo");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -334,7 +339,7 @@ public class DataModelFileTest {
         workspace.setGuid(workspaceID);
         workspace.setName("Sample Workspace");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 

@@ -1,5 +1,10 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.File;
+import io.topiacoin.model.FileChunk;
+import io.topiacoin.model.FileVersion;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.FileChunkAlreadyExistsException;
 import io.topiacoin.model.exceptions.NoSuchFileChunkException;
 import io.topiacoin.model.exceptions.NoSuchFileException;
@@ -12,7 +17,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelFileChunkTest {
+public abstract class DataModelFileChunkTest {
+
+    public abstract DataModel initDataModel();
 
 
     // -------- File Chunk Tests --------
@@ -40,7 +47,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -99,7 +106,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -141,7 +148,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -186,7 +193,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -218,7 +225,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -251,7 +258,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -281,7 +288,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -312,7 +319,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -346,7 +353,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -376,7 +383,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -407,7 +414,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -440,7 +447,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
 
@@ -470,7 +477,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);
@@ -501,7 +508,7 @@ public class DataModelFileChunkTest {
         fileChunk.setChunkID(chunkID);
         fileChunk.setIndex(0);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         dataModel.addWorkspace(workspace);
         dataModel.addFileToWorkspace(workspaceID, file);

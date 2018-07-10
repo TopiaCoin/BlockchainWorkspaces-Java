@@ -1,5 +1,7 @@
-package io.topiacoin.model;
+package io.topiacoin.model.provider;
 
+import io.topiacoin.model.DataModel;
+import io.topiacoin.model.Workspace;
 import io.topiacoin.model.exceptions.NoSuchWorkspaceException;
 import io.topiacoin.model.exceptions.WorkspaceAlreadyExistsException;
 import org.junit.Test;
@@ -10,7 +12,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-public class DataModelWorkspaceTest {
+public abstract class DataModelWorkspaceTest {
+
+    public abstract DataModel initDataModel();
 
     // -------- Workspace Tests --------
 
@@ -22,7 +26,7 @@ public class DataModelWorkspaceTest {
         testWorkspace.setName("A Sample Workspace");
         testWorkspace.setStatus(1);
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<Workspace> workspaces = null;
 
@@ -71,7 +75,7 @@ public class DataModelWorkspaceTest {
         testWorkspace.setGuid(new Random().nextLong());
         testWorkspace.setName("A Sample Workspace");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<Workspace> workspaces = null;
 
@@ -108,7 +112,7 @@ public class DataModelWorkspaceTest {
     public void testFetchNonExistentWorkspace() throws Exception {
 
         long fakeID = 12345L;
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         // Expecting NoSuchWorkspaceException
         Workspace workspace = dataModel.getWorkspace(fakeID);
@@ -121,7 +125,7 @@ public class DataModelWorkspaceTest {
         testWorkspace.setGuid(new Random().nextLong());
         testWorkspace.setName("A Sample Workspace");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<Workspace> workspaces = null;
 
@@ -137,7 +141,7 @@ public class DataModelWorkspaceTest {
         testWorkspace.setGuid(new Random().nextLong());
         testWorkspace.setName("A Sample Workspace");
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         List<Workspace> workspaces = null;
 
@@ -149,7 +153,7 @@ public class DataModelWorkspaceTest {
     public void testRemoveNonExistentWorkspace() throws Exception {
         long fakeID = new Random().nextLong();
 
-        DataModel dataModel = new DataModel();
+        DataModel dataModel = initDataModel();
 
         // Expecting NoSuchWorkspaceException
         dataModel.removeWorkspace(fakeID);
