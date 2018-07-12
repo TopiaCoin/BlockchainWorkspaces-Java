@@ -122,7 +122,7 @@ public class DataModel {
         return _provider.getMessagesInWorkspace(workspaceID);
     }
 
-    public Message getMessage(long messageID)
+    public Message getMessage(String messageID)
             throws NoSuchMessageException {
         return _provider.getMessage(messageID);
     }

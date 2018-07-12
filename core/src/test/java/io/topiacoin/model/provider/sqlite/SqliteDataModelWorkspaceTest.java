@@ -9,11 +9,17 @@ import java.io.File;
 
 public class SqliteDataModelWorkspaceTest extends DataModelWorkspaceTest {
 
+	String sqliteDbLoc = "target/testdbs/sqlitedb-workspacetest";
+
+	public String getDBLoc() {
+		return sqliteDbLoc;
+	}
+
 	@Override public DataModel initDataModel() {
 		Configuration config = new DefaultConfiguration();
 		config.setConfigurationOption("model.storage.type", "Sqlite");
-		config.setConfigurationOption("model.sqllite.location", "target/testdbs/sqlitedb-workspacetest");
-		File f = new File("target/sqlitedb");
+		config.setConfigurationOption("model.sqllite.location", getDBLoc());
+		File f = new File(getDBLoc());
 		if(f.exists()) {
 			f.delete();
 			if(f.exists()) {
@@ -26,5 +32,12 @@ public class SqliteDataModelWorkspaceTest extends DataModelWorkspaceTest {
 
 	@Override public void tearDownDataModel() {
 		DataModel.getInstance().close();
+		File f = new File(getDBLoc());
+		if(f.exists()) {
+			f.delete();
+			if(f.exists()) {
+				throw new RuntimeException("Couldn't delete");
+			}
+		}
 	}
 }

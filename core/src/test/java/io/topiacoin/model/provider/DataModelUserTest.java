@@ -106,6 +106,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail("foo@example.com");
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 
@@ -139,6 +140,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         List<User> users;
 
@@ -163,6 +165,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 
@@ -195,6 +198,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 
@@ -212,6 +216,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 
@@ -229,6 +234,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 
@@ -248,6 +254,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 
@@ -263,6 +270,7 @@ public abstract class DataModelUserTest {
         User user = new User();
         user.setUserID(userID);
         user.setEmail(email);
+        user.setPublicKey(CryptoUtils.generateECKeyPair().getPublic());
 
         DataModel dataModel = initDataModel();
 

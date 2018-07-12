@@ -41,6 +41,7 @@ public class FileVersion {
         this.fileChunks = (fileChunks != null ? new ArrayList<FileChunk>(fileChunks) : new ArrayList<FileChunk>());
         this.receipts = (receipts != null ? new ArrayList<FileVersionReceipt>(receipts) : new ArrayList<FileVersionReceipt>());
         this.ancestorVersionIDs = (ancestorVersionIDs != null ? new ArrayList<String>(ancestorVersionIDs) : new ArrayList<String>());
+        this.lockOwner = lockOwner;
     }
 
     public FileVersion(FileVersion other) {

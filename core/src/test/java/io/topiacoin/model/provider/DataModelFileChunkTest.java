@@ -46,6 +46,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -105,6 +106,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -147,6 +149,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -224,6 +227,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -287,6 +291,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -318,6 +323,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -382,6 +388,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -413,6 +420,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -476,6 +484,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);
@@ -507,6 +516,7 @@ public abstract class DataModelFileChunkTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         FileVersion fileVersion = new FileVersion();
         fileVersion.setVersionID(versionID);

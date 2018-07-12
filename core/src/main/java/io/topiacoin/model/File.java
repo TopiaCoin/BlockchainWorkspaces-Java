@@ -18,14 +18,15 @@ public class File {
 
     public File() {
         versions = new ArrayList<FileVersion>();
+        parentID = "";
     }
 
-    public File(String name, String mimeType, String entryID, long containerID,String parentID, boolean isFolder, int status, String lockOwner, List<FileVersion> versions) {
+    public File(String name, String mimeType, String entryID, long containerID, String parentID, boolean isFolder, int status, String lockOwner, List<FileVersion> versions) {
         this.name = name;
         this.mimeType = mimeType;
         this.entryID = entryID;
         this.containerID = containerID;
-        this.parentID = parentID;
+        this.parentID = parentID == null ? "" : parentID;
         this.isFolder = isFolder;
         this.status = status;
         this.lockOwner = lockOwner;
@@ -89,7 +90,7 @@ public class File {
     }
 
     public void setParentID(String parentID) {
-        this.parentID = parentID;
+        this.parentID = parentID == null ? "" : parentID;
     }
 
     public boolean isFolder() {

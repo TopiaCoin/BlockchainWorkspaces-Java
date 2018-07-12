@@ -17,7 +17,7 @@ public class FileTest {
         assertNull(file.getName());
         assertNull(file.getMimeType());
         assertNull(file.getEntryID());
-        assertNull(file.getParentID());
+        assertEquals("", file.getParentID());
         assertFalse(file.isFolder()) ;
         assertEquals ( 0, file.getStatus());
         assertNull(file.getLockOwner());
@@ -117,11 +117,11 @@ public class FileTest {
         assertEquals(containerID, file.getContainerID());
 
         // Check the Parent ID Accessor
-        assertNull(file.getParentID());
+        assertEquals("", file.getParentID());
         file.setParentID(parentID);
         assertEquals(parentID, file.getParentID());
         file.setParentID(null);
-        assertNull(file.getParentID());
+        assertEquals("", file.getParentID());
 
         // Check the isFolder Accessor
         assertFalse(file.isFolder()) ;

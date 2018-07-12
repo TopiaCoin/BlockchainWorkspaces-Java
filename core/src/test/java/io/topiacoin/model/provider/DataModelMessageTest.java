@@ -31,7 +31,7 @@ public abstract class DataModelMessageTest {
     @Test
     public void testMessageCRUD() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "foobarbaz";
         String authorID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -39,9 +39,10 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -85,7 +86,7 @@ public abstract class DataModelMessageTest {
     @Test
     public void testChangingAddedMessageDoesNotChangeModel() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "test";
         String authorID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -93,9 +94,10 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -112,7 +114,7 @@ public abstract class DataModelMessageTest {
     @Test
     public void testChangingFetchedMessageDoesNotChangeModel() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "anotherTest";
         String authorID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -120,9 +122,10 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -151,7 +154,7 @@ public abstract class DataModelMessageTest {
 
     @Test(expected = NoSuchMessageException.class)
     public void testGetNonExistentMessage() throws Exception {
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
 
         DataModel dataModel = initDataModel();
         Message message;
@@ -163,13 +166,14 @@ public abstract class DataModelMessageTest {
     @Test(expected = NoSuchWorkspaceException.class)
     public void testAddMessageToNonExistentWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
         String authorID = UUID.randomUUID().toString();
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -180,7 +184,7 @@ public abstract class DataModelMessageTest {
     @Test(expected = MessageAlreadyExistsException.class)
     public void testAddDuplicateMessageToWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
         String authorID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -188,9 +192,10 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -204,13 +209,14 @@ public abstract class DataModelMessageTest {
     @Test(expected = NoSuchWorkspaceException.class)
     public void testUpdateMessageInNonExistentWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
         String authorID = UUID.randomUUID().toString();
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -221,7 +227,7 @@ public abstract class DataModelMessageTest {
     @Test(expected = NoSuchMessageException.class)
     public void testUpdateNonExistentMessageInWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
         String authorID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -229,9 +235,10 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -244,13 +251,14 @@ public abstract class DataModelMessageTest {
     @Test(expected = NoSuchWorkspaceException.class)
     public void testRemoveMessageFromNonExistentWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
         String authorID = UUID.randomUUID().toString();
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 
@@ -261,7 +269,7 @@ public abstract class DataModelMessageTest {
     @Test(expected = NoSuchMessageException.class)
     public void testRemoveNonExistentMessageFromWorkspace() throws Exception {
         long workspaceID = new Random().nextLong();
-        long messageID = new Random().nextLong();
+        String messageID = "DEADBEEF";
         String authorID = UUID.randomUUID().toString();
 
         Workspace workspace = new Workspace();
@@ -269,9 +277,10 @@ public abstract class DataModelMessageTest {
         workspace.setName("Sample Workspace");
 
         Message message = new Message();
-        message.setWorkspaceGuid(messageID);
+        message.setWorkspaceGuid(workspaceID);
         message.setText("foo");
         message.setAuthorID(authorID);
+        message.setMessageID(messageID);
 
         DataModel dataModel = initDataModel();
 

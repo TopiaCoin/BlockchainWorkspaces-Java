@@ -78,7 +78,7 @@ public interface DataModelProvider {
     List<Message> getMessagesInWorkspace(long workspaceID)
             throws NoSuchWorkspaceException;
 
-    Message getMessage(long messageID)
+    Message getMessage(String messageID)
             throws NoSuchMessageException;
 
     void addMessageToWorkspace(long workspaceID, Message message)

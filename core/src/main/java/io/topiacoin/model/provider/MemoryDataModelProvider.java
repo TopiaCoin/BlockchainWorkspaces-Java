@@ -44,7 +44,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 	private Map<Long, List<Member>> _workspaceMemberMap;
 	private Map<Long, List<Message>> _workspaceMessageMap;
 	private Map<Long, List<File>> _workspaceFileMap;
-	private Map<Long, Message> _masterMessageMap;
+	private Map<String, Message> _masterMessageMap;
 	private Map<String, File> _masterFileMap;
 	private Map<String, List<FileVersion>> _fileVersionsMap;
 	private Map<String, List<FileVersionReceipt>> _fileVersionsReceiptMap;
@@ -264,7 +264,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 		return retMessages;
 	}
 
-	public Message getMessage(long messageID)
+	public Message getMessage(String messageID)
 			throws NoSuchMessageException {
 
 		if (!_masterMessageMap.containsKey(messageID)) {
@@ -282,12 +282,12 @@ public class MemoryDataModelProvider implements DataModelProvider {
 			throw new NoSuchWorkspaceException("No workspace exists with the requested ID");
 		}
 
-		if (_masterMessageMap.containsKey(message.getWorkspaceGuid())) {
+		if (_masterMessageMap.containsKey(message.getMessageID())) {
 			throw new MessageAlreadyExistsException("This message already exists");
 		}
 
 		Message messageToAdd = new Message(message);
-		_masterMessageMap.put(message.getWorkspaceGuid(), messageToAdd);
+		_masterMessageMap.put(messageToAdd.getMessageID(), messageToAdd);
 		messages.add(messageToAdd);
 	}
 
@@ -306,7 +306,7 @@ public class MemoryDataModelProvider implements DataModelProvider {
 			if (curMessage.getWorkspaceGuid() == message.getWorkspaceGuid()) {
 				iterator.remove();
 				Message messageToAdd = new Message(message);
-				_masterMessageMap.put(message.getWorkspaceGuid(), messageToAdd);
+				_masterMessageMap.put(message.getMessageID(), messageToAdd);
 				messages.add(messageToAdd);
 				messageFound = true;
 				break;
@@ -325,11 +325,11 @@ public class MemoryDataModelProvider implements DataModelProvider {
 			throw new NoSuchWorkspaceException("No workspace exists with the requested ID");
 		}
 
-		if (!_masterMessageMap.containsKey(message.getWorkspaceGuid())) {
+		if (!_masterMessageMap.containsKey(message.getMessageID())) {
 			throw new NoSuchMessageException("No message exists with the requested ID");
 		}
 
-		_masterMessageMap.remove(message.getWorkspaceGuid());
+		_masterMessageMap.remove(message.getMessageID());
 		messages.remove(message);
 	}
 
@@ -353,6 +353,9 @@ public class MemoryDataModelProvider implements DataModelProvider {
 
 	public List<File> getFilesInWorkspace(long workspaceID, String parentID)
 			throws NoSuchWorkspaceException {
+		if(parentID == null) {
+			parentID = "";
+		}
 		List<File> files = _workspaceFileMap.get(workspaceID);
 		if (files == null) {
 			throw new NoSuchWorkspaceException("No workspace exists with the specified ID");

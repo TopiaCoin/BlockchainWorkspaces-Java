@@ -42,6 +42,7 @@ public abstract class DataModelFileTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         DataModel dataModel = initDataModel();
 
@@ -97,11 +98,13 @@ public abstract class DataModelFileTest {
         File file1 = new File();
         file1.setEntryID(fileID1);
         file1.setName("Foo");
+        file1.setContainerID(workspaceID);
 
         File file2 = new File();
         file2.setEntryID(fileID2);
         file2.setName("Foo");
         file2.setParentID(parentID);
+        file2.setContainerID(workspaceID);
 
         DataModel dataModel = initDataModel();
 
@@ -140,11 +143,13 @@ public abstract class DataModelFileTest {
         File file1 = new File();
         file1.setEntryID(fileID1);
         file1.setName("Foo");
+        file1.setContainerID(workspaceID);
 
         File file2 = new File();
         file2.setEntryID(fileID2);
         file2.setName("Foo");
         file2.setParentID(parentID);
+        file2.setContainerID(workspaceID);
 
         DataModel dataModel = initDataModel();
 
@@ -229,6 +234,7 @@ public abstract class DataModelFileTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         DataModel dataModel = initDataModel();
 
@@ -247,6 +253,7 @@ public abstract class DataModelFileTest {
         File file = new File();
         file.setEntryID(fileID);
         file.setName("Foo");
+        file.setContainerID(workspaceID);
 
         DataModel dataModel = initDataModel();
 
